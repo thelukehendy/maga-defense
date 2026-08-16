@@ -1527,20 +1527,81 @@ canvas.portrait {
   }
   /* Fixed deploy CTA covers difficulty on short landscape — keep it in-flow sticky. */
   #overlay-select .hero-row {
-    position: sticky;
+    position: static;
     left: auto;
     right: auto;
-    bottom: 0;
+    bottom: auto;
     z-index: 2;
     width: 100%;
-    margin-top: 8px;
-    padding: 8px 0 0;
-    background: linear-gradient(180deg, transparent, rgba(7, 20, 40, 0.95) 28%);
+    max-width: none;
+    margin: 8px 0 0;
+    padding: 0;
+    background: transparent;
     border-top: none;
     box-shadow: none;
   }
   #overlay-select .panel {
     padding-bottom: 12px;
+  }
+  #overlay-select .panel.mission {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    grid-template-areas:
+      'kick kick'
+      'title title'
+      'maps diffs'
+      'pitch pitch'
+      'cta cta';
+    gap: 6px 10px;
+    align-content: start;
+    text-align: left;
+  }
+  #overlay-select .kicker {
+    grid-area: kick;
+    margin: 0;
+  }
+  #overlay-select .panel.mission > h2 {
+    grid-area: title;
+    margin: 0;
+    font-size: 22px;
+  }
+  #overlay-select .panel.mission > .sub {
+    display: none;
+  }
+  #overlay-select .maps {
+    grid-area: maps;
+    min-width: 0;
+  }
+  #overlay-select .diffs {
+    grid-area: diffs;
+    min-width: 0;
+  }
+  #overlay-select .pitch {
+    grid-area: pitch;
+    margin: 0;
+    font-size: 11px;
+  }
+  #overlay-select .hero-row {
+    grid-area: cta;
+  }
+  #overlay-select .section-label {
+    margin: 0 0 4px;
+    font-size: 10px;
+  }
+  #overlay-select .map-grid,
+  #overlay-select .diff-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+  #overlay-select .plaque,
+  #overlay-select .diff-btn {
+    min-height: 44px;
+    padding: 6px 8px;
+  }
+  #overlay-select .plaque-sub,
+  #overlay-select .plaque-brief,
+  #overlay-select .diff-blurb {
+    display: none;
   }
   #overlay-info .cta {
     position: static;
