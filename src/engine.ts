@@ -123,6 +123,13 @@ export class TraumaCamera {
     this.flash = Math.max(this.flash, 0.24);
   }
 
+  clear(): void {
+    this.trauma = 0;
+    this.flash = 0;
+    this.sx = 0;
+    this.sy = 0;
+  }
+
   update(dt: number): void {
     this.trauma = Math.max(0, this.trauma - dt * 1.7);
     this.flash = Math.max(0, this.flash - dt * 2.6);

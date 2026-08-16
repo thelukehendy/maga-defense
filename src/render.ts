@@ -410,23 +410,29 @@ export class Renderer {
       if (t.kind === 'desk') this.drawRange(ctx, t, time, 0.45);
     }
     for (const w of sim.walls) this.drawWall(ctx, w);
-    const sorted = [...sim.towers].sort((a, b) => a.y - b.y);
-    for (const t of sorted) this.drawTower(ctx, t, sim, time);
-    const foes = [...sim.enemies].sort((a, b) => a.y - b.y);
-    for (const e of foes) this.drawEnemy(ctx, e, time);
+    if (flash > 0) {
+      ctx.fillStyle = `rgba(255, 230, 140, ${flash * 0.35})`;
+      ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    }
+    if (sim.leaking > 0) {
+      ctx.fillStyle = `rgba(200, 16, 46, ${sim.leaking * 0.22})`;
+      ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    }
+    type Layer = { y: number; draw: () => void };
+    const layers: Layer[] = [];
+    for (const t of sim.towers) {
+      layers.push({ y: t.y, draw: () => this.drawTower(ctx, t, sim, time) });
+    }
+    for (const e of sim.enemies) {
+      if (e.hp <= 0) continue;
+      layers.push({ y: e.y, draw: () => this.drawEnemy(ctx, e, time) });
+    }
+    layers.sort((a, b) => a.y - b.y);
+    for (const layer of layers) layer.draw();
     for (const b of sim.beams) this.drawBeam(ctx, b);
     for (const b of sim.boulders) this.drawBoulder(ctx, b);
     for (const b of sim.bricks) this.drawBrickShot(ctx, b);
     fx.draw(ctx);
-
-    if (flash > 0) {
-      ctx.fillStyle = `rgba(255, 230, 140, ${flash * 0.62})`;
-      ctx.fillRect(0, 0, WORLD_W, WORLD_H);
-    }
-    if (sim.leaking > 0) {
-      ctx.fillStyle = `rgba(200, 16, 46, ${sim.leaking * 0.28})`;
-      ctx.fillRect(0, 0, WORLD_W, WORLD_H);
-    }
 
     if (sim.announcing > 0) {
       const a = Math.min(1, sim.announcing / 0.25, 2.1 - 0.15 > sim.announcing ? 1 : sim.announcing / 0.25);

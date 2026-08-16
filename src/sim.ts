@@ -359,10 +359,13 @@ export class Sim {
     e.hp = 0;
     this.donations += e.reward;
     // Trash: small spark. Elite-ish (bureaucrat): patriotic burst. Avoid confetti fog.
-    if (e.kind === 'bureaucrat') this.fx.patriotic(e.x, e.y - e.z, 1.15);
-    else this.fx.spawn(e.x, e.y - e.z, 10, ['#fff3b0', '#c8102e', '#1a4fa8'], 90, 'spark', 2.4);
-    this.fx.say(e.x, e.y - 24, phrase, '#fff3b0', 1.15);
-    this.fx.say(e.x + 10, e.y - 40, `+$${e.reward}`, '#9dffb0', 0.9);
+    if (e.kind === 'bureaucrat') {
+      this.fx.patriotic(e.x, e.y - e.z, 1.15);
+      this.fx.say(e.x, e.y - 24, phrase, '#fff3b0', 1.15);
+    } else {
+      this.fx.spawn(e.x, e.y - e.z, 10, ['#fff3b0', '#c8102e', '#1a4fa8'], 90, 'spark', 2.4);
+    }
+    this.fx.say(e.x + 6, e.y - 36, `+$${e.reward}`, '#9dffb0', 0.9);
     this.audio.death();
   }
 

@@ -196,6 +196,8 @@ export class Game {
     const toHq = (): void => {
       hideMenus(this.hud);
       this.sim.reset();
+      this.fx.clear();
+      this.cam.clear();
       this.setPhase('title');
     };
     root.querySelector('#btn-pause-hq')?.addEventListener('click', toHq);
@@ -248,10 +250,11 @@ export class Game {
     });
   }
 
-  private applyCampaign(resetPlay: boolean): void {
+  private applyCampaign(_resetPlay = true): void {
     this.sim.configure(this.selectedMap, this.selectedDiff);
+    this.fx.clear();
+    this.cam.clear();
     this.renderer.setMap(this.sim.map, this.view.dpr, this.view.scale);
-    if (!resetPlay) this.sim.reset();
   }
 
   private setPhase(p: HudPhase): void {
@@ -261,9 +264,13 @@ export class Game {
 
   private step(dt: number): void {
     this.ambient += dt;
-    this.cam.update(dt);
-    this.fx.update(dt);
-    if (this.phase === 'play') this.sim.update(dt);
+    const playing = this.phase === 'play';
+    if (playing) {
+      const tdt = dt * this.sim.speed;
+      this.cam.update(tdt);
+      this.fx.update(tdt);
+      this.sim.update(dt);
+    }
     if ((this.sim.won || this.sim.lost) && this.phase === 'play') this.setPhase('end');
     this.hudTick += dt;
     if (this.hudTick > 0.12) {

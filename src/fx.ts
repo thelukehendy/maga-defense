@@ -69,6 +69,14 @@ export class FX {
     }
   }
 
+  clear(): void {
+    for (const p of this.particles) p.alive = false;
+    for (const f of this.floaters) f.alive = false;
+    this.pi = 0;
+    this.fi = 0;
+    this.time = 0;
+  }
+
   private p(): Particle {
     const start = this.pi;
     for (let n = 0; n < P_CAP; n++) {
