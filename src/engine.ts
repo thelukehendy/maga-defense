@@ -73,14 +73,19 @@ export class View {
     const cssH = Math.max(1, parent.clientHeight);
     this.cssW = cssW;
     this.cssH = cssH;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
     this.dpr = dpr;
     this.canvas.width = Math.floor(cssW * dpr);
     this.canvas.height = Math.floor(cssH * dpr);
     this.canvas.style.width = `${cssW}px`;
     this.canvas.style.height = `${cssH}px`;
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const fit = Math.min(cssW / WORLD_W, cssH / WORLD_H);
+    const fitW = cssW / WORLD_W;
+    const fitH = cssH / WORLD_H;
+    // Portrait phones: cover-crop so the lawn fills the stage (no 244px postage stamp).
+    // Landscape/desktop: contain so the full map stays visible.
+    const portrait = cssH > cssW * 1.05;
+    const fit = portrait ? Math.max(fitW, fitH) : Math.min(fitW, fitH);
     this.scale = fit;
     this.offsetX = (cssW - WORLD_W * fit) / 2;
     this.offsetY = (cssH - WORLD_H * fit) / 2;
