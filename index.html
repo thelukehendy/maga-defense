@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b1d4a" />
+    <meta name="description" content="MAGA Defense: The Tremendous Tower — a satirical 2D tower defense." />
+    <title>MAGA Defense: The Tremendous Tower</title>
+  </head>
+  <body>
+    <div id="app" class="shell">
+      <header class="hud-top">
+        <div class="brand">
+          <span class="brand-kicker">OFFICIAL CAMPAIGN SIMULATOR</span>
+          <h1>MAGA DEFENSE</h1>
+          <span class="brand-sub">The Tremendous Tower</span>
+        </div>
+        <div class="stats">
+          <div class="stat gold">
+            <span class="label">Donations</span>
+            <strong id="stat-donations">$260</strong>
+          </div>
+          <div class="stat">
+            <span class="label">Approval</span>
+            <div class="approval">
+              <div id="approval-fill" class="fill"></div>
+              <span id="approval-text">100%</span>
+            </div>
+          </div>
+          <div class="stat">
+            <span class="label">Wave</span>
+            <strong id="stat-wave">0/12</strong>
+          </div>
+          <div class="stat tiny">
+            <span class="label">Engine</span>
+            <strong id="stat-fps">60 FPS</strong>
+          </div>
+        </div>
+        <div class="tools">
+          <button id="btn-speed" type="button" class="tool">1×</button>
+          <button id="btn-mute" type="button" class="tool">SOUND ON</button>
+          <button id="btn-pause" type="button" class="tool">PAUSE</button>
+        </div>
+      </header>
+
+      <div class="stage">
+        <canvas id="game" aria-label="Battlefield"></canvas>
+      </div>
+
+      <footer class="hud-bottom">
+        <div class="arsenal" role="toolbar" aria-label="Tower arsenal">
+          <button type="button" class="card selected" data-tower="truth">
+            <span class="icon truth">⚡</span>
+            <span class="name">Truth Tower</span>
+            <span class="meta">Rapid FACT lasers</span>
+            <span class="cost">$80</span>
+            <kbd>1</kbd>
+          </button>
+          <button type="button" class="card" data-tower="trebuchet">
+            <span class="icon treb">💰</span>
+            <span class="name">Tariff Trebuchet</span>
+            <span class="meta">HUGE tax boulders</span>
+            <span class="cost">$190</span>
+            <kbd>2</kbd>
+          </button>
+          <button type="button" class="card" data-tower="brick">
+            <span class="icon brick">🧱</span>
+            <span class="name">Brick-Layer</span>
+            <span class="meta">Mini-walls on track</span>
+            <span class="cost">$115</span>
+            <kbd>3</kbd>
+          </button>
+          <button type="button" class="card" data-tower="desk">
+            <span class="icon desk">📜</span>
+            <span class="name">EO Desk</span>
+            <span class="meta">Fire-rate aura</span>
+            <span class="cost">$165</span>
+            <kbd>4</kbd>
+          </button>
+        </div>
+        <div class="actions">
+          <button id="btn-send" type="button" class="cta">START WAVE 1</button>
+          <button id="btn-sell" type="button" class="ghost" disabled>SELL TOWER</button>
+        </div>
+      </footer>
+
+      <div id="overlay-title" class="overlay">
+        <div class="panel">
+          <p class="kicker">A TREMENDOUS PATRIOTIC EXERCISE</p>
+          <h2>MAGA DEFENSE</h2>
+          <p class="sub">The Tremendous Tower</p>
+          <p class="pitch">
+            Place towers. Drain the swamp. Protect the lawn. Campaign donations buy firepower.
+            If the swarm reaches the White House, approval collapses. Sad!
+          </p>
+          <ul class="how">
+            <li>Tap a tower card, then tap grass to build.</li>
+            <li>Drones fly over walls. Bureaucrats soak damage. Aliens swarm.</li>
+            <li>Space sends the next wave. S sells a selected tower.</li>
+          </ul>
+          <button id="btn-start" type="button" class="cta huge">MAKE THE PATH GREAT</button>
+        </div>
+      </div>
+
+      <div id="overlay-pause" class="overlay hidden">
+        <div class="panel slim">
+          <h2>PAUSED</h2>
+          <p class="pitch">The deep state waits for no one, but we can make an exception.</p>
+          <button id="btn-resume" type="button" class="cta">RESUME THE RALLY</button>
+        </div>
+      </div>
+
+      <div id="overlay-end" class="overlay hidden">
+        <div class="panel">
+          <h2 id="end-title">YOU'RE FIRED</h2>
+          <p id="end-body" class="pitch"></p>
+          <button id="btn-again" type="button" class="cta huge">PLAY AGAIN — BIGGER THIS TIME</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

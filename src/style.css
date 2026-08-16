@@ -1,0 +1,475 @@
+:root {
+  --navy: #071428;
+  --navy-2: #0b1d4a;
+  --gold: #e6c35c;
+  --gold-2: #fff3b0;
+  --red: #c8102e;
+  --paper: #f4f1e8;
+  --ink: #1a1204;
+  --safe: env(safe-area-inset-bottom, 0px);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--navy);
+  color: var(--paper);
+  font-family: Georgia, 'Times New Roman', serif;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+.shell {
+  position: relative;
+  height: 100svh;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  user-select: none;
+  -webkit-user-select: none;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #071428 0 28px,
+      #0a1836 28px 56px
+    );
+}
+
+.hud-top,
+.hud-bottom {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: linear-gradient(180deg, #12285c, #0b1d4a);
+  border-block: 3px solid var(--gold);
+  box-shadow: inset 0 0 0 1px #8a6a1a, 0 8px 24px rgba(0, 0, 0, 0.35);
+  z-index: 2;
+}
+
+.hud-top {
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+}
+
+.brand h1 {
+  margin: 0;
+  font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
+  letter-spacing: 0.08em;
+  font-size: clamp(18px, 3vw, 28px);
+  background: linear-gradient(180deg, #fff6c2, #e6c35c 55%, #8a6a1a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 1px 0 #3a2208);
+  line-height: 1;
+}
+
+.brand-kicker,
+.brand-sub {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+
+.stats {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.stat {
+  min-width: 88px;
+  background: rgba(7, 20, 40, 0.55);
+  border: 1px solid rgba(230, 195, 92, 0.45);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.stat.gold strong {
+  color: var(--gold-2);
+}
+
+.stat .label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #b9c3de;
+}
+
+.stat strong {
+  font-family: Impact, sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+}
+
+.stat.tiny strong {
+  font-size: 14px;
+  color: #9dffb0;
+}
+
+.approval {
+  position: relative;
+  height: 22px;
+  background: #1a1204;
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.approval .fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #c8102e, #e6c35c 40%, #3cff8a);
+  transition: width 0.2s ease;
+}
+
+.approval .fill.low {
+  background: linear-gradient(90deg, #5a1020, #c8102e);
+}
+
+#approval-text {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: Impact, sans-serif;
+  font-size: 13px;
+  color: #fff;
+  text-shadow: 0 1px 2px #000;
+}
+
+.tools {
+  display: flex;
+  gap: 6px;
+}
+
+.tool,
+.ghost,
+.cta,
+.card {
+  font-family: Impact, Haettenschweiler, sans-serif;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  border: 2px solid var(--gold);
+  color: var(--paper);
+  background: #10244c;
+}
+
+.tool,
+.ghost {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 6px;
+}
+
+.tool:hover,
+.ghost:hover,
+.cta:hover,
+.card:hover {
+  filter: brightness(1.12);
+}
+
+.stage {
+  position: relative;
+  min-height: 0;
+  background: #050b18;
+}
+
+#game {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.hud-bottom {
+  padding-bottom: calc(8px + var(--safe));
+  gap: 10px;
+}
+
+.arsenal {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  flex: 1;
+}
+
+.card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  text-align: left;
+  min-height: 72px;
+  padding: 8px 10px 8px 8px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #1a3570, #10244c);
+}
+
+.card.selected {
+  box-shadow: 0 0 0 2px #fff3b0, 0 0 18px rgba(230, 195, 92, 0.55);
+  background: linear-gradient(180deg, #2a4a90, #16305e);
+}
+
+.card.poor {
+  opacity: 0.55;
+}
+
+.card .icon {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  width: 36px;
+  height: 36px;
+  align-self: center;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.card .name {
+  font-size: 14px;
+}
+
+.card .meta {
+  font-family: Georgia, serif;
+  font-size: 11px;
+  letter-spacing: 0;
+  color: #c9d4f0;
+  grid-column: 2;
+}
+
+.card .cost {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  color: var(--gold-2);
+  font-size: 14px;
+}
+
+.card kbd {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  color: #9aa7c2;
+  border: 1px solid #5b6a88;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.cta {
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #e6c35c, #b8860b);
+  color: var(--ink);
+  font-size: 16px;
+  box-shadow: inset 0 1px 0 #fff3b0, 0 4px 0 #6a4e10;
+}
+
+.cta:disabled,
+.ghost:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.cta.huge {
+  min-height: 56px;
+  font-size: 20px;
+  width: 100%;
+}
+
+.cta.pulse {
+  animation: goldpulse 1.1s ease-in-out infinite;
+}
+
+@keyframes goldpulse {
+  0%,
+  100% {
+    box-shadow: inset 0 1px 0 #fff3b0, 0 4px 0 #6a4e10, 0 0 0 0 rgba(230, 195, 92, 0.45);
+  }
+  50% {
+    box-shadow: inset 0 1px 0 #fff3b0, 0 5px 0 #6a4e10, 0 0 18px 4px rgba(230, 195, 92, 0.55);
+  }
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(230, 195, 92, 0.18), transparent 42%),
+    rgba(5, 11, 24, 0.78);
+  z-index: 5;
+  padding: 16px;
+}
+
+.overlay.hidden {
+  display: none;
+}
+
+.panel {
+  width: min(560px, 100%);
+  background: linear-gradient(180deg, #16305e, #0b1d4a);
+  border: 3px solid var(--gold);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45), inset 0 0 0 1px #8a6a1a;
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+}
+
+.panel.slim {
+  width: min(420px, 100%);
+}
+
+.panel h2 {
+  margin: 6px 0 4px;
+  font-family: Impact, sans-serif;
+  font-size: clamp(32px, 7vw, 52px);
+  letter-spacing: 0.06em;
+  background: linear-gradient(180deg, #fff6c2, #e6c35c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.kicker,
+.sub {
+  letter-spacing: 0.22em;
+  font-size: 11px;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+
+.pitch {
+  color: #d7def0;
+  line-height: 1.45;
+}
+
+.how {
+  text-align: left;
+  color: #c9d4f0;
+  line-height: 1.5;
+  padding-left: 18px;
+}
+
+@media (max-width: 900px) {
+  .hud-top,
+  .hud-bottom {
+    padding-left: max(8px, env(safe-area-inset-left, 0px));
+    padding-right: max(8px, env(safe-area-inset-right, 0px));
+  }
+  .hud-top {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+  .brand {
+    width: 100%;
+    text-align: center;
+  }
+  .brand-kicker,
+  .brand-sub {
+    display: none;
+  }
+  .brand h1 {
+    font-size: 16px;
+  }
+  .arsenal {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .actions {
+    min-width: 0;
+    width: 100%;
+    flex-direction: row;
+  }
+  .hud-bottom {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .card {
+    min-height: 52px;
+    padding: 6px 8px;
+  }
+  .card .meta,
+  .card kbd {
+    display: none;
+  }
+  .stat {
+    min-width: 70px;
+    padding: 4px 8px;
+  }
+  .stat strong {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 900px) and (orientation: portrait) {
+  .stage {
+    min-height: 52dvh;
+  }
+}
+
+@media (max-height: 540px) {
+  .brand {
+    display: none;
+  }
+  .stage {
+    min-height: 0;
+  }
+  .hud-top {
+    flex-wrap: nowrap;
+  }
+  .hud-bottom {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .arsenal {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .card {
+    min-height: 44px;
+  }
+  .actions {
+    width: auto;
+    min-width: 132px;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 520px) {
+  .tools {
+    width: 100%;
+    justify-content: stretch;
+  }
+  .tool {
+    flex: 1;
+  }
+}
