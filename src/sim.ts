@@ -4,6 +4,7 @@ import {
   DIFFICULTIES,
   type Difficulty,
   type DifficultyId,
+  houseOrigin,
   MAX_TIER,
   type MapId,
   towerStats,
@@ -357,7 +358,9 @@ export class Sim {
   private kill(e: Enemy, phrase: string): void {
     e.hp = 0;
     this.donations += e.reward;
-    this.fx.patriotic(e.x, e.y - e.z, e.kind === 'bureaucrat' ? 1.4 : 1);
+    // Trash: small spark. Elite-ish (bureaucrat): patriotic burst. Avoid confetti fog.
+    if (e.kind === 'bureaucrat') this.fx.patriotic(e.x, e.y - e.z, 1.15);
+    else this.fx.spawn(e.x, e.y - e.z, 10, ['#fff3b0', '#c8102e', '#1a4fa8'], 90, 'spark', 2.4);
     this.fx.say(e.x, e.y - 24, phrase, '#fff3b0', 1.15);
     this.fx.say(e.x + 10, e.y - 40, `+$${e.reward}`, '#9dffb0', 0.9);
     this.audio.death();
@@ -371,10 +374,14 @@ export class Sim {
   }
 
   private aoe(x: number, y: number, radius: number, dmg: number): void {
+    let tagged = false;
     for (const e of this.enemies) {
       if (e.hp <= 0) continue;
       if (dist(e.x, e.y, x, y) <= radius + e.radius) {
-        this.damage(e, dmg, pick(BIG), '#e6c35c');
+        // One splash callout max — labeling every hit floods the screen.
+        const label = !tagged ? pick(BIG) : undefined;
+        if (label) tagged = true;
+        this.damage(e, dmg, label, '#e6c35c');
       }
     }
   }
@@ -508,7 +515,8 @@ export class Sim {
         this.won = true;
         this.banner = this.map.def.victory;
         this.audio.victory();
-        this.fx.patriotic(this.map.center(14, 8).x, this.map.center(14, 8).y, 2.2);
+        const keep = houseOrigin(this.map.def);
+        this.fx.patriotic(keep.x + keep.w * 0.5, keep.y + keep.h * 0.45, 2.2);
         return;
       }
       if (this.wave > 0 && this.between === 0) {
@@ -580,7 +588,7 @@ export class Sim {
       this.fx.say(w.x, w.y - 18, 'WALL DOWN', '#ffb38a', 1.05);
       this.audio.hit();
       this.audio.brick();
-      this.cam.hit(0.24);
+      this.cam.hit(0.4);
     }
     this.walls = this.walls.filter((w) => w.life > 0 && w.hp > 0);
 
@@ -617,7 +625,8 @@ export class Sim {
       if (u >= 1) {
         this.aoe(b.tx, b.ty, b.aoe, b.dmg);
         this.fx.boom(b.tx, b.ty);
-        this.cam.hit(0.14);
+        this.cam.hit(0.3);
+        this.cam.flash = Math.max(this.cam.flash, 0.16);
         this.audio.boom();
         b.t = 99;
       }

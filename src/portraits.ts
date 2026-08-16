@@ -5,12 +5,12 @@ export function paintPortraits(root: HTMLElement): void {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   for (const canvas of root.querySelectorAll<HTMLCanvasElement>('[data-portrait]')) {
     const spec = canvas.dataset.portrait ?? '';
-    const cssW = Math.max(48, canvas.clientWidth || Number(canvas.getAttribute('width')) || 96);
-    const cssH = Math.max(48, canvas.clientHeight || Number(canvas.getAttribute('height')) || 96);
+    const cssW = canvas.clientWidth;
+    const cssH = canvas.clientHeight;
+    // Skip hidden/zero-size canvases so we don't bake wrong inline sizes.
+    if (!cssW || !cssH) continue;
     canvas.width = Math.floor(cssW * dpr);
     canvas.height = Math.floor(cssH * dpr);
-    canvas.style.width = `${cssW}px`;
-    canvas.style.height = `${cssH}px`;
     const ctx = canvas.getContext('2d');
     if (!ctx) continue;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

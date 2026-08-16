@@ -76,6 +76,11 @@ export class Game {
       this.audio.unlock();
       if (this.sim.selectAt(c, r)) return;
       if (this.coarse && this.sim.placing) {
+        if (!this.sim.map.canPlace(c, r, this.sim.occupied) || !this.sim.canAfford(this.sim.placing)) {
+          this.audio.deny();
+          this.cam.hit(0.12);
+          return;
+        }
         if (!this.sim.armed || this.sim.armed.c !== c || this.sim.armed.r !== r) {
           this.sim.armed = { c, r };
           this.sim.hover = { c, r };
@@ -184,9 +189,13 @@ export class Game {
     root.querySelector('#btn-info-close')?.addEventListener('click', () => {
       this.hud.overlayInfo?.classList.add('hidden');
     });
-    root.querySelector('#btn-resume')?.addEventListener('click', () => this.setPhase('play'));
+    root.querySelector('#btn-resume')?.addEventListener('click', () => {
+      this.audio.unlock();
+      this.setPhase('play');
+    });
     const toHq = (): void => {
       hideMenus(this.hud);
+      this.sim.reset();
       this.setPhase('title');
     };
     root.querySelector('#btn-pause-hq')?.addEventListener('click', toHq);
@@ -198,8 +207,17 @@ export class Game {
     });
 
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.phase === 'play') this.setPhase('pause');
-      else if (e.key === 'Escape' && this.phase === 'pause') this.setPhase('play');
+      if (e.key === 'Escape') {
+        const infoOpen = !this.hud.overlayInfo?.classList.contains('hidden');
+        const optOpen = !this.hud.overlayOptions?.classList.contains('hidden');
+        if (infoOpen || optOpen) {
+          hideMenus(this.hud);
+          return;
+        }
+        if (this.phase === 'play') this.setPhase('pause');
+        else if (this.phase === 'pause') this.setPhase('play');
+        return;
+      }
       if (this.phase !== 'play') return;
       if (e.key === '1') {
         this.sim.placing = 'truth';
@@ -246,7 +264,7 @@ export class Game {
     this.cam.update(dt);
     this.fx.update(dt);
     if (this.phase === 'play') this.sim.update(dt);
-    if (this.sim.won || this.sim.lost) this.phase = 'end';
+    if ((this.sim.won || this.sim.lost) && this.phase === 'play') this.setPhase('end');
     this.hudTick += dt;
     if (this.hudTick > 0.12) {
       this.hudTick = 0;

@@ -139,7 +139,7 @@ export const MAPS: Record<MapId, MapDef> = {
     name: 'South Lawn',
     subtitle: 'Protect the People’s House',
     briefing:
-      'Night falls on Pennsylvania Avenue. A caravan of bureaucrats, drones, and very small Marxists is trying to cut across the lawn. The fountain still works. The roses still bloom. The House still stands — if you spend every last donation.',
+      'Golden hour on Pennsylvania Avenue. A caravan of bureaucrats, drones, and very small Marxists is trying to cut across the lawn. The fountain still works. The roses still bloom. The House still stands — if you spend every last donation.',
     victory: 'The lawn is mowed. The fountain sparkles. Cable news is furious. Tremendous.',
     defeat: 'They walked right up the steps. Approval: zero. The roses wilt. Sad!',
     theme: {

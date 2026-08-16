@@ -19,6 +19,12 @@
   box-sizing: border-box;
 }
 
+button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
 html,
 body {
   margin: 0;
@@ -203,7 +209,20 @@ body {
 }
 
 .tool,
-.ghost,
+.ghost {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border-width: 2px;
+  background: linear-gradient(180deg, #3a5aa0 0%, #1a3570 48%, #10244c 100%);
+  color: #f4f1e8;
+  box-shadow:
+    inset 0 1px 0 rgba(220, 230, 255, 0.38),
+    inset 0 -2px 0 rgba(0, 8, 24, 0.32),
+    0 3px 0 #081428;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
 .btn-blue,
 .ghost.blue {
   min-height: 44px;
@@ -575,7 +594,7 @@ body {
   height: 100%;
   max-width: none;
   object-fit: cover;
-  object-position: 62% 42%;
+  object-position: 55% 40%;
   pointer-events: none;
   user-select: none;
   z-index: 0;
@@ -587,8 +606,21 @@ body {
   pointer-events: none;
   z-index: 1;
   background:
-    linear-gradient(90deg, rgba(8, 22, 48, 0.84) 0%, rgba(8, 22, 48, 0.42) 38%, rgba(8, 22, 48, 0.08) 62%, transparent 78%),
-    linear-gradient(180deg, transparent 42%, rgba(8, 22, 48, 0.58) 100%);
+    linear-gradient(
+      90deg,
+      rgba(7, 16, 36, 0.92) 0%,
+      rgba(7, 16, 36, 0.74) 20%,
+      rgba(7, 16, 36, 0.4) 38%,
+      rgba(7, 16, 36, 0.12) 54%,
+      transparent 68%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(7, 16, 36, 0.16) 0%,
+      transparent 20%,
+      transparent 82%,
+      rgba(7, 16, 36, 0.18) 100%
+    );
 }
 
 .overlay.overlay-hero .hero-ui,
@@ -596,69 +628,119 @@ body {
 .overlay.overlay-hero .hero-menu {
   position: relative;
   z-index: 2;
+  box-sizing: border-box;
   width: min(420px, 100%);
   max-width: 100%;
   min-height: 0;
   max-height: 100%;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   justify-content: flex-end;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   pointer-events: auto;
+  margin: 0;
   padding:
     max(20px, var(--safe-t))
     24px
-    max(20px, var(--safe-b))
+    max(24px, var(--safe-b))
     max(20px, var(--safe-l));
+  color: var(--paper);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
+.overlay.overlay-hero .hero-banner,
 .hero-banner {
-  margin: 0 0 14px;
+  margin: 0 0 10px;
   align-self: flex-start;
-  padding: 8px 18px;
+  max-width: 100%;
+  padding: 6px 14px;
   border-radius: 999px;
-  background: linear-gradient(180deg, #fff3b0, #e6c35c 55%, #b8860b);
-  color: #5a3010;
+  color: #3a1c08;
   font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
-  font-size: 13px;
+  font-size: 11px;
   letter-spacing: 0.12em;
-  box-shadow: 0 4px 0 #6a4e10, inset 0 1px 0 #fff8dc;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff8d0, #e6c35c 48%, #c9a227);
+  box-shadow: 0 3px 0 #6a4e10, inset 0 1px 0 #fff8dc;
+  transform: none;
+  clip-path: none;
+  filter: none;
 }
 
-.hero-title {
+.overlay.overlay-hero .hero-title {
   margin: 0;
   max-width: 100%;
   font-family: Impact, Haettenschweiler, 'Arial Black', sans-serif;
-  font-size: clamp(36px, 8vw, 72px);
-  letter-spacing: 0.04em;
-  line-height: 0.88;
-  color: var(--gold);
+  font-size: clamp(40px, 6.4vw, 78px);
+  letter-spacing: 0.03em;
+  line-height: 0.84;
+  color: #f4f1e8;
   overflow-wrap: anywhere;
   text-shadow:
-    0 3px 0 #8a1a1a,
-    0 6px 0 #5a1010,
-    0 10px 18px rgba(0, 0, 0, 0.45);
+    0 2px 0 #c9a227,
+    0 5px 0 #6a4e10,
+    0 10px 16px rgba(0, 0, 0, 0.45);
 }
 
-.hero-title span {
+.overlay.overlay-hero .hero-title span {
   display: block;
-  font-size: 1.12em;
-  background: linear-gradient(180deg, #fff6c2, #e6c35c 48%, #c9a227);
+  font-size: 1.16em;
+  letter-spacing: 0.02em;
+  background: linear-gradient(180deg, #fff8d0 0%, #e6c35c 44%, #c9a227 78%, #8a6a1a 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  text-shadow: none;
+  filter:
+    drop-shadow(0 3px 0 #8a0c18)
+    drop-shadow(0 6px 0 #5a0810);
 }
 
-.hero-sub {
-  margin: 10px 0 22px;
-  font-family: Impact, sans-serif;
-  font-size: 13px;
-  letter-spacing: 0.28em;
-  color: #fff;
+.overlay.overlay-hero .hero-rule {
+  width: 72px;
+  height: 4px;
+  margin: 12px 0 8px;
+  flex: 0 0 auto;
+  background: linear-gradient(90deg, #c8102e 0%, #e6c35c 42%, #e6c35c 58%, #1a4fa8 100%);
+  clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 0 100%);
+  box-shadow: 0 2px 0 #3a2208;
+}
+
+.overlay.overlay-hero .hero-sub {
+  margin: 0;
+  max-width: 100%;
+  font-family: Impact, Haettenschweiler, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  line-height: 1.25;
+  color: var(--gold-2);
   text-transform: uppercase;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 2px 0 #3a2208;
+}
+
+.overlay.overlay-hero .hero-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  margin-top: 18px;
+}
+
+.overlay.overlay-hero .btn-start,
+.overlay.overlay-hero .hero-row {
+  width: 100%;
+  margin-top: 0;
+}
+
+.overlay.overlay-hero .btn-start {
+  min-height: 52px;
 }
 
 .overlay.hidden {
@@ -1033,17 +1115,52 @@ canvas.portrait {
     display: none;
   }
   .arsenal {
+    display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 4px;
-  }
-  .card .name {
-    display: none;
+    flex: 1 1 auto;
+    min-width: 0;
   }
   .card {
-    min-height: 44px;
-    padding: 4px;
-    grid-template-columns: 1fr;
-    justify-items: center;
+    min-height: 52px;
+    padding: 4px 6px 5px;
+    grid-template-columns: 28px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    justify-items: stretch;
+    text-align: left;
+    column-gap: 6px;
+    row-gap: 0;
+  }
+  .card .icon,
+  .card .icon-canvas {
+    grid-row: 1 / span 2;
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+  .card .name {
+    display: block;
+    font-size: 11px;
+    line-height: 1.15;
+    letter-spacing: 0.04em;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .card .cost {
+    position: static;
+    top: auto;
+    right: auto;
+    grid-column: 2;
+    font-size: 12px;
+    line-height: 1.1;
+    justify-self: start;
+  }
+  .card .meta,
+  .card kbd {
+    display: none;
   }
   .actions {
     min-width: 0;
@@ -1060,14 +1177,6 @@ canvas.portrait {
   .hud-bottom {
     flex-direction: column;
     align-items: stretch;
-  }
-  .card {
-    min-height: 44px;
-    padding: 4px;
-  }
-  .card .meta,
-  .card kbd {
-    display: none;
   }
   .stat {
     min-width: 0;
@@ -1098,8 +1207,13 @@ canvas.portrait {
     z-index: 7;
     width: auto;
     max-width: none;
+    margin: 0;
     padding: 8px 12px calc(10px + env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(180deg, transparent, #0b1d4a 28%);
+    background:
+      linear-gradient(180deg, transparent, #0b1d4a 22%),
+      linear-gradient(180deg, #16305e, #0b1d4a);
+    border-top: 3px solid var(--gold);
+    box-shadow: inset 0 1px 0 #8a6a1a, 0 -8px 24px rgba(0, 0, 0, 0.35);
   }
   #overlay-select .panel {
     padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
@@ -1118,6 +1232,7 @@ canvas.portrait {
 @media (max-width: 900px) and (orientation: portrait) {
   .stage {
     min-height: 0;
+    max-height: none;
   }
   .hud-top {
     gap: 4px 8px;
@@ -1161,8 +1276,10 @@ canvas.portrait {
     align-items: baseline;
     justify-content: space-between;
     gap: 8px;
-    padding: 6px 8px;
-    min-height: 44px;
+    padding: 4px 8px;
+    min-height: 36px;
+    flex: 0 0 auto;
+    width: 100%;
   }
   #inspect-title,
   #inspect-stats {
@@ -1179,8 +1296,38 @@ canvas.portrait {
   .hud-bottom {
     gap: 4px;
     padding-top: 4px;
-    max-height: 28dvh;
+    max-height: none;
+    flex: 0 0 auto;
     padding-bottom: max(4px, calc(4px + var(--safe-b)));
+  }
+  .arsenal {
+    flex: 0 0 auto;
+  }
+  .card {
+    min-height: 58px;
+    padding: 4px 2px 5px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    justify-items: center;
+    text-align: center;
+    row-gap: 1px;
+  }
+  .card .icon,
+  .card .icon-canvas {
+    grid-row: auto;
+    width: 26px;
+    height: 26px;
+  }
+  .card .name {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 0.03em;
+    text-align: center;
+  }
+  .card .cost {
+    grid-column: 1;
+    justify-self: center;
+    font-size: 11px;
   }
   .overlay.overlay-scroll,
   #overlay-select,
@@ -1197,19 +1344,67 @@ canvas.portrait {
   }
   .overlay.overlay-hero {
     align-items: end;
+    justify-items: start;
+  }
+  .overlay.overlay-hero .hero-art,
+  .overlay.overlay-hero .hero-img,
+  .overlay.overlay-hero .hero-bg,
+  .overlay.overlay-hero > img {
+    inset: 0;
+    top: 0;
+    height: 100%;
+    object-position: 55% 40%;
+  }
+  .overlay.overlay-hero .hero-scrim {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(7, 16, 36, 0.94) 0%,
+        rgba(7, 16, 36, 0.7) 32%,
+        rgba(7, 16, 36, 0.28) 52%,
+        transparent 70%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(7, 16, 36, 0.18) 0%,
+        transparent 24%,
+        transparent 82%,
+        rgba(7, 16, 36, 0.22) 100%
+      );
   }
   .overlay.overlay-hero .hero-ui,
   .overlay.overlay-hero .hero-copy,
   .overlay.overlay-hero .hero-menu {
-    width: 100%;
-    max-height: 58%;
+    width: min(420px, 92%);
+    max-width: 100%;
+    max-height: none;
+    align-self: end;
+    align-items: flex-start;
     justify-content: flex-end;
+    text-align: left;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding:
+      max(16px, var(--safe-t))
+      16px
+      max(16px, var(--safe-b))
+      max(16px, var(--safe-l));
   }
-  .overlay.overlay-hero .hero-art {
-    object-position: 78% 36%;
+  .overlay.overlay-hero .hero-banner,
+  .hero-banner {
+    display: block;
+    align-self: flex-start;
+    font-size: 11px;
+    margin: 0 0 10px;
   }
-  .overlay.overlay-hero .hero-scrim {
-    background: linear-gradient(180deg, rgba(8, 22, 48, 0.12) 18%, rgba(8, 22, 48, 0.82) 72%);
+  .overlay.overlay-hero .hero-rule {
+    margin-inline: 0;
+  }
+  .overlay.overlay-hero .hero-title {
+    font-size: clamp(36px, 12vw, 56px);
   }
   .btn-start,
   .cta.start,
@@ -1224,6 +1419,7 @@ canvas.portrait {
   }
   .stage {
     min-height: 0;
+    max-height: none;
   }
   .hud-top {
     flex-wrap: nowrap;
@@ -1236,12 +1432,40 @@ canvas.portrait {
     flex-wrap: nowrap;
     align-items: stretch;
     gap: 6px;
-    max-height: 72px;
+    max-height: 76px;
+    overflow: hidden;
     padding-bottom: max(4px, calc(4px + var(--safe-b)));
   }
+  .arsenal {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .card {
+    min-height: 0;
+    max-height: 100%;
+    padding: 3px 5px 4px;
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+  .card .icon,
+  .card .icon-canvas {
+    width: 24px;
+    height: 24px;
+  }
+  .card .name {
+    display: block;
+    font-size: 10px;
+    text-align: left;
+  }
+  .card .cost {
+    font-size: 11px;
+    grid-column: 2;
+    justify-self: start;
+  }
   .inspect {
-    flex: 0 1 96px;
-    max-width: 96px;
+    flex: 0 1 120px;
+    max-width: 132px;
     min-width: 0;
     width: auto;
     padding: 4px 6px;
@@ -1251,7 +1475,7 @@ canvas.portrait {
     display: none;
   }
   #inspect-title {
-    font-size: 13px;
+    font-size: 12px;
     margin: 0;
   }
   #inspect-stats {
@@ -1260,35 +1484,130 @@ canvas.portrait {
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  .actions {
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    flex: 0 0 auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+  .actions .cta,
+  .actions .ghost {
+    flex: 0 1 auto;
+    width: auto;
+    min-width: 72px;
+    min-height: 44px;
+    font-size: 12px;
+    padding: 0 8px;
+  }
   .stat.tiny {
     display: none;
   }
+  .overlay:not(.overlay-hero),
+  .overlay.overlay-scroll,
+  #overlay-select,
+  #overlay-options,
+  #overlay-info,
+  #overlay-pause,
+  #overlay-end {
+    padding:
+      max(6px, var(--safe-t))
+      max(8px, var(--safe-r))
+      max(8px, var(--safe-b))
+      max(8px, var(--safe-l));
+    overflow-x: hidden;
+    overflow-y: auto;
+    align-content: start;
+    place-items: start center;
+  }
+  .panel,
+  .panel.hq,
+  .panel.slim,
+  .panel.mission {
+    padding: 12px 14px 16px;
+    max-width: 100%;
+  }
+  .panel h2 {
+    font-size: clamp(22px, 6vh, 32px);
+  }
   .overlay.overlay-hero {
-    align-items: center;
+    align-items: end;
+    justify-items: start;
+    overflow: hidden;
+    padding: 0;
+    place-items: unset;
+  }
+  .overlay.overlay-hero .hero-art,
+  .overlay.overlay-hero .hero-img,
+  .overlay.overlay-hero .hero-bg,
+  .overlay.overlay-hero > img {
+    inset: 0;
+    top: 0;
+    height: 100%;
+    object-position: 55% 40%;
+  }
+  .overlay.overlay-hero .hero-scrim {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(7, 16, 36, 0.9) 0%,
+        rgba(7, 16, 36, 0.58) 28%,
+        rgba(7, 16, 36, 0.16) 48%,
+        transparent 64%
+      );
   }
   .overlay.overlay-hero .hero-ui,
   .overlay.overlay-hero .hero-copy,
   .overlay.overlay-hero .hero-menu {
-    width: min(380px, 48%);
+    width: min(380px, 46%);
     max-height: 100%;
-    justify-content: center;
+    justify-content: flex-end;
+    align-items: flex-start;
     padding:
-      12px
-      16px
-      max(12px, var(--safe-b))
-      max(16px, var(--safe-l));
+      10px
+      14px
+      max(10px, var(--safe-b))
+      max(14px, var(--safe-l));
+    margin: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
   }
-  .hero-banner,
-  .hero-sub {
-    display: none;
+  .overlay.overlay-hero .hero-banner,
+  .hero-banner {
+    display: block;
+    font-size: 10px;
+    padding: 5px 10px;
+    margin: 0 0 8px;
   }
-  .hero-title {
-    font-size: 32px;
+  .overlay.overlay-hero .hero-title {
+    font-size: clamp(26px, 6vh, 36px);
+  }
+  .overlay.overlay-hero .hero-rule {
+    margin: 8px 0 6px;
+  }
+  .overlay.overlay-hero .hero-sub {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+  .overlay.overlay-hero .hero-actions {
+    margin-top: 10px;
+    gap: 8px;
+  }
+  .overlay.overlay-hero .btn-start {
+    min-height: 44px;
+    font-size: 18px;
+  }
+  .hero-row {
+    margin-top: 8px;
+    width: 100%;
   }
   .btn-start,
   .cta.start {
     min-height: 44px;
-    font-size: 20px;
+    font-size: 18px;
   }
 }
 
@@ -1327,8 +1646,8 @@ canvas.portrait {
   .panel h2 {
     font-size: clamp(26px, 9vw, 40px);
   }
-  .hero-title {
-    font-size: clamp(32px, 12vw, 48px);
+  .overlay.overlay-hero .hero-title {
+    font-size: clamp(36px, 12vw, 52px);
   }
 }
 

@@ -1,6 +1,6 @@
 import { ENEMY_LORE, MAX_TIER, TOWER_LORE, towerStats, UPGRADE_COST } from './campaign.ts';
 import type { Sim } from './sim.ts';
-import { MAX_WAVES, TOWERS, type TowerId } from './types.ts';
+import { MAX_WAVES, SELL_RATIO, TOWERS, type TowerId } from './types.ts';
 
 export type HudPhase = 'title' | 'select' | 'play' | 'pause' | 'end';
 
@@ -155,8 +155,9 @@ export function paintHud(
   phase: HudPhase,
 ): void {
   hud.donations.textContent = `$${sim.donations.toLocaleString()}`;
-  hud.approvalFill.style.width = `${sim.approval}%`;
-  hud.approvalFill.classList.toggle('low', sim.approval <= 30);
+  const maxA = Math.max(1, sim.diff?.startApproval ?? 100);
+  hud.approvalFill.style.width = `${Math.min(100, (100 * sim.approval) / maxA)}%`;
+  hud.approvalFill.classList.toggle('low', sim.approval <= maxA * 0.3);
   hud.approvalText.textContent = `${sim.approval}%`;
   hud.wave.textContent = `${Math.min(sim.wave, MAX_WAVES)}/${MAX_WAVES}`;
   hud.fps.textContent = `${Math.round(fps)} FPS`;
@@ -169,7 +170,7 @@ export function paintHud(
   hud.sendBtn.textContent = sim.wave === 0 ? 'START WAVE 1' : sim.waveReady() ? 'SEND NEXT WAVE' : 'WAVE INCOMING';
   hud.sellBtn.disabled = !sim.selected;
   hud.sellBtn.textContent = sim.selected
-    ? `SELL $${Math.round(sim.selected.costPaid * 0.6)}`
+    ? `SELL $${Math.round(sim.selected.costPaid * SELL_RATIO)}`
     : 'SELL TOWER';
 
   const mapName = sim.map?.def?.name;
