@@ -1,20 +1,7 @@
-import { CELL, COLS, ROWS, WORLD_H, WORLD_W } from './types.ts';
+import { CELL, COLS, ROWS } from './types.ts';
+import { MAPS, type MapDef, type MapId } from './campaign.ts';
 
 export type PathSample = { x: number; y: number; angle: number; t: number };
-
-const RAW: readonly [number, number][] = (() => {
-  const cells: [number, number][] = [];
-  const add = (c: number, r: number): void => {
-    cells.push([c, r]);
-  };
-  for (let x = 0; x <= 13; x++) add(x, 1);
-  for (let y = 2; y <= 4; y++) add(13, y);
-  for (let x = 12; x >= 2; x--) add(x, 4);
-  for (let y = 5; y <= 7; y++) add(2, y);
-  for (let x = 3; x <= 12; x++) add(x, 7);
-  add(12, 8);
-  return cells;
-})();
 
 function cellCenter(c: number, r: number): { x: number; y: number } {
   return { x: (c + 0.5) * CELL, y: (r + 0.5) * CELL };
@@ -72,6 +59,7 @@ function densify(points: { x: number; y: number }[], spacing: number): PathSampl
 }
 
 export class GameMap {
+  readonly def: MapDef;
   readonly pathIndex: Int16Array;
   readonly blocked: Uint8Array;
   readonly samples: PathSample[];
@@ -79,44 +67,30 @@ export class GameMap {
   readonly pathCells: readonly [number, number][];
   readonly whiteHouse: readonly [number, number][];
 
-  constructor() {
-    this.pathCells = RAW;
-    this.whiteHouse = [
-      [13, 7],
-      [14, 7],
-      [15, 7],
-      [13, 8],
-      [14, 8],
-      [15, 8],
-      [13, 9],
-      [14, 9],
-      [15, 9],
-    ];
+  constructor(id: MapId = 'lawn') {
+    this.def = MAPS[id];
+    this.pathCells = this.def.path;
+    this.whiteHouse = this.def.house;
     this.pathIndex = new Int16Array(COLS * ROWS);
     this.pathIndex.fill(-1);
-    RAW.forEach(([c, r], i) => {
+    this.pathCells.forEach(([c, r], i) => {
       this.pathIndex[r * COLS + c] = i;
     });
     this.blocked = new Uint8Array(COLS * ROWS);
     for (const [c, r] of this.whiteHouse) this.blocked[r * COLS + c] = 1;
-
-    const centers = RAW.map(([c, r]) => cellCenter(c, r));
+    for (const lm of this.def.landmarks) this.blocked[lm.r * COLS + lm.c] = 2;
+    const centers = this.pathCells.map(([c, r]) => cellCenter(c, r));
     this.samples = densify(chamfer(centers, 38), 4);
     this.length = this.samples[this.samples.length - 1]!.t;
-
-    if (!this.verifyPath()) {
-      throw new Error('Path graph is disconnected');
-    }
+    if (!this.verifyPath()) throw new Error(`Path disconnected: ${id}`);
   }
 
   private verifyPath(): boolean {
-    const start = RAW[0]!;
-    const goal = RAW[RAW.length - 1]!;
-    const walkable = (c: number, r: number): boolean => this.isPath(c, r);
-    const key = (c: number, r: number): number => r * COLS + c;
+    const start = this.pathCells[0]!;
+    const goal = this.pathCells[this.pathCells.length - 1]!;
     const open: [number, number][] = [start];
     const seen = new Uint8Array(COLS * ROWS);
-    seen[key(start[0], start[1])] = 1;
+    seen[start[1] * COLS + start[0]] = 1;
     const dirs: [number, number][] = [
       [1, 0],
       [-1, 0],
@@ -130,8 +104,8 @@ export class GameMap {
         const nc = c + dc;
         const nr = r + dr;
         if (nc < 0 || nr < 0 || nc >= COLS || nr >= ROWS) continue;
-        if (!walkable(nc, nr) || seen[key(nc, nr)]) continue;
-        seen[key(nc, nr)] = 1;
+        if (!this.isPath(nc, nr) || seen[nr * COLS + nc]) continue;
+        seen[nr * COLS + nc] = 1;
         open.push([nc, nr]);
       }
     }
@@ -156,15 +130,12 @@ export class GameMap {
 
   canPlace(c: number, r: number, occupied: Set<number>): boolean {
     if (!this.inBounds(c, r)) return false;
-    if (this.isPath(c, r) || this.isHouse(c, r)) return false;
+    if (this.isPath(c, r) || this.blocked[this.idx(c, r)] !== 0) return false;
     return !occupied.has(this.idx(c, r));
   }
 
   cellOf(x: number, y: number): { c: number; r: number } {
-    return {
-      c: Math.floor(x / CELL),
-      r: Math.floor(y / CELL),
-    };
+    return { c: Math.floor(x / CELL), r: Math.floor(y / CELL) };
   }
 
   center(c: number, r: number): { x: number; y: number } {
@@ -195,8 +166,8 @@ export class GameMap {
   nearestPathCell(x: number, y: number): { c: number; r: number; i: number } | null {
     let best = -1;
     let bestD = Infinity;
-    for (let i = 0; i < RAW.length; i++) {
-      const [c, r] = RAW[i]!;
+    for (let i = 0; i < this.pathCells.length; i++) {
+      const [c, r] = this.pathCells[i]!;
       const p = cellCenter(c, r);
       const d = (p.x - x) ** 2 + (p.y - y) ** 2;
       if (d < bestD) {
@@ -205,13 +176,12 @@ export class GameMap {
       }
     }
     if (best < 0) return null;
-    const [c, r] = RAW[best]!;
+    const [c, r] = this.pathCells[best]!;
     return { c, r, i: best };
   }
 
   distAtCell(c: number, r: number): number {
-    const i = this.pathIndex[this.idx(c, r)];
-    if (i < 0) return 0;
+    if (this.pathIndex[this.idx(c, r)] < 0) return 0;
     const p = cellCenter(c, r);
     let best = this.samples[0]!;
     let bestD = Infinity;
@@ -225,5 +195,3 @@ export class GameMap {
     return best.t;
   }
 }
-
-export const MAP_BOUNDS = { w: WORLD_W, h: WORLD_H };

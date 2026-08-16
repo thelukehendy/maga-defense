@@ -1,6 +1,8 @@
 import { easeOutBack, seeded } from './engine.ts';
 import { star } from './fx.ts';
 import type { FX } from './fx.ts';
+import { drawEnemyArt, drawKeep, drawLandmarkArt, drawTowerArt } from './art.ts';
+import { houseOrigin, towerStats } from './campaign.ts';
 import type { GameMap } from './map.ts';
 import type { Enemy, Sim, Tower, Wall } from './sim.ts';
 import { CELL, COLS, ROWS, TOWERS, WORLD_H, WORLD_W } from './types.ts';
@@ -8,7 +10,7 @@ import { CELL, COLS, ROWS, TOWERS, WORLD_H, WORLD_W } from './types.ts';
 export class Renderer {
   private bg: HTMLCanvasElement;
   private bgx: CanvasRenderingContext2D;
-  private readonly map: GameMap;
+  private map: GameMap;
 
   constructor(map: GameMap) {
     this.map = map;
@@ -28,13 +30,18 @@ export class Renderer {
     this.bake();
   }
 
+  setMap(map: GameMap, dpr: number, scale: number): void {
+    this.map = map;
+    this.resize(dpr, scale);
+  }
+
   private bake(): void {
     const ctx = this.bgx;
     ctx.clearRect(0, 0, WORLD_W, WORLD_H);
+    const theme = this.map.def.theme;
     const g = ctx.createLinearGradient(0, 0, 0, WORLD_H);
-    g.addColorStop(0, '#0a1a3a');
-    g.addColorStop(0.45, '#10244c');
-    g.addColorStop(1, '#071326');
+    g.addColorStop(0, theme.skyTop);
+    g.addColorStop(1, theme.skyBot);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, WORLD_W, WORLD_H);
 
@@ -42,7 +49,7 @@ export class Renderer {
       const x = seeded(i * 3.1) * WORLD_W;
       const y = seeded(i * 7.7) * WORLD_H;
       ctx.globalAlpha = 0.15 + seeded(i * 9.2) * 0.5;
-      ctx.fillStyle = '#fff8d6';
+      ctx.fillStyle = theme.star;
       star(ctx, x, y, 2 + seeded(i) * 3, 1, 5);
       ctx.fill();
     }
@@ -50,13 +57,15 @@ export class Renderer {
 
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
-        if (this.map.isPath(c, r) || this.map.isHouse(c, r)) continue;
+        if (this.map.isPath(c, r) || this.map.blocked[this.map.idx(c, r)] !== 0) continue;
         const x = c * CELL;
         const y = r * CELL;
-        const shade = 0.04 + seeded(c * 19 + r * 31) * 0.05;
-        ctx.fillStyle = `rgba(18, 72, 42, ${0.28 + shade})`;
+        const shade = seeded(c * 19 + r * 31);
+        ctx.fillStyle = shade > 0.5 ? theme.grassHi : theme.grass;
+        ctx.globalAlpha = 0.78 + shade * 0.18;
         ctx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
-        ctx.strokeStyle = 'rgba(230, 195, 92, 0.14)';
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = theme.grid;
         ctx.lineWidth = 1;
         ctx.strokeRect(x + 3, y + 3, CELL - 6, CELL - 6);
         if (seeded(c * 5 + r) > 0.72) {
@@ -69,13 +78,13 @@ export class Renderer {
 
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
-    ctx.strokeStyle = '#8a6a1a';
+    ctx.strokeStyle = theme.pathEdge;
     ctx.lineWidth = 46;
     this.strokePath(ctx);
-    ctx.strokeStyle = '#d9c7a2';
+    ctx.strokeStyle = theme.pathFill;
     ctx.lineWidth = 40;
     this.strokePath(ctx);
-    ctx.strokeStyle = '#c8102e';
+    ctx.strokeStyle = theme.pathRunner;
     ctx.lineWidth = 14;
     this.strokePath(ctx);
     ctx.strokeStyle = '#f4f1e8';
@@ -136,7 +145,13 @@ export class Renderer {
   ): void {
     ctx.drawImage(this.bg, 0, 0, WORLD_W, WORLD_H);
     this.drawAmbient(ctx, time);
-
+    for (const lm of this.map.def.landmarks) {
+      const p = this.map.center(lm.c, lm.r);
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      drawLandmarkArt(ctx, lm.kind, time);
+      ctx.restore();
+    }
     this.drawHouse(ctx, time, sim.leaking);
     if (sim.hover && sim.placing) this.drawGhost(ctx, sim, sim.hover);
     else if (sim.armed && sim.placing) this.drawGhost(ctx, sim, sim.armed);
@@ -173,7 +188,7 @@ export class Renderer {
       ctx.lineWidth = 3;
       ctx.strokeRect(40, WORLD_H * 0.38, WORLD_W - 80, 70);
       ctx.fillStyle = '#e6c35c';
-      ctx.font = '800 32px Impact, Haettenschweiler, sans-serif';
+      ctx.font = '800 18px Impact, Haettenschweiler, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(sim.banner, WORLD_W / 2, WORLD_H * 0.38 + 35);
@@ -183,7 +198,7 @@ export class Renderer {
   }
 
   private drawRange(ctx: CanvasRenderingContext2D, t: Tower, time: number, alpha: number): void {
-    const r = TOWERS[t.kind].range * CELL;
+    const r = towerStats(t.kind, t.tier).range * CELL;
     ctx.save();
     ctx.globalAlpha = alpha * (0.35 + Math.sin(time * 3) * 0.08);
     ctx.beginPath();
@@ -216,6 +231,7 @@ export class Renderer {
       angle: 0,
       costPaid: 0,
       age: 1,
+      tier: 0,
     };
     this.drawRange(ctx, fake, 0, 0.7);
     this.drawTower(ctx, fake, sim, 0);
@@ -223,65 +239,8 @@ export class Renderer {
   }
 
   private drawHouse(ctx: CanvasRenderingContext2D, time: number, leak: number): void {
-    const x = 13 * CELL;
-    const y = 7 * CELL;
-    const w = 3 * CELL;
-    const h = 3 * CELL;
-    ctx.save();
-    ctx.translate(x, y);
-    const glow = leak > 0 ? 0.5 : 0.18;
-    ctx.fillStyle = `rgba(230, 195, 92, ${glow})`;
-    ctx.fillRect(-6, -6, w + 12, h + 12);
-    ctx.fillStyle = '#f4f1e8';
-    ctx.fillRect(8, 38, w - 16, h - 46);
-    ctx.fillStyle = '#1c3f9a';
-    ctx.beginPath();
-    ctx.moveTo(w / 2, 4);
-    ctx.lineTo(w - 6, 42);
-    ctx.lineTo(6, 42);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#e6c35c';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    ctx.fillStyle = '#e6c35c';
-    star(ctx, w / 2, 24, 10, 4, 5);
-    ctx.fill();
-    const cols = 5;
-    for (let i = 0; i < cols; i++) {
-      const cx = 22 + i * 30;
-      ctx.fillStyle = '#f8f4e8';
-      ctx.fillRect(cx, 48, 10, 78);
-      ctx.fillStyle = '#e6c35c';
-      ctx.beginPath();
-      ctx.arc(cx + 5, 48, 7, Math.PI, 0);
-      ctx.fill();
-    }
-    ctx.fillStyle = '#1a1204';
-    ctx.fillRect(w / 2 - 14, 92, 28, 36);
-    ctx.fillStyle = '#e6c35c';
-    ctx.font = '700 9px Impact, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('WH', w / 2, 128);
-
-    ctx.save();
-    ctx.translate(w / 2 + 52, 8);
-    ctx.fillStyle = '#c8102e';
-    ctx.fillRect(0, 0, 28, 18);
-    ctx.fillStyle = '#1c3f9a';
-    ctx.fillRect(0, 0, 12, 10);
-    for (let i = 0; i < 4; i++) {
-      const wy = 2 + i * 4 + Math.sin(time * 6 + i) * 0.6;
-      ctx.fillStyle = i % 2 === 0 ? '#f4f1e8' : '#c8102e';
-      ctx.fillRect(12, wy, 16, 3);
-    }
-    ctx.strokeStyle = '#e6c35c';
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(0, 36);
-    ctx.stroke();
-    ctx.restore();
-    ctx.restore();
+    const box = houseOrigin(this.map.def);
+    drawKeep(ctx, box.x, box.y, box.w, box.h, time, leak, this.map.def.id);
   }
 
   private drawWall(ctx: CanvasRenderingContext2D, w: Wall): void {
@@ -315,9 +274,9 @@ export class Renderer {
     ctx.scale(pop, pop);
     if (t.kind !== 'desk') {
       let buffed = false;
-      const range = TOWERS.desk.range * CELL;
       for (const d of sim.towers) {
         if (d.kind !== 'desk') continue;
+        const range = towerStats('desk', d.tier).range * CELL;
         const dx = d.x - t.x;
         const dy = d.y - t.y;
         if (dx * dx + dy * dy <= range * range) buffed = true;
@@ -330,136 +289,10 @@ export class Renderer {
         ctx.stroke();
       }
     }
-    if (t.kind === 'truth') this.truth(ctx, t, time);
-    else if (t.kind === 'trebuchet') this.treb(ctx, t);
-    else if (t.kind === 'brick') this.brick(ctx, t);
-    else this.desk(ctx, t, time);
+    drawTowerArt(ctx, t.kind, t.tier, t.angle, time, t.cooldown);
     ctx.restore();
   }
 
-  private truth(ctx: CanvasRenderingContext2D, t: Tower, time: number): void {
-    const pulse = 0.55 + Math.sin(time * 10) * 0.2;
-    ctx.fillStyle = `rgba(60, 240, 255, ${pulse * 0.32})`;
-    ctx.beginPath();
-    ctx.arc(0, 0, 28, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = `rgba(60, 240, 255, ${pulse})`;
-    ctx.beginPath();
-    ctx.arc(0, 0, 16, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#0b1d4a';
-    ctx.beginPath();
-    ctx.moveTo(0, -26);
-    ctx.lineTo(14, 16);
-    ctx.lineTo(-14, 16);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#3cf0ff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.save();
-    ctx.rotate(t.angle);
-    ctx.strokeStyle = '#7af7ff';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(0, -8);
-    ctx.lineTo(18, 0);
-    ctx.stroke();
-    ctx.restore();
-    ctx.fillStyle = '#3cf0ff';
-    ctx.font = '800 8px Impact, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('FACT', 0, 8);
-  }
-
-  private treb(ctx: CanvasRenderingContext2D, t: Tower): void {
-    const def = TOWERS.trebuchet;
-    const period = 1 / (def.fireRate * 1.0001);
-    const u = 1 - Math.min(1, t.cooldown / period);
-    const arm = -0.9 + u * 2.4;
-    ctx.fillStyle = '#3a2412';
-    ctx.fillRect(-16, 6, 32, 12);
-    ctx.fillStyle = '#e6c35c';
-    ctx.fillRect(-18, 16, 36, 6);
-    ctx.fillStyle = '#c8102e';
-    ctx.beginPath();
-    ctx.moveTo(-10, -2);
-    ctx.lineTo(10, -2);
-    ctx.lineTo(6, 8);
-    ctx.lineTo(-6, 8);
-    ctx.fill();
-    ctx.save();
-    ctx.rotate(arm);
-    ctx.strokeStyle = '#d9c7a2';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(-4, 0);
-    ctx.lineTo(22, -18);
-    ctx.stroke();
-    ctx.fillStyle = '#e6c35c';
-    ctx.beginPath();
-    ctx.arc(24, -20, 7, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#1a1204';
-    ctx.font = '800 7px Impact, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('$', 24, -19);
-    ctx.restore();
-  }
-
-  private brick(ctx: CanvasRenderingContext2D, t: Tower): void {
-    ctx.fillStyle = '#6b3a28';
-    ctx.fillRect(-18, -8, 36, 24);
-    ctx.strokeStyle = '#e6c35c';
-    ctx.strokeRect(-18, -8, 36, 24);
-    ctx.fillStyle = '#c46a48';
-    ctx.fillRect(-14, -4, 12, 8);
-    ctx.fillRect(2, -4, 12, 8);
-    ctx.fillRect(-8, 6, 16, 8);
-    ctx.save();
-    ctx.rotate(t.angle);
-    ctx.fillStyle = '#2a1a12';
-    ctx.fillRect(8, -5, 22, 10);
-    ctx.fillStyle = '#e6c35c';
-    ctx.fillRect(26, -7, 8, 14);
-    ctx.restore();
-    ctx.fillStyle = '#f4f1e8';
-    ctx.font = '800 8px Impact, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('WALL', 0, 22);
-  }
-
-  private desk(ctx: CanvasRenderingContext2D, t: Tower, time: number): void {
-    ctx.strokeStyle = `rgba(230, 195, 92, ${0.45 + Math.sin(time * 4) * 0.2})`;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath();
-    ctx.arc(0, 0, 26, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#6b4a24';
-    ctx.fillRect(-22, -8, 44, 20);
-    ctx.fillStyle = '#e6c35c';
-    ctx.fillRect(-22, -10, 44, 4);
-    ctx.fillStyle = '#f4f1e8';
-    ctx.fillRect(-10, -18, 12, 10);
-    ctx.fillStyle = '#c8102e';
-    ctx.fillRect(8, -16, 8, 8);
-    for (let i = 0; i < 3; i++) {
-      const a = time * 1.6 + i * 2.1;
-      ctx.fillStyle = '#fff3b0';
-      ctx.save();
-      ctx.translate(Math.cos(a) * 18, Math.sin(a) * 10 - 6);
-      ctx.rotate(a);
-      ctx.fillRect(-4, -3, 8, 6);
-      ctx.restore();
-    }
-    ctx.fillStyle = '#fff3b0';
-    ctx.font = '800 8px Impact, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('EO', 0, 20);
-    void t;
-  }
 
   private drawEnemy(ctx: CanvasRenderingContext2D, e: Enemy, _time: number): void {
     ctx.save();
@@ -470,9 +303,7 @@ export class Renderer {
       ctx.ellipse(0, e.z + 10, 12, 5, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-    if (e.kind === 'alien') this.alien(ctx, e);
-    else if (e.kind === 'drone') this.drone(ctx, e);
-    else this.bureaucrat(ctx, e);
+    drawEnemyArt(ctx, e.kind, e.angle, e.bob, _time);
     if (e.flash > 0) {
       ctx.fillStyle = `rgba(255,255,255,${Math.min(0.85, e.flash * 6)})`;
       ctx.beginPath();
@@ -487,89 +318,6 @@ export class Renderer {
     ctx.restore();
   }
 
-  private alien(ctx: CanvasRenderingContext2D, e: Enemy): void {
-    ctx.rotate(e.angle);
-    ctx.fillStyle = '#c8102e';
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 11, 14, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#e6c35c';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    ctx.strokeStyle = '#9dffb0';
-    ctx.beginPath();
-    ctx.moveTo(-6, -14);
-    ctx.lineTo(-8, -22);
-    ctx.moveTo(6, -14);
-    ctx.lineTo(8, -22);
-    ctx.stroke();
-    ctx.fillStyle = '#9dffb0';
-    ctx.beginPath();
-    ctx.arc(-8, -22, 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(8, -22, 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#111';
-    ctx.beginPath();
-    ctx.ellipse(-4, -2, 3, 4, -0.2, 0, Math.PI * 2);
-    ctx.ellipse(4, -2, 3, 4, 0.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#e6c35c';
-    star(ctx, 0, 8, 5, 2, 5);
-    ctx.fill();
-  }
-
-  private drone(ctx: CanvasRenderingContext2D, e: Enemy): void {
-    const spin = e.bob * 14;
-    ctx.fillStyle = '#2a3344';
-    ctx.beginPath();
-    ctx.roundRect(-14, -7, 28, 14, 4);
-    ctx.fill();
-    ctx.strokeStyle = '#c8102e';
-    ctx.stroke();
-    ctx.fillStyle = '#ff3b3b';
-    ctx.fillRect(-10, -3, 20, 6);
-    ctx.fillStyle = '#fff';
-    ctx.font = '800 6px Impact, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('FAKE', 0, 0);
-    for (const s of [-1, 1]) {
-      ctx.save();
-      ctx.translate(s * 16, -8);
-      ctx.rotate(spin);
-      ctx.strokeStyle = '#9aa7c2';
-      ctx.beginPath();
-      ctx.moveTo(-8, 0);
-      ctx.lineTo(8, 0);
-      ctx.moveTo(0, -8);
-      ctx.lineTo(0, 8);
-      ctx.stroke();
-      ctx.restore();
-    }
-  }
-
-  private bureaucrat(ctx: CanvasRenderingContext2D, e: Enemy): void {
-    ctx.rotate(e.angle * 0.15);
-    ctx.fillStyle = '#6b7280';
-    ctx.fillRect(-10, -8, 20, 22);
-    ctx.fillStyle = '#111827';
-    ctx.fillRect(-2, -6, 4, 14);
-    ctx.fillStyle = '#e5e7eb';
-    ctx.beginPath();
-    ctx.arc(0, -14, 7, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#111';
-    ctx.strokeRect(-8, -16, 6, 3);
-    ctx.strokeRect(2, -16, 6, 3);
-    ctx.fillStyle = '#92400e';
-    ctx.fillRect(8, 4, 10, 8);
-    ctx.fillStyle = '#d1d5db';
-    ctx.font = '700 6px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('GS-15', 0, 18);
-  }
 
   private drawBeam(ctx: CanvasRenderingContext2D, b: { x0: number; y0: number; x1: number; y1: number; life: number }): void {
     ctx.save();

@@ -1,3 +1,4 @@
+import { type DifficultyId, type MapId } from './campaign.ts';
 import { Synth } from './audio.ts';
 import { FrameLoop, TraumaCamera, View } from './engine.ts';
 import { FX } from './fx.ts';
@@ -20,6 +21,8 @@ export class Game {
   private phase: 'title' | 'play' | 'pause' | 'end' = 'title';
   private hudTick = 0;
   private ambient = 0;
+  private selectedMap: MapId = 'lawn';
+  private selectedDiff: DifficultyId = 'normal';
   private readonly coarse = window.matchMedia('(pointer: coarse)').matches;
 
   constructor(root: HTMLElement, canvas: HTMLCanvasElement) {
@@ -107,6 +110,24 @@ export class Game {
       this.sim.startNextWave();
     });
     this.hud.sellBtn.addEventListener('click', () => this.sim.trySell());
+    this.hud.upgradeBtn?.addEventListener('click', () => {
+      this.audio.unlock();
+      this.sim.tryUpgrade();
+    });
+    for (const btn of this.hud.diffBtns) {
+      btn.addEventListener('click', () => {
+        this.audio.click();
+        this.selectedDiff = (btn.dataset.diff ?? 'normal') as DifficultyId;
+        this.applyCampaign(false);
+      });
+    }
+    for (const card of this.hud.mapCards) {
+      card.addEventListener('click', () => {
+        this.audio.click();
+        this.selectedMap = (card.dataset.map ?? 'lawn') as MapId;
+        this.applyCampaign(false);
+      });
+    }
     this.hud.speedBtn.addEventListener('click', () => {
       this.audio.click();
       this.sim.speed = this.sim.speed === 1 ? 2 : this.sim.speed === 2 ? 3 : 1;
@@ -123,13 +144,13 @@ export class Game {
     root.querySelector('#btn-start')?.addEventListener('click', () => {
       this.audio.unlock();
       this.audio.wave();
-      this.sim.reset();
+      this.applyCampaign(true);
       this.setPhase('play');
     });
     root.querySelector('#btn-resume')?.addEventListener('click', () => this.setPhase('play'));
     root.querySelector('#btn-again')?.addEventListener('click', () => {
       this.audio.unlock();
-      this.sim.reset();
+      this.applyCampaign(true);
       this.setPhase('play');
     });
 
@@ -162,7 +183,14 @@ export class Game {
         this.sim.startNextWave();
       }
       if (e.key === 's' || e.key === 'S') this.sim.trySell();
+      if (e.key === 'u' || e.key === 'U') this.sim.tryUpgrade();
     });
+  }
+
+  private applyCampaign(resetPlay: boolean): void {
+    this.sim.configure(this.selectedMap, this.selectedDiff);
+    this.renderer.setMap(this.sim.map, this.view.dpr, this.view.scale);
+    if (!resetPlay) this.sim.reset();
   }
 
   private setPhase(p: 'title' | 'play' | 'pause' | 'end'): void {

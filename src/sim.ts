@@ -1,21 +1,26 @@
 import type { Synth } from './audio.ts';
+import {
+  campaignWaves,
+  DIFFICULTIES,
+  type Difficulty,
+  type DifficultyId,
+  MAX_TIER,
+  type MapId,
+  towerStats,
+  UPGRADE_COST,
+} from './campaign.ts';
 import type { TraumaCamera } from './engine.ts';
 import { dist } from './engine.ts';
 import type { FX } from './fx.ts';
-import type { GameMap } from './map.ts';
+import { GameMap } from './map.ts';
 import {
   CELL,
-  DESK_BUFF,
   ENEMIES,
   type EnemyId,
   MAX_WAVES,
   SELL_RATIO,
-  START_APPROVAL,
-  START_DONATIONS,
   TOWERS,
   type TowerId,
-  WALL_DURATION,
-  WALL_HP,
   WORLD_H,
   WORLD_W,
 } from './types.ts';
@@ -50,6 +55,7 @@ export type Tower = {
   angle: number;
   costPaid: number;
   age: number;
+  tier: number;
 };
 
 export type Wall = {
@@ -91,6 +97,8 @@ export type BrickShot = {
   tr: number;
   t: number;
   dur: number;
+  life: number;
+  hp: number;
 };
 
 export type Beam = {
@@ -111,63 +119,11 @@ function pick(arr: string[]): string {
   return arr[(Math.random() * arr.length) | 0]!;
 }
 
-function waveQueue(wave: number): SpawnItem[] {
+function buildQueue(map: MapId, wave: number, waveMul: number): SpawnItem[] {
   const q: SpawnItem[] = [];
-  const push = (kind: EnemyId, n: number, gap: number): void => {
-    for (let i = 0; i < n; i++) q.push({ kind, delay: gap });
-  };
-  switch (wave) {
-    case 1:
-      push('alien', 8, 0.62);
-      break;
-    case 2:
-      push('alien', 12, 0.5);
-      break;
-    case 3:
-      push('alien', 8, 0.48);
-      push('drone', 5, 0.7);
-      break;
-    case 4:
-      push('alien', 10, 0.42);
-      push('bureaucrat', 2, 1.4);
-      break;
-    case 5:
-      push('drone', 8, 0.55);
-      push('alien', 10, 0.4);
-      break;
-    case 6:
-      push('bureaucrat', 3, 1.2);
-      push('alien', 14, 0.36);
-      push('drone', 4, 0.6);
-      break;
-    case 7:
-      push('drone', 12, 0.42);
-      push('bureaucrat', 3, 1.1);
-      break;
-    case 8:
-      push('alien', 18, 0.28);
-      push('drone', 8, 0.4);
-      push('bureaucrat', 4, 0.9);
-      break;
-    case 9:
-      push('bureaucrat', 6, 0.85);
-      push('drone', 10, 0.38);
-      break;
-    case 10:
-      push('alien', 22, 0.24);
-      push('drone', 12, 0.32);
-      push('bureaucrat', 5, 0.7);
-      break;
-    case 11:
-      push('drone', 16, 0.28);
-      push('bureaucrat', 7, 0.65);
-      push('alien', 16, 0.22);
-      break;
-    default:
-      push('alien', 28, 0.18);
-      push('drone', 18, 0.22);
-      push('bureaucrat', 10, 0.5);
-      break;
+  for (const beat of campaignWaves(map, wave)) {
+    const n = Math.max(1, Math.round(beat.n * waveMul));
+    for (let i = 0; i < n; i++) q.push({ kind: beat.kind, delay: beat.gap });
   }
   return q;
 }
@@ -178,8 +134,8 @@ function scaledHp(kind: EnemyId, wave: number): number {
 }
 
 export class Sim {
-  donations = START_DONATIONS;
-  approval = START_APPROVAL;
+  donations = DIFFICULTIES.normal.startGold;
+  approval = DIFFICULTIES.normal.startApproval;
   wave = 0;
   speed = 1;
   enemies: Enemy[] = [];
@@ -203,7 +159,8 @@ export class Sim {
   nextId = 1;
   time = 0;
   leaking = 0;
-  readonly map: GameMap;
+  map: GameMap;
+  diff: Difficulty = DIFFICULTIES.normal;
   readonly fx: FX;
   readonly cam: TraumaCamera;
   readonly audio: Synth;
@@ -215,9 +172,15 @@ export class Sim {
     this.audio = audio;
   }
 
+  configure(mapId: MapId, diffId: DifficultyId): void {
+    this.map = new GameMap(mapId);
+    this.diff = DIFFICULTIES[diffId];
+    this.reset();
+  }
+
   reset(): void {
-    this.donations = START_DONATIONS;
-    this.approval = START_APPROVAL;
+    this.donations = this.diff.startGold;
+    this.approval = this.diff.startApproval;
     this.wave = 0;
     this.speed = 1;
     this.enemies.length = 0;
@@ -247,11 +210,12 @@ export class Sim {
     if (this.wave >= MAX_WAVES) return;
     if (this.waveQueue.length || this.enemies.length) return;
     this.wave += 1;
-    this.waveQueue = waveQueue(this.wave);
+    this.waveQueue = buildQueue(this.map.def.id, this.wave, this.diff.waveMul);
     this.spawnWait = 0.35;
     this.between = 0;
-    this.announcing = 2.1;
-    this.banner = `WAVE ${this.wave} — TREMENDOUS`;
+    this.announcing = 2.2;
+    const flavor = this.map.def.flavor[(this.wave - 1) % this.map.def.flavor.length]!;
+    this.banner = `WAVE ${this.wave} — ${flavor}`;
     this.audio.wave();
   }
 
@@ -285,6 +249,7 @@ export class Sim {
       angle: 0,
       costPaid: def.cost,
       age: 0,
+      tier: 0,
     };
     this.towers.push(t);
     this.occupied.add(this.map.idx(c, r));
@@ -310,6 +275,34 @@ export class Sim {
     return true;
   }
 
+  upgradeCost(t: Tower): number | null {
+    if (t.tier >= MAX_TIER) return null;
+    return UPGRADE_COST[t.kind][t.tier]!;
+  }
+
+  tryUpgrade(): boolean {
+    const t = this.selected;
+    if (!t) return false;
+    const cost = this.upgradeCost(t);
+    if (cost === null) {
+      this.audio.deny();
+      return false;
+    }
+    if (this.donations < cost) {
+      this.audio.deny();
+      this.fx.say(t.x, t.y, 'TOO CHEAP!', '#ff6b6b');
+      return false;
+    }
+    this.donations -= cost;
+    t.tier += 1;
+    t.costPaid += cost;
+    t.age = 0;
+    this.audio.place();
+    this.fx.spawn(t.x, t.y, 22, ['#e6c35c', '#fff3b0', '#3cf0ff'], 110, 'star', 4);
+    this.fx.say(t.x, t.y - 22, `TIER ${towerStats(t.kind, t.tier).label}`, '#fff3b0', 1.2);
+    return true;
+  }
+
   selectAt(c: number, r: number): boolean {
     const found = this.towers.find((t) => t.c === c && t.r === r);
     if (found) {
@@ -326,8 +319,9 @@ export class Sim {
     let m = 1;
     for (const d of this.towers) {
       if (d.kind !== 'desk') continue;
-      const range = TOWERS.desk.range * CELL;
-      if (dist(t.x, t.y, d.x, d.y) <= range) m = Math.max(m, DESK_BUFF);
+      const st = towerStats('desk', d.tier);
+      const range = st.range * CELL;
+      if (dist(t.x, t.y, d.x, d.y) <= range) m = Math.max(m, st.buff);
     }
     return m;
   }
@@ -338,7 +332,7 @@ export class Sim {
 
   private spawnEnemy(kind: EnemyId): void {
     const def = ENEMIES[kind];
-    const hp = scaledHp(kind, this.wave);
+    const hp = Math.round(scaledHp(kind, this.wave) * this.diff.hpMul);
     const s = this.map.sample(0);
     this.enemies.push({
       id: this.nextId++,
@@ -346,10 +340,10 @@ export class Sim {
       hp,
       maxHp: hp,
       dist: 0,
-      speed: def.speed,
+      speed: def.speed * this.diff.spdMul,
       flying: def.flying,
-      reward: def.reward + Math.floor(this.wave * 1.2),
-      leak: def.leak,
+      reward: Math.round((def.reward + Math.floor(this.wave * 1.2)) * this.diff.rewardMul),
+      leak: Math.max(1, Math.round(def.leak * this.diff.leakMul)),
       radius: def.radius,
       flash: 0,
       bob: Math.random() * Math.PI * 2,
@@ -403,9 +397,10 @@ export class Sim {
   private fireTruth(t: Tower, e: Enemy): void {
     t.angle = Math.atan2(e.y - t.y, e.x - t.x);
     this.beams.push({ x0: t.x, y0: t.y - 18, x1: e.x, y1: e.y - e.z, life: 0.09 });
+    const st = towerStats('truth', t.tier);
     this.damage(
       e,
-      TOWERS.truth.damage,
+      st.damage,
       Math.random() < 0.18 ? (Math.random() < 0.5 ? pick(HITS) : 'FACT!') : undefined,
       '#3cf0ff',
     );
@@ -417,6 +412,7 @@ export class Sim {
     t.angle = Math.atan2(e.y - t.y, e.x - t.x);
     const lead = e.speed * 0.55;
     const pred = this.map.sample(Math.min(this.map.length, e.dist + lead));
+    const st = towerStats('trebuchet', t.tier);
     this.boulders.push({
       kind: 'boulder',
       x: t.x,
@@ -428,8 +424,8 @@ export class Sim {
       ty: pred.y,
       t: 0,
       dur: 0.72,
-      dmg: TOWERS.trebuchet.damage,
-      aoe: TOWERS.trebuchet.aoe * CELL,
+      dmg: st.damage,
+      aoe: st.aoe * CELL,
     });
     this.audio.trebShoot();
   }
@@ -453,6 +449,7 @@ export class Sim {
       if (this.map.isHouse(c, r) || this.wallAt(c, r)) continue;
       const p = this.map.center(c, r);
       t.angle = Math.atan2(p.y - t.y, p.x - t.x);
+      const st = towerStats('brick', t.tier);
       this.bricks.push({
         kind: 'brick',
         x: t.x,
@@ -466,6 +463,8 @@ export class Sim {
         tr: r,
         t: 0,
         dur: 0.55,
+        life: st.wallLife,
+        hp: st.wallHp,
       });
       this.audio.brick();
       return true;
@@ -473,12 +472,14 @@ export class Sim {
     return false;
   }
 
-  private dropWall(c: number, r: number): void {
+  private dropWall(c: number, r: number, life: number, hp: number): void {
     const existing = this.wallAt(c, r);
     const p = this.map.center(c, r);
     if (existing) {
-      existing.life = WALL_DURATION;
-      existing.hp = WALL_HP;
+      existing.life = Math.max(existing.life, life);
+      existing.hp = Math.max(existing.hp, hp);
+      existing.maxHp = Math.max(existing.maxHp, hp);
+      existing.maxLife = Math.max(existing.maxLife, life);
       return;
     }
     this.walls.push({
@@ -486,10 +487,10 @@ export class Sim {
       r,
       x: p.x,
       y: p.y,
-      hp: WALL_HP,
-      maxHp: WALL_HP,
-      life: WALL_DURATION,
-      maxLife: WALL_DURATION,
+      hp,
+      maxHp: hp,
+      life,
+      maxLife: life,
     });
     this.fx.spawn(p.x, p.y, 14, ['#c46a48', '#e8c9b0'], 70, 'spark', 4);
     this.fx.say(p.x, p.y - 20, 'THE WALL!', '#f0b27a', 1.1);
@@ -505,7 +506,7 @@ export class Sim {
     if (!this.waveQueue.length && !this.enemies.length) {
       if (this.wave >= MAX_WAVES) {
         this.won = true;
-        this.banner = 'TREMENDOUS VICTORY';
+        this.banner = this.map.def.victory;
         this.audio.victory();
         this.fx.patriotic(this.map.center(14, 8).x, this.map.center(14, 8).y, 2.2);
         return;
@@ -560,7 +561,7 @@ export class Sim {
         e.hp = 0;
         if (this.approval <= 0) {
           this.lost = true;
-          this.banner = "YOU'RE FIRED";
+          this.banner = this.map.def.defeat;
           this.audio.defeat();
         }
         continue;
@@ -588,22 +589,22 @@ export class Sim {
       t.cooldown = Math.max(0, t.cooldown - tdt);
       if (t.kind === 'desk') continue;
       if (t.cooldown > 0) continue;
-      const def = TOWERS[t.kind];
-      const range = def.range * CELL;
+      const st = towerStats(t.kind, t.tier);
+      const range = st.range * CELL;
       if (t.kind === 'truth') {
         const e = this.target(t, range, true);
         if (!e) continue;
         this.fireTruth(t, e);
-        t.cooldown = 1 / (def.fireRate * this.buffMult(t));
+        t.cooldown = 1 / (st.fireRate * this.buffMult(t));
       } else if (t.kind === 'trebuchet') {
         const e = this.target(t, range, true);
         if (!e) continue;
         this.fireTreb(t, e);
-        t.cooldown = 1 / (def.fireRate * this.buffMult(t));
+        t.cooldown = 1 / (st.fireRate * this.buffMult(t));
       } else if (t.kind === 'brick') {
         const e = this.target(t, range, false);
         if (!e) continue;
-        if (this.fireBrick(t, e)) t.cooldown = 1 / (def.fireRate * this.buffMult(t));
+        if (this.fireBrick(t, e)) t.cooldown = 1 / (st.fireRate * this.buffMult(t));
       }
     }
 
@@ -630,7 +631,7 @@ export class Sim {
       b.y = b.sy + (b.ty - b.sy) * u;
       b.z = 16 + Math.sin(u * Math.PI) * 54;
       if (u >= 1) {
-        this.dropWall(b.tc, b.tr);
+        this.dropWall(b.tc, b.tr, b.life, b.hp);
         b.t = 99;
       }
     }
