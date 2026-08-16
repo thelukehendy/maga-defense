@@ -2,6 +2,8 @@ import { ENEMY_LORE, MAX_TIER, TOWER_LORE, towerStats, UPGRADE_COST } from './ca
 import type { Sim } from './sim.ts';
 import { MAX_WAVES, TOWERS, type TowerId } from './types.ts';
 
+export type HudPhase = 'title' | 'select' | 'play' | 'pause' | 'end';
+
 export type HudHandles = {
   donations: HTMLElement;
   approvalFill: HTMLElement;
@@ -17,6 +19,9 @@ export type HudHandles = {
   overlayTitle: HTMLElement;
   overlayPause: HTMLElement;
   overlayEnd: HTMLElement;
+  overlaySelect: HTMLElement | null;
+  overlayOptions: HTMLElement | null;
+  overlayInfo: HTMLElement | null;
   endTitle: HTMLElement;
   endBody: HTMLElement;
   missionName: HTMLElement | null;
@@ -26,9 +31,7 @@ export type HudHandles = {
   inspectStats: HTMLElement | null;
   diffBtns: HTMLButtonElement[];
   mapCards: HTMLButtonElement[];
-  overlayCodex: HTMLElement | null;
-  codexBtn: HTMLButtonElement | null;
-  codexCloseBtn: HTMLButtonElement | null;
+  optMuteBtn: HTMLButtonElement | null;
 };
 
 type SimPaint = Sim & { diff?: { id?: string } };
@@ -106,17 +109,6 @@ export function bindHud(root: HTMLElement): HudHandles {
     if (!el) throw new Error(`Missing ${sel}`);
     return el as HTMLElement;
   };
-  const overlayCodex = opt<HTMLElement>(root, '#overlay-codex');
-  const codexBtn = opt<HTMLButtonElement>(root, '#btn-codex');
-  const codexCloseBtn = opt<HTMLButtonElement>(root, '#btn-codex-close');
-  const hideCodex = (): void => {
-    overlayCodex?.classList.add('hidden');
-  };
-  const toggleCodex = (): void => {
-    overlayCodex?.classList.toggle('hidden');
-  };
-  codexBtn?.addEventListener('click', toggleCodex);
-  codexCloseBtn?.addEventListener('click', hideCodex);
 
   return {
     donations: $('#stat-donations'),
@@ -133,6 +125,9 @@ export function bindHud(root: HTMLElement): HudHandles {
     overlayTitle: $('#overlay-title'),
     overlayPause: $('#overlay-pause'),
     overlayEnd: $('#overlay-end'),
+    overlaySelect: opt(root, '#overlay-select'),
+    overlayOptions: opt(root, '#overlay-options'),
+    overlayInfo: opt(root, '#overlay-info'),
     endTitle: $('#end-title'),
     endBody: $('#end-body'),
     missionName: opt(root, '#mission-name'),
@@ -142,10 +137,13 @@ export function bindHud(root: HTMLElement): HudHandles {
     inspectStats: opt(root, '#inspect-stats'),
     diffBtns: [...root.querySelectorAll<HTMLButtonElement>('[data-diff]')],
     mapCards: [...root.querySelectorAll<HTMLButtonElement>('[data-map]')],
-    overlayCodex,
-    codexBtn,
-    codexCloseBtn,
+    optMuteBtn: opt<HTMLButtonElement>(root, '#btn-opt-mute'),
   };
+}
+
+export function hideMenus(hud: HudHandles): void {
+  hud.overlayOptions?.classList.add('hidden');
+  hud.overlayInfo?.classList.add('hidden');
 }
 
 export function paintHud(
@@ -154,7 +152,7 @@ export function paintHud(
   fps: number,
   muted: boolean,
   paused: boolean,
-  phase: 'title' | 'play' | 'pause' | 'end',
+  phase: HudPhase,
 ): void {
   hud.donations.textContent = `$${sim.donations.toLocaleString()}`;
   hud.approvalFill.style.width = `${sim.approval}%`;
@@ -164,6 +162,7 @@ export function paintHud(
   hud.fps.textContent = `${Math.round(fps)} FPS`;
   hud.speedBtn.textContent = `${sim.speed}×`;
   hud.muteBtn.textContent = muted ? 'SOUND OFF' : 'SOUND ON';
+  if (hud.optMuteBtn) hud.optMuteBtn.textContent = muted ? 'SOUND OFF' : 'SOUND ON';
   hud.pauseBtn.textContent = paused ? 'RESUME' : 'PAUSE';
   hud.sendBtn.disabled = !sim.waveReady();
   hud.sendBtn.classList.toggle('pulse', sim.waveReady());
@@ -205,9 +204,10 @@ export function paintHud(
   paintInspect(hud, sim);
 
   hud.overlayTitle.classList.toggle('hidden', phase !== 'title');
+  hud.overlaySelect?.classList.toggle('hidden', phase !== 'select');
   hud.overlayPause.classList.toggle('hidden', phase !== 'pause');
   hud.overlayEnd.classList.toggle('hidden', phase !== 'end');
-  if (phase === 'title' || phase === 'end') hud.overlayCodex?.classList.add('hidden');
+  if (phase === 'play' || phase === 'end' || phase === 'select') hideMenus(hud);
   if (sim.won) {
     hud.endTitle.textContent = 'TREMENDOUS VICTORY';
     hud.endBody.textContent = sim.map.def.victory;

@@ -1,61 +1,175 @@
 import type { LandmarkKind } from './campaign.ts';
 import { CELL, type EnemyId, type TowerId } from './types.ts';
 
-const C = {
-  marbleHi: '#fbfaf4',
-  marble: '#f2eee6',
-  marbleMid: '#e4ddd2',
-  marbleLo: '#c4bbad',
-  marbleDeep: '#8f8678',
-  marbleVein: 'rgba(118, 122, 132, 0.28)',
-  goldHi: '#fff6c8',
-  gold: '#e6c35c',
-  goldMid: '#c9a227',
-  goldLo: '#8a6a18',
-  goldDeep: '#5c470c',
-  navy: '#1a2f72',
-  navyMid: '#14245c',
-  navyDeep: '#0c183e',
-  woodHi: '#c4894a',
-  wood: '#8a4e22',
-  woodLo: '#5a3014',
-  glass: '#12151c',
-  glassHi: '#2a3348',
-  steel: '#9aa6b8',
-  steelHi: '#d5dde8',
-  steelLo: '#4a5564',
-  sandHi: '#ead4aa',
-  sand: '#d2b07a',
-  sandLo: '#9a7040',
-  brick: '#c45a3a',
-  brickHi: '#d97858',
-  brickLo: '#7a3020',
-  mortar: '#e8d8c4',
-  ink: '#1a1204',
-  shadow: 'rgba(10, 8, 6, 0.34)',
-  cyan: '#3cf0ff',
-  cyanHi: '#9af8ff',
-  magared: '#c8102e',
-} as const;
+const INK = '#0c1838';
+const INK_W = 2.2;
 
-const ISO = { x: 0.72, y: 0.55 } as const;
+const C = {
+  red: '#c8102e',
+  redHi: '#f24a58',
+  redLo: '#7a0c1c',
+  white: '#fff8ee',
+  blue: '#1a4fa8',
+  blueHi: '#4c7fd6',
+  blueLo: '#0d2e72',
+  gold: '#e6c35c',
+  goldHi: '#fff3b0',
+  goldLo: '#8a6418',
+  stoneHi: '#eef0f4',
+  stone: '#c5cad3',
+  stoneLo: '#7a818c',
+  woodHi: '#d4a05a',
+  wood: '#a86a32',
+  woodLo: '#6a3a16',
+  sandHi: '#f0d8a8',
+  sand: '#d4b070',
+  sandLo: '#9a7038',
+  grassHi: '#7ed45a',
+  grass: '#3a9a3a',
+  grassLo: '#1e6a24',
+  oceanHi: '#7ec8f8',
+  ocean: '#2a7ad4',
+  oceanLo: '#0e3e88',
+  land: '#4cba4a',
+  landLo: '#2a7a28',
+  steelHi: '#d8dee8',
+  steel: '#8a96a8',
+  steelLo: '#3a4454',
+  robe: '#2a3040',
+  robeHi: '#4a5468',
+  robeLo: '#12161e',
+  skin: '#f0c8a0',
+  skinLo: '#c49068',
+} as const;
 
 function hash(n: number): number {
   const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return x - Math.floor(x);
 }
 
+function ink(ctx: CanvasRenderingContext2D, w = INK_W): void {
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = w;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+}
+
 function rr(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
   const rad = Math.max(0, Math.min(r, w * 0.5, h * 0.5));
   ctx.beginPath();
-  if (rad <= 0) {
-    ctx.rect(x, y, w, h);
-    return;
-  }
-  ctx.roundRect(x, y, w, h, rad);
+  if (rad <= 0) ctx.rect(x, y, w, h);
+  else ctx.roundRect(x, y, w, h, rad);
 }
 
-function quad(
+function paint(ctx: CanvasRenderingContext2D, fill: string | CanvasGradient, line = INK_W): void {
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if (line > 0) {
+    ink(ctx, line);
+    ctx.stroke();
+  }
+}
+
+function lin(
+  ctx: CanvasRenderingContext2D,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  a: string,
+  b: string,
+  c?: string,
+): CanvasGradient {
+  const g = ctx.createLinearGradient(x0, y0, x1, y1);
+  g.addColorStop(0, a);
+  if (c) {
+    g.addColorStop(0.45, b);
+    g.addColorStop(1, c);
+  } else {
+    g.addColorStop(1, b);
+  }
+  return g;
+}
+
+function blobHi(ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, a = 0.5): void {
+  ctx.fillStyle = `rgba(255,255,245,${a})`;
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, -0.45, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function blobLo(ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, a = 0.2): void {
+  ctx.fillStyle = `rgba(90,40,12,${a})`;
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, 0.35, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function clayRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+  hi: string,
+  mid: string,
+  lo: string,
+  line = INK_W,
+): void {
+  rr(ctx, x, y, w, h, r);
+  paint(ctx, lin(ctx, x, y, x + w, y + h, hi, mid, lo), line);
+  ctx.save();
+  rr(ctx, x, y, w, h, r);
+  ctx.clip();
+  blobHi(ctx, x + w * 0.28, y + h * 0.22, w * 0.3, h * 0.16, 0.42);
+  blobLo(ctx, x + w * 0.74, y + h * 0.78, w * 0.32, h * 0.2, 0.16);
+  ctx.restore();
+}
+
+function clayBall(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+  hi: string,
+  mid: string,
+  lo: string,
+  line = INK_W,
+): void {
+  const g = ctx.createRadialGradient(cx - r * 0.38, cy - r * 0.42, r * 0.04, cx + r * 0.12, cy + r * 0.18, r);
+  g.addColorStop(0, hi);
+  g.addColorStop(0.42, mid);
+  g.addColorStop(1, lo);
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  paint(ctx, g, line);
+  blobHi(ctx, cx - r * 0.32, cy - r * 0.36, r * 0.28, r * 0.18, 0.55);
+}
+
+function clayOval(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  rot: number,
+  hi: string,
+  mid: string,
+  lo: string,
+  line = INK_W,
+): void {
+  const g = ctx.createRadialGradient(cx - rx * 0.35, cy - ry * 0.4, 0, cx, cy, Math.max(rx, ry));
+  g.addColorStop(0, hi);
+  g.addColorStop(0.45, mid);
+  g.addColorStop(1, lo);
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rx, ry, rot, 0, Math.PI * 2);
+  paint(ctx, g, line);
+  blobHi(ctx, cx - rx * 0.3, cy - ry * 0.35, rx * 0.28, ry * 0.18, 0.45);
+}
+
+function tri(
   ctx: CanvasRenderingContext2D,
   ax: number,
   ay: number,
@@ -63,59 +177,216 @@ function quad(
   by: number,
   cx: number,
   cy: number,
-  dx: number,
-  dy: number,
-  fill: string,
+  hi: string,
+  lo: string,
+  line = INK_W,
 ): void {
-  ctx.fillStyle = fill;
   ctx.beginPath();
   ctx.moveTo(ax, ay);
   ctx.lineTo(bx, by);
   ctx.lineTo(cx, cy);
-  ctx.lineTo(dx, dy);
   ctx.closePath();
+  paint(ctx, lin(ctx, ax, ay, cx, cy, hi, lo), line);
+}
+
+function ground(ctx: CanvasRenderingContext2D, cx: number, cy: number, rx: number, ry: number): void {
+  ctx.fillStyle = 'rgba(12, 18, 40, 0.22)';
+  ctx.beginPath();
+  ctx.ellipse(cx + 1.5, cy + 1, rx, ry, 0, 0, Math.PI * 2);
   ctx.fill();
 }
 
-function contact(ctx: CanvasRenderingContext2D, cx: number, cy: number, rx: number, ry: number): void {
-  ctx.fillStyle = 'rgba(12, 10, 8, 0.16)';
+export function star5(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, ir: number): void {
   ctx.beginPath();
-  ctx.ellipse(cx + 3, cy + 2, rx * 1.18, ry * 1.22, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = 'rgba(10, 8, 6, 0.28)';
-  ctx.beginPath();
-  ctx.ellipse(cx + 1, cy + 0.5, rx, ry, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = 'rgba(6, 5, 4, 0.42)';
-  ctx.beginPath();
-  ctx.ellipse(cx - 1, cy, rx * 0.62, ry * 0.58, 0, 0, Math.PI * 2);
-  ctx.fill();
+  for (let i = 0; i < 10; i++) {
+    const a = (i * Math.PI) / 5 - Math.PI / 2;
+    const radv = i % 2 === 0 ? r : ir;
+    const px = x + Math.cos(a) * radv;
+    const py = y + Math.sin(a) * radv;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  const g = ctx.createRadialGradient(x - r * 0.28, y - r * 0.34, 0, x, y, r);
+  g.addColorStop(0, C.goldHi);
+  g.addColorStop(0.4, C.gold);
+  g.addColorStop(1, C.goldLo);
+  paint(ctx, g, Math.max(1.5, r * 0.16));
+  blobHi(ctx, x - r * 0.12, y - r * 0.22, r * 0.2, r * 0.12, 0.5);
 }
 
-function box3(
+function pole(ctx: CanvasRenderingContext2D, x: number, y: number, h: number): void {
+  clayRect(ctx, x - 1.1, y, 2.2, h, 1, C.goldHi, C.gold, C.goldLo, 1.5);
+}
+
+function usFlag(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, s: number): void {
+  ctx.save();
+  ctx.translate(x, y);
+  pole(ctx, 0, 0, 26 * s);
+  const fw = 20 * s;
+  const fh = 12 * s;
+  const cantonH = fh * 0.54;
+  for (let i = 0; i < 7; i++) {
+    const wy = i * (fh / 7) + Math.sin(time * 5.2 + i * 0.65) * 0.7 * s;
+    const wave = Math.sin(time * 6 + i) * 1.3 * s;
+    ctx.beginPath();
+    ctx.moveTo(1.2, wy);
+    ctx.quadraticCurveTo(fw * 0.45, wy + wave, fw, wy + Math.sin(time * 4.1 + i) * 0.7 * s);
+    ctx.lineTo(fw, wy + fh / 7 + 0.4);
+    ctx.quadraticCurveTo(fw * 0.45, wy + fh / 7 + wave, 1.2, wy + fh / 7);
+    ctx.closePath();
+    paint(ctx, i % 2 === 0 ? C.red : C.white, 0);
+  }
+  const cy0 = Math.sin(time * 5.2) * 0.45 * s;
+  clayRect(ctx, 1.2, cy0, fw * 0.4, cantonH, 1.2, C.blueHi, C.blue, C.blueLo, 1.4);
+  ctx.fillStyle = C.goldHi;
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 4; c++) {
+      ctx.fillRect(2.8 * s + c * 1.9 * s, cy0 + 1.4 * s + r * 1.9 * s, 0.85 * s, 0.85 * s);
+    }
+  }
+  ctx.restore();
+}
+
+function goldBand(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+  clayRect(ctx, x, y, w, h, Math.min(2, h * 0.45), C.goldHi, C.gold, C.goldLo, 1.6);
+}
+
+function toyWindow(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   w: number,
   h: number,
-  d: number,
-  front: string,
-  top: string,
-  side: string,
+  cols: number,
+  rows: number,
 ): void {
-  const dx = d * ISO.x;
-  const dy = d * ISO.y;
-  quad(ctx, x + w, y, x + w + dx, y - dy, x + w + dx, y + h - dy, x + w, y + h, side);
-  quad(ctx, x, y, x + w, y, x + w + dx, y - dy, x + dx, y - dy, top);
-  ctx.fillStyle = front;
-  ctx.fillRect(x, y, w, h);
+  clayRect(ctx, x, y, w, h, 2, '#8ec8f0', '#2a5088', '#122040', 1.8);
+  ctx.fillStyle = 'rgba(255,255,255,0.38)';
+  ctx.fillRect(x + 1.5, y + 1.2, w * 0.4, h * 0.32);
+  ctx.strokeStyle = C.gold;
+  ctx.lineWidth = 1.3;
+  ctx.lineJoin = 'round';
+  const cw = w / cols;
+  const rh = h / rows;
+  for (let c = 1; c < cols; c++) {
+    ctx.beginPath();
+    ctx.moveTo(x + c * cw, y + 1);
+    ctx.lineTo(x + c * cw, y + h - 1);
+    ctx.stroke();
+  }
+  for (let r = 1; r < rows; r++) {
+    ctx.beginPath();
+    ctx.moveTo(x + 1, y + r * rh);
+    ctx.lineTo(x + w - 1, y + r * rh);
+    ctx.stroke();
+  }
 }
 
-function goldStroke(ctx: CanvasRenderingContext2D, width: number): void {
-  ctx.strokeStyle = C.gold;
-  ctx.lineWidth = width;
+function toyColumn(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+  clayRect(ctx, x - 1, y + h - 6, w + 2, 6, 2, C.white, '#e8e0d4', '#b8b0a4', 1.8);
+  clayRect(ctx, x + w * 0.12, y + 6, w * 0.76, h - 12, w * 0.38, C.white, '#f2eee6', '#c8c0b4', 1.9);
+  goldBand(ctx, x + w * 0.08, y + 5, w * 0.84, 3);
+  goldBand(ctx, x + w * 0.08, y + h - 10, w * 0.84, 3);
+  clayRect(ctx, x, y, w, 7, 2.5, C.white, '#efeae0', '#c4bcb0', 1.8);
+  blobHi(ctx, x + w * 0.32, y + h * 0.35, w * 0.12, h * 0.22, 0.35);
+}
+
+function woodDoor(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+  clayRect(ctx, x - 2, y - 2, w + 4, h + 3, 3, C.goldHi, C.gold, C.goldLo, 1.8);
+  clayRect(ctx, x, y, w, h, 2.5, C.woodHi, C.wood, C.woodLo, 1.9);
+  ctx.fillStyle = C.woodLo;
+  ctx.fillRect(x + w * 0.48, y + 3, 1.4, h - 6);
+  clayRect(ctx, x + w - 7, y + h * 0.48, 3.5, 3.5, 1.5, C.goldHi, C.gold, C.goldLo, 1.3);
+  ctx.beginPath();
+  ctx.moveTo(x + 2, y + 2);
+  ctx.lineTo(x + w * 0.5, y - h * 0.16);
+  ctx.lineTo(x + w - 2, y + 2);
+  ctx.closePath();
+  paint(ctx, lin(ctx, x, y, x + w, y, C.blueHi, C.blue, C.blueLo), 1.6);
+}
+
+function leakRim(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  time: number,
+  leak: number,
+): void {
+  if (leak <= 0) return;
+  const pulse = 0.28 + Math.abs(Math.sin(time * 8)) * 0.42;
+  rr(ctx, x + 3, y + 4, w - 6, h - 8, 14);
+  ctx.strokeStyle = `rgba(200,16,46,${pulse * leak})`;
+  ctx.lineWidth = 5 + leak * 3;
   ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
+  ctx.stroke();
+  rr(ctx, x + 6, y + 7, w - 12, h - 14, 12);
+  ctx.strokeStyle = `rgba(255,90,90,${pulse * 0.45 * leak})`;
+  ctx.lineWidth = 2.2;
+  ctx.stroke();
+}
+
+function keepCannon(ctx: CanvasRenderingContext2D, x: number, y: number, dir: number): void {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(dir);
+  clayRect(ctx, -4, -5, 22, 10, 4, C.steelHi, C.steel, C.steelLo, 1.8);
+  goldBand(ctx, 4, -6, 3.5, 12);
+  goldBand(ctx, 14, -6.5, 5, 13);
+  ctx.restore();
+}
+
+function palmFrond(ctx: CanvasRenderingContext2D, time: number, scale: number): void {
+  const sway = Math.sin(time * 1.6) * 0.14;
+  ctx.save();
+  ctx.rotate(sway);
+  for (let i = 0; i < 8; i++) {
+    ctx.save();
+    ctx.rotate(-0.95 + i * 0.27);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(16 * scale, -5 * scale, 24 * scale, 1 * scale);
+    ctx.quadraticCurveTo(12 * scale, 4 * scale, 0, 2 * scale);
+    ctx.closePath();
+    paint(ctx, i % 2 === 0 ? C.grassHi : C.gold, 1.5);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function miniPalm(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, s: number): void {
+  ctx.save();
+  ctx.translate(x, y);
+  for (let i = 0; i < 5; i++) {
+    clayRect(ctx, -3 * s, (10 - i * 6) * s, 6 * s, 7 * s, 2, C.woodHi, C.wood, C.woodLo, 1.5);
+  }
+  ctx.translate(0, -18 * s);
+  palmFrond(ctx, time, s);
+  ctx.restore();
+}
+
+function magaBrick(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, glow: number): void {
+  if (glow > 0) {
+    ctx.fillStyle = `rgba(255,70,40,${0.22 * glow})`;
+    rr(ctx, x - 3, y - 3, w + 6, h + 6, 4);
+    ctx.fill();
+    ctx.fillStyle = `rgba(255,200,80,${0.16 * glow})`;
+    rr(ctx, x - 1, y - 1, w + 2, h + 2, 3);
+    ctx.fill();
+  }
+  clayRect(ctx, x, y, w, h, 2.4, C.redHi, C.red, C.redLo, 1.8);
+  ctx.fillStyle = C.white;
+  ctx.font = `800 ${Math.max(5, h * 0.42)}px Impact, Arial Black, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('MAGA', x + w * 0.5, y + h * 0.55);
+}
+
+function wheel(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {
+  clayBall(ctx, x, y, r, C.woodHi, C.wood, C.woodLo, 1.9);
+  clayBall(ctx, x, y, r * 0.38, C.goldHi, C.gold, C.goldLo, 1.5);
 }
 
 function plaque(
@@ -125,610 +396,208 @@ function plaque(
   w: number,
   h: number,
   text: string,
-  fill: string,
-  ink: string,
   size: number,
 ): void {
-  bevelRect(ctx, x, y, w, h, fill, C.goldHi, C.goldLo, 2);
-  ctx.fillStyle = C.gold;
-  ctx.fillRect(x, y, w, 1);
-  ctx.fillStyle = ink;
-  ctx.font = `800 ${size}px Impact, Haettenschweiler, Arial Black, sans-serif`;
+  clayRect(ctx, x, y, w, h, 3, C.blueHi, C.blue, C.blueLo, 1.8);
+  goldBand(ctx, x, y, w, 2);
+  ctx.fillStyle = C.white;
+  ctx.font = `800 ${size}px Impact, Arial Black, sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(text, x + w * 0.5, y + h * 0.55);
-}
-
-function mullionWindow(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  cols: number,
-  rows: number,
-  glow: string | null,
-): void {
-  const g = ctx.createLinearGradient(x, y, x + w, y + h);
-  g.addColorStop(0, glow ?? C.glassHi);
-  g.addColorStop(0.35, C.glass);
-  g.addColorStop(1, '#0a0c12');
-  ctx.fillStyle = g;
-  ctx.fillRect(x, y, w, h);
-  ctx.fillStyle = 'rgba(210, 230, 255, 0.16)';
-  ctx.fillRect(x + 1, y + 1, w * 0.42, h * 0.32);
-  ctx.fillStyle = C.marbleHi;
-  const cw = w / cols;
-  const rh = h / rows;
-  ctx.fillRect(x, y, w, 1);
-  ctx.fillRect(x, y + h - 1, w, 1);
-  ctx.fillRect(x, y, 1, h);
-  ctx.fillRect(x + w - 1, y, 1, h);
-  for (let c = 1; c < cols; c++) ctx.fillRect(x + c * cw, y, 1, h);
-  for (let r = 1; r < rows; r++) ctx.fillRect(x, y + r * rh, w, 1);
-}
-
-function miniPediment(ctx: CanvasRenderingContext2D, x: number, y: number, w: number): void {
-  ctx.fillStyle = C.marbleDeep;
-  ctx.beginPath();
-  ctx.moveTo(x - 1, y + 4);
-  ctx.lineTo(x + w * 0.5, y - 5);
-  ctx.lineTo(x + w + 1, y + 4);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = C.marbleHi;
-  ctx.beginPath();
-  ctx.moveTo(x, y + 3);
-  ctx.lineTo(x + w * 0.5, y - 4);
-  ctx.lineTo(x + w * 0.5 - 1, y - 2);
-  ctx.lineTo(x + 2, y + 3);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = C.marble;
-  ctx.beginPath();
-  ctx.moveTo(x, y + 3);
-  ctx.lineTo(x + w * 0.5, y - 4);
-  ctx.lineTo(x + w, y + 3);
-  ctx.closePath();
-  ctx.fill();
-}
-
-function usFlag(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, s: number): void {
-  ctx.save();
-  ctx.translate(x, y);
-  gold(ctx, -1.2, 0, 2.4, 28 * s);
-  ctx.fillStyle = C.goldDeep;
-  ctx.fillRect(0.6, 0, 0.8, 28 * s);
-  const fw = 22 * s;
-  const fh = 14 * s;
-  for (let i = 0; i < 7; i++) {
-    const wy = i * (fh / 7) + Math.sin(time * 5.4 + i * 0.7) * 0.7 * s;
-    ctx.fillStyle = i % 2 === 0 ? C.magared : '#f7f4ea';
-    ctx.beginPath();
-    ctx.moveTo(1.2, wy);
-    ctx.quadraticCurveTo(fw * 0.45, wy + Math.sin(time * 6 + i) * 1.4 * s, fw, wy + Math.sin(time * 4.2 + i) * 0.8 * s);
-    ctx.lineTo(fw, wy + fh / 7 + 0.4);
-    ctx.quadraticCurveTo(fw * 0.45, wy + fh / 7 + Math.sin(time * 6 + i) * 1.4 * s, 1.2, wy + fh / 7);
-    ctx.closePath();
-    ctx.fill();
-  }
-  ctx.fillStyle = C.navy;
-  ctx.fillRect(1.2, Math.sin(time * 5.4) * 0.5 * s, fw * 0.42, fh * 0.54);
-  ctx.fillStyle = C.goldHi;
-  for (let r = 0; r < 3; r++) {
-    for (let c = 0; c < 4; c++) {
-      ctx.fillRect(3.2 * s + c * 2.1 * s, 1.6 * s + r * 2.1 * s, 0.9 * s, 0.9 * s);
-    }
-  }
-  ctx.restore();
-}
-
-function woodDoor(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
-  const g = ctx.createLinearGradient(x, y, x + w, y);
-  g.addColorStop(0, C.woodHi);
-  g.addColorStop(0.18, C.wood);
-  g.addColorStop(0.72, C.wood);
-  g.addColorStop(1, C.woodLo);
-  ctx.fillStyle = C.marbleDeep;
-  ctx.fillRect(x - 2, y - 2, w + 4, h + 3);
-  ctx.fillStyle = g;
-  ctx.fillRect(x, y, w, h);
-  ctx.fillStyle = 'rgba(255, 220, 170, 0.18)';
-  ctx.fillRect(x + 1, y + 1, 2, h - 2);
-  ctx.fillStyle = C.woodLo;
-  ctx.fillRect(x + w * 0.48, y + 2, 1.2, h - 4);
-  ctx.fillRect(x + 3, y + h * 0.12, w * 0.38, h * 0.32);
-  ctx.fillRect(x + w * 0.56, y + h * 0.12, w * 0.38, h * 0.32);
-  ctx.fillRect(x + 3, y + h * 0.52, w * 0.38, h * 0.36);
-  ctx.fillRect(x + w * 0.56, y + h * 0.52, w * 0.38, h * 0.36);
-  gold(ctx, x + w - 6, y + h * 0.48, 3.5, 3.5);
-  ctx.fillStyle = C.navyDeep;
-  ctx.beginPath();
-  ctx.ellipse(x + w * 0.5, y - 1, w * 0.42, h * 0.18, 0, Math.PI, 0);
-  ctx.fill();
-  ctx.fillStyle = 'rgba(180, 210, 255, 0.2)';
-  ctx.beginPath();
-  ctx.ellipse(x + w * 0.38, y - 2, w * 0.16, h * 0.08, 0, Math.PI, 0);
-  ctx.fill();
-  ctx.fillStyle = C.marbleHi;
-  ctx.fillRect(x + w * 0.5 - 0.5, y - h * 0.18, 1, h * 0.16);
-}
-
-function cornice(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, d: number): void {
-  const dx = d * ISO.x;
-  const dy = d * ISO.y;
-  gold(ctx, x - 3, y, w + 6, 4);
-  quad(ctx, x - 3, y, x + w + 3, y, x + w + 3 + dx, y - dy, x - 3 + dx, y - dy, C.goldHi);
-  ctx.fillStyle = C.goldLo;
-  ctx.fillRect(x - 3, y + 3, w + 6, 1.5);
-}
-
-function navyPediment(
-  ctx: CanvasRenderingContext2D,
-  l: number,
-  r: number,
-  baseY: number,
-  peakX: number,
-  peakY: number,
-  withStar: boolean,
-): void {
-  ctx.fillStyle = C.navyDeep;
-  ctx.beginPath();
-  ctx.moveTo(l - 2, baseY + 2);
-  ctx.lineTo(peakX + 3, peakY + 3);
-  ctx.lineTo(r + 4, baseY + 2);
-  ctx.closePath();
-  ctx.fill();
-  const g = ctx.createLinearGradient(l, peakY, r, baseY);
-  g.addColorStop(0, '#243a86');
-  g.addColorStop(0.45, C.navy);
-  g.addColorStop(1, C.navyDeep);
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.moveTo(l, baseY);
-  ctx.lineTo(peakX, peakY);
-  ctx.lineTo(r, baseY);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-  ctx.beginPath();
-  ctx.moveTo(l + (peakX - l) * 0.18, baseY - 4);
-  ctx.lineTo(peakX - 4, peakY + 8);
-  ctx.lineTo(peakX - 10, peakY + 14);
-  ctx.closePath();
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(l, baseY);
-  ctx.lineTo(peakX, peakY);
-  ctx.lineTo(r, baseY);
-  ctx.lineWidth = 3.4;
-  ctx.strokeStyle = C.gold;
-  ctx.lineJoin = 'round';
-  ctx.stroke();
-  ctx.strokeStyle = C.goldHi;
-  ctx.lineWidth = 1.2;
-  ctx.stroke();
-  gold(ctx, l - 2, baseY - 1, r - l + 4, 3.5);
-  if (withStar) {
-    star5(ctx, peakX, (peakY + baseY) * 0.5 + 2, 11, 4.6);
-  }
-}
-
-export function marble(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, seed = 1): void {
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(x, y, w, h);
-  ctx.clip();
-  const g = ctx.createLinearGradient(x, y, x + w, y + h);
-  g.addColorStop(0, C.marbleHi);
-  g.addColorStop(0.28, C.marble);
-  g.addColorStop(0.72, C.marbleMid);
-  g.addColorStop(1, C.marbleLo);
-  ctx.fillStyle = g;
-  ctx.fillRect(x, y, w, h);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
-  ctx.fillRect(x, y, w * 0.38, 2);
-  ctx.fillRect(x, y, 2, h * 0.55);
-  const veins = 4 + Math.floor(hash(seed * 9.1) * 5);
-  ctx.strokeStyle = C.marbleVein;
-  ctx.lineCap = 'round';
-  for (let i = 0; i < veins; i++) {
-    const a = hash(seed * 3.7 + i * 11.3);
-    const b = hash(seed * 5.1 + i * 7.9);
-    ctx.lineWidth = 0.6 + hash(seed + i) * 1.4;
-    ctx.globalAlpha = 0.35 + hash(seed * 2 + i) * 0.4;
-    ctx.beginPath();
-    const x0 = x + a * w * 0.2;
-    const y0 = y + b * h;
-    ctx.moveTo(x0, y0);
-    ctx.bezierCurveTo(
-      x + (0.3 + hash(i + 2) * 0.3) * w,
-      y + hash(i + 4) * h,
-      x + (0.55 + hash(i + 6) * 0.25) * w,
-      y + hash(i + 8) * h,
-      x + w,
-      y + hash(i + 10) * h,
-    );
-    ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = C.marbleDeep;
-  ctx.fillRect(x + w - 2, y + 2, 2, h - 2);
-  ctx.fillRect(x + 2, y + h - 2, w - 2, 2);
-  ctx.restore();
-}
-
-export function gold(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(x, y, w, h);
-  ctx.clip();
-  const g = ctx.createLinearGradient(x, y, x + w, y + h);
-  g.addColorStop(0, C.goldHi);
-  g.addColorStop(0.2, '#f3d56a');
-  g.addColorStop(0.42, C.gold);
-  g.addColorStop(0.5, '#fff4c0');
-  g.addColorStop(0.58, C.gold);
-  g.addColorStop(0.82, C.goldMid);
-  g.addColorStop(1, C.goldLo);
-  ctx.fillStyle = g;
-  ctx.fillRect(x, y, w, h);
-  ctx.fillStyle = 'rgba(255, 255, 240, 0.45)';
-  ctx.fillRect(x, y, w, Math.max(1, h * 0.18));
-  ctx.fillRect(x, y, Math.max(1, w * 0.12), h);
-  ctx.fillStyle = C.goldDeep;
-  ctx.fillRect(x, y + h - 1, w, 1);
-  ctx.fillRect(x + w - 1, y, 1, h);
-  ctx.restore();
-}
-
-export function bevelRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  fill: string,
-  hi: string,
-  lo: string,
-  r = 0,
-): void {
-  ctx.save();
-  rr(ctx, x, y, w, h, r);
-  ctx.fillStyle = fill;
-  ctx.fill();
-  ctx.clip();
-  ctx.fillStyle = hi;
-  ctx.fillRect(x, y, w, 2);
-  ctx.fillRect(x, y, 2, h);
-  ctx.fillStyle = 'rgba(255,255,255,0.18)';
-  ctx.fillRect(x + 2, y + 2, w * 0.35, 1);
-  ctx.fillStyle = lo;
-  ctx.fillRect(x, y + h - 2, w, 2);
-  ctx.fillRect(x + w - 2, y, 2, h);
-  ctx.restore();
-}
-
-export function column(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
-  const cx = x + w * 0.5;
-  const shaftX = x + w * 0.16;
-  const shaftW = w * 0.68;
-  ctx.fillStyle = C.shadow;
-  ctx.fillRect(x + 1, y + h - 3, w, 4);
-  marble(ctx, x - 1, y + h - 7, w + 2, 7, 4);
-  box3(ctx, x - 1, y + h - 7, w + 2, 5, 4, C.marbleMid, C.marbleHi, C.marbleDeep);
-  const sg = ctx.createLinearGradient(shaftX, y, shaftX + shaftW, y);
-  sg.addColorStop(0, C.marbleHi);
-  sg.addColorStop(0.16, '#f7f3ea');
-  sg.addColorStop(0.42, C.marble);
-  sg.addColorStop(0.78, C.marbleLo);
-  sg.addColorStop(1, C.marbleDeep);
-  ctx.fillStyle = sg;
-  ctx.fillRect(shaftX, y + 8, shaftW, h - 16);
-  ctx.fillStyle = 'rgba(255,255,255,0.38)';
-  ctx.fillRect(shaftX + shaftW * 0.18, y + 9, 1.6, h - 18);
-  ctx.fillStyle = C.marbleDeep;
-  ctx.fillRect(shaftX + shaftW - 1.4, y + 9, 1.4, h - 18);
-  gold(ctx, shaftX - 1, y + 6, shaftW + 2, 3);
-  gold(ctx, shaftX - 1, y + h - 11, shaftW + 2, 3);
-  box3(ctx, x, y + 2, w, 6, 3.5, C.marble, C.marbleHi, C.marbleLo);
-  gold(ctx, x - 0.5, y, w + 1, 2.4);
-  ctx.fillStyle = C.marbleHi;
-  ctx.beginPath();
-  ctx.ellipse(cx, y + 2, w * 0.48, 2.2, 0, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-export function star5(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, ir: number): void {
-  ctx.beginPath();
-  for (let i = 0; i < 10; i++) {
-    const a = (i * Math.PI) / 5 - Math.PI / 2;
-    const rad = i % 2 === 0 ? r : ir;
-    const px = x + Math.cos(a) * rad;
-    const py = y + Math.sin(a) * rad;
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
-  }
-  ctx.closePath();
-  const g = ctx.createRadialGradient(x - r * 0.25, y - r * 0.35, 0, x, y, r);
-  g.addColorStop(0, C.goldHi);
-  g.addColorStop(0.4, C.gold);
-  g.addColorStop(1, C.goldLo);
-  ctx.fillStyle = g;
-  ctx.fill();
-  ctx.fillStyle = C.goldDeep;
-  ctx.beginPath();
-  ctx.moveTo(x + r * 0.15, y);
-  ctx.lineTo(x + Math.cos(0.2) * r, y + Math.sin(0.2) * r);
-  ctx.lineTo(x + Math.cos(0.9) * ir, y + Math.sin(0.9) * ir);
-  ctx.closePath();
-  ctx.fill();
+  ctx.fillText(text, x + w * 0.5, y + h * 0.58);
 }
 
 function lawnKeep(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, time: number, leak: number): void {
-  const d = 11;
-  const bodyX = x + w * 0.1;
-  const bodyW = w * 0.8;
-  const plinthTop = y + h * 0.82;
-  const bodyY = y + h * 0.34;
-  const bodyH = plinthTop - bodyY - 4;
+  const cx = x + w * 0.5;
+  ground(ctx, cx, y + h * 0.94, w * 0.44, h * 0.055);
+  leakRim(ctx, x, y, w, h, time, leak);
 
-  contact(ctx, x + w * 0.52, y + h * 0.96, w * 0.46, h * 0.055);
-  if (leak > 0) {
-    const pulse = 0.22 + Math.abs(Math.sin(time * 8)) * 0.28;
-    const rg = ctx.createRadialGradient(x + w * 0.5, y + h * 0.55, 8, x + w * 0.5, y + h * 0.55, w * 0.62);
-    rg.addColorStop(0, `rgba(200, 16, 46, ${pulse})`);
-    rg.addColorStop(1, 'rgba(200, 16, 46, 0)');
-    ctx.fillStyle = rg;
-    ctx.fillRect(x - 8, y - 8, w + 16, h + 16);
+  clayRect(ctx, x + w * 0.06, y + h * 0.86, w * 0.88, h * 0.1, 5, C.stoneHi, C.stone, C.stoneLo);
+  goldBand(ctx, x + w * 0.06, y + h * 0.86, w * 0.88, 4);
+  clayRect(ctx, x + w * 0.12, y + h * 0.78, w * 0.76, h * 0.09, 5, C.white, '#efe8dc', '#c8c0b4');
+  goldBand(ctx, x + w * 0.12, y + h * 0.78, w * 0.76, 3.5);
+  clayRect(ctx, x + w * 0.18, y + h * 0.71, w * 0.64, h * 0.08, 4, C.white, '#f6f1e8', '#d0c8bc');
+
+  const wingY = y + h * 0.52;
+  const wingH = h * 0.22;
+  clayRect(ctx, x + w * 0.08, wingY, w * 0.18, wingH, 5, C.white, '#f4efe6', '#c8c0b4');
+  clayRect(ctx, x + w * 0.74, wingY, w * 0.18, wingH, 5, C.white, '#f4efe6', '#c8c0b4');
+  for (let i = 0; i < 3; i++) {
+    clayRect(ctx, x + w * 0.09 + i * w * 0.055, wingY - 8, w * 0.04, 10, 1.5, C.white, '#efe8dc', '#b8b0a4', 1.6);
+    clayRect(ctx, x + w * 0.76 + i * w * 0.055, wingY - 8, w * 0.04, 10, 1.5, C.white, '#efe8dc', '#b8b0a4', 1.6);
   }
+  keepCannon(ctx, x + w * 0.12, wingY + 8, Math.PI);
+  keepCannon(ctx, x + w * 0.88, wingY + 8, 0);
 
-  box3(ctx, x + 8, plinthTop + 14, w - 16, 10, d + 2, C.marbleLo, C.marble, C.marbleDeep);
-  marble(ctx, x + 8, plinthTop + 14, w - 16, 10, 2);
-  box3(ctx, x + 16, plinthTop + 6, w - 32, 10, d, C.marbleMid, C.marbleHi, C.marbleLo);
-  marble(ctx, x + 16, plinthTop + 6, w - 32, 10, 3);
-  box3(ctx, x + 24, plinthTop - 2, w - 48, 10, d - 1, C.marble, C.marbleHi, C.marbleLo);
-  marble(ctx, x + 24, plinthTop - 2, w - 48, 10, 4);
-  gold(ctx, x + 24, plinthTop - 3, w - 48, 2);
+  const bx = x + w * 0.2;
+  const by = y + h * 0.34;
+  const bw = w * 0.6;
+  const bh = h * 0.4;
+  clayRect(ctx, bx, by, bw, bh, 6, C.white, '#f7f3ea', '#cfc7bb');
+  goldBand(ctx, bx - 2, by, bw + 4, 5);
 
-  box3(ctx, bodyX, bodyY, bodyW, bodyH, d, C.marble, C.marbleHi, C.marbleDeep);
-  marble(ctx, bodyX, bodyY, bodyW, bodyH, 11);
-  cornice(ctx, bodyX, bodyY, bodyW, d);
+  toyWindow(ctx, bx + bw * 0.08, by + bh * 0.18, bw * 0.12, bh * 0.22, 2, 2);
+  toyWindow(ctx, bx + bw * 0.8, by + bh * 0.18, bw * 0.12, bh * 0.22, 2, 2);
+  toyWindow(ctx, bx + bw * 0.08, by + bh * 0.5, bw * 0.12, bh * 0.26, 2, 2);
+  toyWindow(ctx, bx + bw * 0.8, by + bh * 0.5, bw * 0.12, bh * 0.26, 2, 2);
 
-  const winGlow = leak > 0 ? `rgba(255, 60, 70, ${0.35 + Math.sin(time * 9) * 0.2})` : null;
-  const rowY0 = bodyY + bodyH * 0.14;
-  const rowY1 = bodyY + bodyH * 0.48;
-  const winW = bodyW * 0.09;
-  const winH = bodyH * 0.22;
-  const slots = [0.08, 0.2, 0.32, 0.59, 0.71, 0.83];
-  for (let i = 0; i < slots.length; i++) {
-    const wx = bodyX + bodyW * slots[i]!;
-    mullionWindow(ctx, wx, rowY0, winW, winH * 0.9, 2, 2, winGlow);
-    mullionWindow(ctx, wx, rowY1, winW, winH, 2, 3, winGlow);
-    miniPediment(ctx, wx - 1, rowY1, winW + 2);
-  }
+  const doorW = bw * 0.16;
+  woodDoor(ctx, cx - doorW * 0.5, by + bh - bh * 0.42 - 2, doorW, bh * 0.42);
 
-  const doorW = bodyW * 0.13;
-  const doorH = bodyH * 0.42;
-  woodDoor(ctx, bodyX + bodyW * 0.5 - doorW * 0.5, bodyY + bodyH - doorH - 2, doorW, doorH);
-
-  const colW = bodyW * 0.07;
-  const colH = bodyH * 0.78;
-  const colY = bodyY + bodyH - colH;
-  const colXs = [0.34, 0.44, 0.56, 0.66];
+  const colW = bw * 0.08;
+  const colH = bh * 0.72;
+  const colY = by + bh - colH;
+  const colXs = [0.28, 0.4, 0.6, 0.72];
   for (let i = 0; i < colXs.length; i++) {
-    column(ctx, bodyX + bodyW * colXs[i]! - colW * 0.5, colY, colW, colH);
+    toyColumn(ctx, bx + bw * colXs[i]! - colW * 0.5, colY, colW, colH);
   }
 
-  const portL = bodyX + bodyW * 0.3;
-  const portR = bodyX + bodyW * 0.7;
-  const portBase = colY + 6;
-  navyPediment(ctx, portL, portR, portBase, (portL + portR) * 0.5, portBase - h * 0.1, false);
+  const pL = bx + bw * 0.22;
+  const pR = bx + bw * 0.78;
+  const pBase = colY + 4;
+  const pPeak = pBase - h * 0.09;
+  tri(ctx, pL, pBase, cx, pPeak, pR, pBase, C.white, '#d8d0c4');
+  goldBand(ctx, pL - 2, pBase - 2, pR - pL + 4, 4);
+  star5(ctx, cx, (pPeak + pBase) * 0.5 + 1, 8, 3.4);
 
-  const roofL = bodyX - 4;
-  const roofR = bodyX + bodyW + 4;
-  const roofBase = bodyY + 2;
-  navyPediment(ctx, roofL, roofR, roofBase, x + w * 0.5, y + h * 0.05, true);
-  usFlag(ctx, roofR - 6, y + h * 0.02, time, 0.95);
+  const domeY = by + 4;
+  clayOval(ctx, cx, domeY, bw * 0.22, h * 0.12, 0, C.white, '#f4efe6', '#c0b8ac');
+  goldBand(ctx, cx - bw * 0.2, domeY + h * 0.02, bw * 0.4, 4);
+  clayRect(ctx, cx - 4, y + h * 0.08, 8, h * 0.12, 2, C.goldHi, C.gold, C.goldLo, 1.7);
+  clayBall(ctx, cx, y + h * 0.07, 5.5, C.goldHi, C.gold, C.goldLo, 1.6);
+  star5(ctx, cx, y + h * 0.02, 6, 2.5);
+
+  usFlag(ctx, x + w * 0.14, y + h * 0.28, time, 0.85);
+  usFlag(ctx, x + w * 0.86, y + h * 0.28, time + 0.4, 0.85);
 }
 
 function palazzoKeep(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, time: number, leak: number): void {
-  const d = 12;
-  contact(ctx, x + w * 0.52, y + h * 0.97, w * 0.48, h * 0.05);
-  if (leak > 0) {
-    ctx.fillStyle = `rgba(200,16,46,${0.18 + Math.abs(Math.sin(time * 7)) * 0.2})`;
-    ctx.fillRect(x + 6, y + 8, w - 12, h - 16);
-  }
-  box3(ctx, x + 10, y + h * 0.86, w - 20, 14, d, C.marbleLo, C.goldHi, C.goldLo);
-  marble(ctx, x + 10, y + h * 0.86, w - 20, 14, 21);
-  gold(ctx, x + 10, y + h * 0.86, w - 20, 3);
+  const cx = x + w * 0.5;
+  ground(ctx, cx, y + h * 0.95, w * 0.46, h * 0.05);
+  leakRim(ctx, x, y, w, h, time, leak);
+  miniPalm(ctx, x + w * 0.08, y + h * 0.72, time, 0.85);
+  miniPalm(ctx, x + w * 0.92, y + h * 0.72, time + 0.8, 0.85);
 
-  const bx = x + w * 0.12;
-  const by = y + h * 0.32;
-  const bw = w * 0.76;
-  const bh = h * 0.54;
-  box3(ctx, bx, by, bw, bh, d, C.marble, C.goldHi, C.marbleDeep);
-  marble(ctx, bx, by, bw, bh, 22);
-  gold(ctx, bx - 2, by - 2, bw + 4, 6);
-  cornice(ctx, bx, by, bw, d);
+  clayRect(ctx, x + w * 0.1, y + h * 0.84, w * 0.8, h * 0.1, 5, C.goldHi, C.gold, C.goldLo);
+  const bx = x + w * 0.14;
+  const by = y + h * 0.36;
+  const bw = w * 0.72;
+  const bh = h * 0.5;
+  clayRect(ctx, bx, by, bw, bh, 8, C.goldHi, C.gold, C.goldLo);
+  goldBand(ctx, bx - 3, by - 2, bw + 6, 7);
 
-  const archW = bw * 0.14;
+  const archW = bw * 0.13;
   const archH = bh * 0.42;
   for (let i = 0; i < 5; i++) {
-    const ax = bx + bw * 0.08 + i * (bw * 0.17);
-    const ay = by + bh - archH - 4;
-    ctx.fillStyle = C.marbleDeep;
+    const ax = bx + bw * 0.07 + i * (bw * 0.175);
+    const ay = by + bh - archH - 3;
     ctx.beginPath();
     ctx.moveTo(ax, ay + archH);
     ctx.lineTo(ax, ay + archW * 0.55);
     ctx.arc(ax + archW * 0.5, ay + archW * 0.55, archW * 0.5, Math.PI, 0);
     ctx.lineTo(ax + archW, ay + archH);
     ctx.closePath();
-    ctx.fill();
-    const hole = ctx.createLinearGradient(ax, ay, ax + archW, ay + archH);
-    hole.addColorStop(0, '#1a1430');
-    hole.addColorStop(1, '#0a0814');
-    ctx.fillStyle = hole;
-    ctx.beginPath();
-    ctx.moveTo(ax + 3, ay + archH);
-    ctx.lineTo(ax + 3, ay + archW * 0.55);
-    ctx.arc(ax + archW * 0.5, ay + archW * 0.55, archW * 0.5 - 3, Math.PI, 0);
-    ctx.lineTo(ax + archW - 3, ay + archH);
-    ctx.closePath();
-    ctx.fill();
-    gold(ctx, ax + archW * 0.5 - 3, ay + 2, 6, 5);
+    paint(ctx, lin(ctx, ax, ay, ax + archW, ay + archH, '#3a2060', '#120818'), 1.8);
+    clayBall(ctx, ax + archW * 0.5, ay + 4, 3.2, C.goldHi, C.gold, C.goldLo, 1.4);
+  }
+  for (let i = 0; i < 5; i++) {
+    toyWindow(ctx, bx + bw * 0.09 + i * bw * 0.17, by + bh * 0.1, bw * 0.1, bh * 0.2, 2, 2);
   }
 
-  for (let i = 0; i < 6; i++) {
-    mullionWindow(ctx, bx + bw * 0.08 + i * bw * 0.14, by + bh * 0.12, bw * 0.1, bh * 0.22, 2, 2, null);
-  }
-
-  const colW = bw * 0.055;
-  for (let i = 0; i < 6; i++) {
-    column(ctx, bx + bw * (0.07 + i * 0.155), by + bh * 0.28, colW, bh * 0.7);
-  }
-
-  ctx.fillStyle = C.goldLo;
-  ctx.beginPath();
-  ctx.moveTo(bx - 8, by + 8);
-  ctx.lineTo(x + w * 0.5, y + h * 0.06);
-  ctx.lineTo(bx + bw + 8, by + 8);
-  ctx.closePath();
-  ctx.fill();
-  const roof = ctx.createLinearGradient(bx, y, bx + bw, by);
-  roof.addColorStop(0, '#f0d48a');
-  roof.addColorStop(0.5, C.gold);
-  roof.addColorStop(1, C.goldLo);
-  ctx.fillStyle = roof;
-  ctx.beginPath();
-  ctx.moveTo(bx - 6, by + 6);
-  ctx.lineTo(x + w * 0.5, y + h * 0.08);
-  ctx.lineTo(bx + bw + 6, by + 6);
-  ctx.closePath();
-  ctx.fill();
-  goldStroke(ctx, 3.2);
-  ctx.stroke();
-  star5(ctx, x + w * 0.5, y + h * 0.2, 10, 4.2);
-  usFlag(ctx, bx + bw - 2, y + h * 0.05, time, 0.9);
+  tri(ctx, bx - 10, by + 8, cx, y + h * 0.08, bx + bw + 10, by + 8, C.goldHi, C.goldLo);
+  goldBand(ctx, bx - 6, by + 4, bw + 12, 5);
+  star5(ctx, cx, y + h * 0.2, 10, 4.2);
+  usFlag(ctx, bx + bw - 4, y + h * 0.1, time, 0.9);
 }
 
 function borderKeep(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, time: number, leak: number): void {
-  const d = 10;
-  contact(ctx, x + w * 0.5, y + h * 0.96, w * 0.46, h * 0.05);
-  if (leak > 0) {
-    ctx.fillStyle = `rgba(180,40,20,${0.16 + Math.abs(Math.sin(time * 6)) * 0.18})`;
-    ctx.fillRect(x + 8, y + 10, w - 16, h - 18);
-  }
-  box3(ctx, x + 12, y + h * 0.84, w - 24, 16, d, C.sand, C.sandHi, C.sandLo);
-  bevelRect(ctx, x + 12, y + h * 0.84, w - 24, 16, C.sand, C.sandHi, C.sandLo, 0);
+  const cx = x + w * 0.5;
+  ground(ctx, cx, y + h * 0.95, w * 0.44, h * 0.05);
+  leakRim(ctx, x, y, w, h, time, leak);
+  clayRect(ctx, x + w * 0.1, y + h * 0.84, w * 0.8, h * 0.1, 4, C.sandHi, C.sand, C.sandLo);
 
-  const wallX = x + w * 0.16;
-  const wallY = y + h * 0.3;
-  const wallW = w * 0.68;
-  const wallH = h * 0.54;
-  box3(ctx, wallX, wallY, wallW, wallH, d, C.sand, C.sandHi, C.sandLo);
-  marble(ctx, wallX, wallY, wallW, wallH, 40);
-  ctx.save();
-  ctx.globalAlpha = 0.55;
-  ctx.fillStyle = C.sand;
-  ctx.fillRect(wallX, wallY, wallW, wallH);
-  ctx.restore();
+  const wallX = x + w * 0.18;
+  const wallY = y + h * 0.34;
+  const wallW = w * 0.64;
+  const wallH = h * 0.52;
+  clayRect(ctx, wallX, wallY, wallW, wallH, 4, C.sandHi, C.sand, C.sandLo);
   ctx.fillStyle = C.sandLo;
   for (let row = 0; row < 6; row++) {
-    const off = row % 2 === 0 ? 0 : 8;
+    const off = row % 2 === 0 ? 0 : 7;
     for (let col = 0; col < 8; col++) {
-      ctx.fillRect(wallX + 4 + off + col * 14, wallY + 8 + row * 12, 12, 3);
+      ctx.fillRect(wallX + 6 + off + col * 14, wallY + 10 + row * 12, 11, 2.5);
     }
   }
 
   const tw = w * 0.18;
-  const th = h * 0.62;
+  const th = h * 0.58;
   for (const side of [0.08, 0.74]) {
     const tx = x + w * side;
-    const ty = y + h * 0.22;
-    box3(ctx, tx, ty, tw, th, d, C.sandHi, C.sandHi, C.sandLo);
-    bevelRect(ctx, tx, ty, tw, th, C.sand, C.sandHi, C.sandLo, 0);
-    mullionWindow(ctx, tx + tw * 0.28, ty + th * 0.18, tw * 0.44, th * 0.16, 2, 2, null);
-    mullionWindow(ctx, tx + tw * 0.28, ty + th * 0.48, tw * 0.44, th * 0.16, 2, 2, null);
+    const ty = y + h * 0.24;
+    clayRect(ctx, tx, ty, tw, th, 4, C.sandHi, C.sand, C.sandLo);
+    toyWindow(ctx, tx + tw * 0.28, ty + th * 0.18, tw * 0.44, th * 0.14, 2, 2);
+    toyWindow(ctx, tx + tw * 0.28, ty + th * 0.48, tw * 0.44, th * 0.14, 2, 2);
+    for (let i = 0; i < 3; i++) {
+      clayRect(ctx, tx + 3 + i * (tw / 3), ty - 8, tw * 0.22, 10, 1.5, C.steelHi, C.steel, C.steelLo, 1.6);
+    }
   }
 
-  const merlon = 10;
-  const topY = wallY - 8;
-  gold(ctx, wallX - 2, topY + 8, wallW + 4, 3);
-  for (let i = 0; i < 9; i++) {
-    const mx = wallX + i * (wallW / 8) - merlon * 0.3;
-    box3(ctx, mx, topY, merlon, 14, 5, C.steel, C.steelHi, C.steelLo);
-    bevelRect(ctx, mx, topY, merlon, 14, C.steel, C.steelHi, C.steelLo, 1);
+  goldBand(ctx, wallX - 2, wallY - 2, wallW + 4, 4);
+  for (let i = 0; i < 8; i++) {
+    clayRect(ctx, wallX + i * (wallW / 8) + 2, wallY - 12, 9, 14, 1.5, C.steelHi, C.steel, C.steelLo, 1.6);
   }
-  woodDoor(ctx, wallX + wallW * 0.5 - 12, wallY + wallH - 36, 24, 34);
-  gold(ctx, wallX + wallW * 0.5 - 16, wallY + wallH - 40, 32, 5);
-  usFlag(ctx, x + w * 0.82, y + h * 0.08, time, 1);
-  ctx.fillStyle = C.steelLo;
-  ctx.fillRect(x + w * 0.5 - 1, y + h * 0.08, 3, wallY - y - h * 0.08);
-  gold(ctx, x + w * 0.5 - 2, y + h * 0.08, 5, 4);
+  woodDoor(ctx, cx - 12, wallY + wallH - 36, 24, 34);
+  usFlag(ctx, x + w * 0.82, y + h * 0.1, time, 1);
+  clayRect(ctx, cx - 1.5, y + h * 0.1, 3, wallY - y - h * 0.1, 1, C.goldHi, C.gold, C.goldLo, 1.5);
 }
 
 function avenueKeep(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, time: number, leak: number): void {
-  contact(ctx, x + w * 0.52, y + h * 0.97, w * 0.4, h * 0.045);
-  if (leak > 0) {
-    ctx.fillStyle = `rgba(200,16,46,${0.14 + Math.abs(Math.sin(time * 8)) * 0.2})`;
-    ctx.fillRect(x + 20, y + 6, w - 40, h - 12);
-  }
+  const cx = x + w * 0.5;
+  ground(ctx, cx, y + h * 0.96, w * 0.38, h * 0.045);
+  leakRim(ctx, x, y, w, h, time, leak);
   const tiers = [
-    { t: 0.72, h: 0.22, y: 0.74 },
-    { t: 0.58, h: 0.2, y: 0.54 },
-    { t: 0.44, h: 0.2, y: 0.34 },
-    { t: 0.3, h: 0.16, y: 0.18 },
+    { t: 0.7, hh: 0.2, yy: 0.74 },
+    { t: 0.56, hh: 0.2, yy: 0.54 },
+    { t: 0.42, hh: 0.2, yy: 0.34 },
+    { t: 0.28, hh: 0.16, yy: 0.18 },
   ] as const;
-  const d = 9;
   for (let i = 0; i < tiers.length; i++) {
     const t = tiers[i]!;
     const tw = w * t.t;
-    const th = h * t.h;
+    const th = h * t.hh;
     const tx = x + (w - tw) * 0.5;
-    const ty = y + h * t.y;
-    box3(ctx, tx, ty, tw, th, d, C.gold, C.goldHi, C.goldLo);
-    gold(ctx, tx, ty, tw, th);
-    ctx.fillStyle = C.goldDeep;
-    ctx.fillRect(tx + tw - 3, ty + 2, 3, th - 2);
+    const ty = y + h * t.yy;
+    clayRect(ctx, tx, ty, tw, th, 5, C.goldHi, C.gold, C.goldLo);
     const cols = 4 + i;
     const rows = 3;
-    const pad = 6;
+    const pad = 7;
     const gw = (tw - pad * 2) / cols;
     const gh = (th - pad * 2) / rows;
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        const gx = tx + pad + c * gw + 2;
-        const gy = ty + pad + r * gh + 2;
-        ctx.fillStyle = leak > 0 && (r + c + Math.floor(time * 4)) % 5 === 0 ? '#5a1020' : C.glass;
-        ctx.fillRect(gx, gy, gw - 4, gh - 4);
-        ctx.fillStyle = 'rgba(180,210,255,0.12)';
-        ctx.fillRect(gx, gy, (gw - 4) * 0.4, (gh - 4) * 0.35);
+        clayRect(
+          ctx,
+          tx + pad + c * gw + 1.5,
+          ty + pad + r * gh + 1.5,
+          gw - 3.5,
+          gh - 3.5,
+          1.6,
+          '#6aa0d0',
+          '#1a3058',
+          '#0a1428',
+          1.3,
+        );
       }
     }
   }
-  const lobbyW = w * 0.28;
-  const lobbyX = x + (w - lobbyW) * 0.5;
-  const lobbyY = y + h * 0.86;
-  box3(ctx, lobbyX, lobbyY, lobbyW, h * 0.1, d, C.ink, C.goldHi, C.goldLo);
-  gold(ctx, lobbyX, lobbyY, lobbyW, 3);
-  ctx.fillStyle = C.navyDeep;
-  ctx.fillRect(lobbyX + lobbyW * 0.35, lobbyY + 6, lobbyW * 0.3, h * 0.08);
-  const capW = w * 0.22;
-  const capX = x + (w - capW) * 0.5;
-  const capY = y + h * 0.08;
-  box3(ctx, capX, capY, capW, h * 0.1, d, C.gold, C.goldHi, C.goldLo);
-  gold(ctx, capX, capY, capW, h * 0.1);
-  star5(ctx, x + w * 0.5, capY - 2, 8, 3.4);
-  ctx.fillStyle = C.goldLo;
-  ctx.beginPath();
-  ctx.moveTo(x + w * 0.5 - 4, capY);
-  ctx.lineTo(x + w * 0.5, y + 2);
-  ctx.lineTo(x + w * 0.5 + 4, capY);
-  ctx.closePath();
-  ctx.fill();
-  gold(ctx, x + w * 0.5 - 2, y + 2, 4, capY - y);
-  usFlag(ctx, capX + capW - 2, capY - 10, time, 0.85);
+  const lobbyW = w * 0.26;
+  clayRect(ctx, cx - lobbyW * 0.5, y + h * 0.86, lobbyW, h * 0.1, 4, C.goldHi, C.gold, C.goldLo);
+  clayRect(ctx, cx - lobbyW * 0.12, y + h * 0.9, lobbyW * 0.24, h * 0.07, 2, C.blueHi, C.blue, INK, 1.6);
+  const capW = w * 0.2;
+  clayRect(ctx, cx - capW * 0.5, y + h * 0.08, capW, h * 0.1, 4, C.goldHi, C.gold, C.goldLo);
+  star5(ctx, cx, y + h * 0.06, 8, 3.4);
+  tri(ctx, cx - 5, y + h * 0.08, cx, y + 2, cx + 5, y + h * 0.08, C.goldHi, C.goldLo, 1.6);
+  usFlag(ctx, cx + capW * 0.45, y + h * 0.02, time, 0.85);
 }
 
 export function drawKeep(
@@ -751,268 +620,131 @@ export function drawKeep(
   ctx.restore();
 }
 
-function klieg(ctx: CanvasRenderingContext2D, x: number, y: number, ang: number, on: number): void {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(ang);
-  gold(ctx, -4, -3, 8, 6);
-  ctx.fillStyle = C.ink;
-  ctx.beginPath();
-  ctx.moveTo(2, -5);
-  ctx.lineTo(10, -8);
-  ctx.lineTo(10, 8);
-  ctx.lineTo(2, 5);
-  ctx.closePath();
-  ctx.fill();
-  const beam = ctx.createLinearGradient(10, 0, 42, 0);
-  beam.addColorStop(0, `rgba(255, 248, 210, ${0.42 * on})`);
-  beam.addColorStop(1, 'rgba(255, 248, 210, 0)');
-  ctx.fillStyle = beam;
-  ctx.beginPath();
-  ctx.moveTo(10, -6);
-  ctx.lineTo(44, -16);
-  ctx.lineTo(44, 16);
-  ctx.lineTo(10, 6);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = `rgba(255,255,230,${0.55 * on})`;
-  ctx.beginPath();
-  ctx.arc(8, 0, 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
 function truthArt(ctx: CanvasRenderingContext2D, tier: number, angle: number, time: number, cooldown: number): void {
   const t = Math.max(0, Math.min(2, Math.floor(tier)));
-  const h = 30 + t * 9;
-  const pulse = 0.45 + Math.sin(time * 10) * 0.2 + (cooldown < 0.08 ? 0.3 : 0);
-  contact(ctx, 1, 18, 16, 6);
-  const glow = ctx.createRadialGradient(0, -4, 2, 0, -4, 28 + t * 6);
-  glow.addColorStop(0, `rgba(60, 240, 255, ${pulse * 0.45})`);
-  glow.addColorStop(1, 'rgba(60, 240, 255, 0)');
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(0, -4, 28 + t * 6, 0, Math.PI * 2);
-  ctx.fill();
-
-  box3(ctx, -16, 8, 32, 10, 6, C.gold, C.goldHi, C.goldLo);
-  gold(ctx, -16, 8, 32, 10);
-  marble(ctx, -10, 8 - h, 20, h, 8);
-  box3(ctx, -10, 8 - h, 20, h, 6, C.marble, C.marbleHi, C.marbleDeep);
-  marble(ctx, -10, 8 - h, 20, h, 8);
-  ctx.beginPath();
-  ctx.moveTo(-8, 8 - h);
-  ctx.lineTo(0, 8 - h - 14 - t * 4);
-  ctx.lineTo(8, 8 - h);
-  ctx.closePath();
-  const tip = ctx.createLinearGradient(-8, 8 - h - 14, 8, 8 - h);
-  tip.addColorStop(0, C.cyanHi);
-  tip.addColorStop(0.5, C.navy);
-  tip.addColorStop(1, C.navyDeep);
-  ctx.fillStyle = tip;
-  ctx.fill();
-  goldStroke(ctx, 1.6);
-  ctx.stroke();
-
+  const bodyH = 28 + t * 8;
+  const dishR = 11 + t * 3;
+  ground(ctx, 1, 18, 16, 5.5);
+  clayRect(ctx, -16, 8, 32, 12, 4, C.stoneHi, C.stone, C.stoneLo);
+  clayRect(ctx, -11, 8 - bodyH, 22, bodyH, 5, C.stoneHi, C.stone, C.stoneLo);
+  toyWindow(ctx, -5, 8 - bodyH * 0.55, 10, 8, 2, 1);
   const rings = 1 + t;
   for (let i = 0; i < rings; i++) {
-    const ry = 4 - i * (h / (rings + 1));
-    gold(ctx, -12, ry, 24, 3);
+    goldBand(ctx, -13, 4 - i * (bodyH / (rings + 0.6)), 26, 3.4);
   }
-  plaque(ctx, -12, 2, 24, 9, 'FACT', C.navyDeep, C.cyanHi, 7);
+  plaque(ctx, -11, 11, 22, 8, 'FACT', 6);
+  usFlag(ctx, 12, 8 - bodyH - 4, time, 0.55);
 
-  klieg(ctx, -18, -2, -0.55 + Math.sin(time * 2) * 0.08, pulse);
-  klieg(ctx, 18, -2, Math.PI + 0.55 - Math.sin(time * 2) * 0.08, pulse);
+  ctx.save();
+  ctx.translate(0, 8 - bodyH - 2);
+  ctx.rotate(angle);
+  clayRect(ctx, -3, -3, 8, 6, 2, C.steelHi, C.steel, C.steelLo, 1.6);
+  clayOval(ctx, 10 + t, 0, dishR, dishR * 0.72, 0, C.blueHi, C.blue, C.blueLo, 2);
+  clayOval(ctx, 8 + t, 0, dishR * 0.55, dishR * 0.4, 0, '#8ec8f8', C.blueHi, C.blueLo, 1.5);
+  clayBall(ctx, 6, 0, 2.6, C.redHi, C.red, C.redLo, 1.4);
+  const pulse = 0.4 + Math.sin(time * 12) * 0.2 + (cooldown < 0.08 ? 0.35 : 0);
+  const beam = ctx.createLinearGradient(10, 0, 36 + t * 4, 0);
+  beam.addColorStop(0, `rgba(200,16,46,${pulse})`);
+  beam.addColorStop(1, 'rgba(200,16,46,0)');
+  ctx.fillStyle = beam;
+  ctx.beginPath();
+  ctx.moveTo(10, -2.2);
+  ctx.lineTo(38 + t * 4, -7);
+  ctx.lineTo(38 + t * 4, 7);
+  ctx.lineTo(10, 2.2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function trebArt(ctx: CanvasRenderingContext2D, tier: number, angle: number, time: number, cooldown: number): void {
+  const t = Math.max(0, Math.min(2, Math.floor(tier)));
+  const period = 2.1;
+  const u = Math.max(0, Math.min(1, cooldown / period));
+  const recoil = u * u * (8 + t);
+  ground(ctx, 2, 18, 18, 6);
+  clayRect(ctx, -20, 6, 40, 14, 5, C.woodHi, C.wood, C.woodLo);
+  goldBand(ctx, -22, 16, 44, 4);
+  wheel(ctx, -14, 18, 7 + t * 0.6);
+  wheel(ctx, 14, 18, 7 + t * 0.6);
+  usFlag(ctx, -18, -8, time, 0.5);
+
   ctx.save();
   ctx.rotate(angle);
-  ctx.strokeStyle = C.cyanHi;
-  ctx.lineWidth = 2.4;
-  ctx.beginPath();
-  ctx.moveTo(0, -6);
-  ctx.lineTo(16 + t * 3, 0);
-  ctx.stroke();
-  ctx.fillStyle = C.cyan;
-  ctx.beginPath();
-  ctx.arc(16 + t * 3, 0, 2.4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
-function trebArt(ctx: CanvasRenderingContext2D, tier: number, _angle: number, time: number, cooldown: number): void {
-  const t = Math.max(0, Math.min(2, Math.floor(tier)));
-  const period = 1 / 0.48;
-  const u = 1 - Math.min(1, cooldown / period);
-  const arm = -0.92 + u * 2.42;
-  contact(ctx, 2, 18, 20, 7);
-  box3(ctx, -20, 8, 40, 12, 7, C.wood, C.woodHi, C.woodLo);
-  bevelRect(ctx, -20, 8, 40, 12, C.wood, C.woodHi, C.woodLo, 2);
-  gold(ctx, -22, 16, 44, 5);
-  ctx.fillStyle = C.magared;
-  ctx.beginPath();
-  ctx.moveTo(-12, 2);
-  ctx.lineTo(12, 2);
-  ctx.lineTo(8, 10);
-  ctx.lineTo(-8, 10);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = '#f4f1e8';
-  ctx.beginPath();
-  ctx.moveTo(-7, 2);
-  ctx.lineTo(7, 2);
-  ctx.lineTo(5, 5);
-  ctx.lineTo(-5, 5);
-  ctx.closePath();
-  ctx.fill();
-  gold(ctx, -3, -1, 6, 3);
-  for (const s of [-1, 1]) {
-    ctx.fillStyle = C.ink;
-    ctx.beginPath();
-    ctx.arc(s * 14, 18, 5 + t, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = C.goldMid;
-    ctx.beginPath();
-    ctx.arc(s * 14, 18, 2.2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.fillStyle = C.woodLo;
-  ctx.fillRect(-3, -6, 6, 18);
-  gold(ctx, -4, -8, 8, 4);
-  ctx.save();
-  ctx.rotate(arm);
-  ctx.fillStyle = C.goldMid;
-  ctx.fillRect(-2, -4, 5, 28);
-  gold(ctx, -2, -4, 5, 28);
-  ctx.strokeStyle = C.ink;
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.moveTo(1, 24);
-  ctx.quadraticCurveTo(14, 28 + Math.sin(time) * 0.5, 22, 18);
-  ctx.stroke();
-  if (u < 0.9) {
-    ctx.fillStyle = C.gold;
-    ctx.beginPath();
-    ctx.arc(24, 16, 7 + t, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = C.goldLo;
-    ctx.beginPath();
-    ctx.arc(26, 18, 7 + t, 0.2, Math.PI * 1.1);
-    ctx.fill();
-    ctx.fillStyle = C.ink;
-    ctx.font = '800 6px Impact, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('TAX', 24, 17);
-  }
-  ctx.restore();
-}
-
-function brickBond(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(x, y, w, h);
-  ctx.clip();
-  ctx.fillStyle = C.mortar;
-  ctx.fillRect(x, y, w, h);
-  const bh = 5;
-  const bw = 9;
-  for (let row = 0; row < Math.ceil(h / bh) + 1; row++) {
-    const off = row % 2 === 0 ? 0 : bw * 0.5;
-    for (let col = -1; col < Math.ceil(w / bw) + 1; col++) {
-      const bx = x + off + col * bw;
-      const by = y + row * bh;
-      bevelRect(ctx, bx + 0.5, by + 0.4, bw - 1.2, bh - 0.8, C.brick, C.brickHi, C.brickLo, 0.5);
-    }
-  }
+  ctx.translate(-recoil, 0);
+  const len = 30 + t * 4;
+  clayRect(ctx, -6, -8, len, 16, 7, C.blueHi, C.blue, C.blueLo);
+  goldBand(ctx, 4, -9, 4, 18);
+  goldBand(ctx, 14, -9, 4, 18);
+  goldBand(ctx, len - 10, -10, 7, 20);
+  clayOval(ctx, len - 2, 0, 5, 8, 0, C.goldHi, C.gold, C.goldLo, 1.7);
+  clayBall(ctx, -4, 0, 6, C.blueHi, C.blue, C.blueLo, 1.8);
   ctx.restore();
 }
 
 function brickArt(ctx: CanvasRenderingContext2D, tier: number, angle: number, time: number, cooldown: number): void {
   const t = Math.max(0, Math.min(2, Math.floor(tier)));
-  contact(ctx, 1, 16, 18, 6);
-  box3(ctx, -20, -6, 40, 24, 7, C.brick, C.brickHi, C.brickLo);
-  brickBond(ctx, -20, -6, 40, 24);
-  gold(ctx, -20, -8, 40, 4);
-  gold(ctx, -20, 14, 40, 4);
-  if (t >= 1) gold(ctx, -20, 4, 40, 3);
-  if (t >= 2) {
-    gold(ctx, -22, -10, 44, 3);
-    star5(ctx, 0, -14, 5, 2);
-  }
-  const kick = cooldown < 0.2 ? Math.sin(time * 40) * 1.2 : 0;
+  const recoil = Math.max(0, Math.min(1, cooldown * 1.8)) * 5;
+  const glow = 0.55 + Math.sin(time * 6) * 0.2;
+  ground(ctx, 1, 17, 17, 5.5);
+  clayRect(ctx, -18, 8, 36, 12, 4, C.woodHi, C.wood, C.woodLo);
+  usFlag(ctx, -16, -6, time, 0.5);
+  clayRect(ctx, -16, -8, 32, 20, 4, C.redHi, C.red, C.redLo);
+  goldBand(ctx, -16, -9, 32, 3.5);
+  goldBand(ctx, -16, 9, 32, 3.5);
+  if (t >= 1) goldBand(ctx, -16, 1, 32, 3);
+  if (t >= 2) star5(ctx, 0, -14, 5, 2.1);
+  magaBrick(ctx, -10, -4, 20, 10, glow);
   ctx.save();
   ctx.rotate(angle);
-  ctx.translate(kick, 0);
-  box3(ctx, 8, -5, 22 + t * 3, 10, 4, C.ink, C.steelHi, C.steelLo);
-  bevelRect(ctx, 8, -5, 22 + t * 3, 10, '#2a1a12', C.steel, C.ink, 1);
-  gold(ctx, 28 + t * 3, -7, 8, 14);
-  ctx.fillStyle = cooldown < 0.12 ? C.goldHi : C.ink;
-  ctx.fillRect(30 + t * 3, -3, 4, 6);
+  ctx.translate(-recoil, 0);
+  clayRect(ctx, 6, -6, 22 + t * 3, 12, 4, C.redHi, C.red, C.redLo);
+  goldBand(ctx, 26 + t * 3, -8, 7, 16);
+  magaBrick(ctx, 10, -4, 14, 8, glow + (cooldown < 0.15 ? 0.4 : 0));
   ctx.restore();
-  plaque(ctx, -14, 18, 28, 8, 'WALL', C.navyDeep, '#f4f1e8', 7);
 }
 
 function deskArt(ctx: CanvasRenderingContext2D, tier: number, _angle: number, time: number, _cooldown: number): void {
   const t = Math.max(0, Math.min(2, Math.floor(tier)));
-  contact(ctx, 2, 16, 20, 6);
-  const aura = ctx.createRadialGradient(0, 0, 8, 0, 0, 28 + t * 4);
-  aura.addColorStop(0, `rgba(230, 195, 92, ${0.18 + Math.sin(time * 4) * 0.08})`);
-  aura.addColorStop(1, 'rgba(230, 195, 92, 0)');
+  ground(ctx, 2, 17, 18, 5.5);
+  const aura = ctx.createRadialGradient(0, 0, 6, 0, 0, 28 + t * 4);
+  aura.addColorStop(0, `rgba(230,195,92,${0.22 + Math.sin(time * 4) * 0.08})`);
+  aura.addColorStop(1, 'rgba(230,195,92,0)');
   ctx.fillStyle = aura;
   ctx.beginPath();
   ctx.arc(0, 0, 28 + t * 4, 0, Math.PI * 2);
   ctx.fill();
 
-  box3(ctx, -24, -2, 48, 18, 8, C.wood, C.woodHi, C.woodLo);
-  const top = ctx.createLinearGradient(-24, -8, 24, 4);
-  top.addColorStop(0, C.woodHi);
-  top.addColorStop(0.4, C.wood);
-  top.addColorStop(1, C.woodLo);
-  ctx.fillStyle = top;
-  ctx.beginPath();
-  ctx.moveTo(-22, -8);
-  ctx.lineTo(22, -8);
-  ctx.lineTo(26, -2);
-  ctx.lineTo(-26, -2);
-  ctx.closePath();
-  ctx.fill();
-  gold(ctx, -24, -10, 48, 3);
-  gold(ctx, -8, 2, 6, 8);
-  gold(ctx, 4, 2, 6, 8);
-  ctx.fillStyle = C.woodLo;
-  ctx.fillRect(-20, 2, 12, 10);
-  ctx.fillRect(8, 2, 12, 10);
+  clayRect(ctx, -20, -4, 40, 22, 5, C.stoneHi, C.stone, C.stoneLo);
+  clayRect(ctx, -22, -10, 44, 10, 3, C.goldHi, C.gold, C.goldLo);
+  goldBand(ctx, -8, -2, 5, 8);
+  goldBand(ctx, 3, -2, 5, 8);
+  clayRect(ctx, -16, 4, 10, 10, 2, C.goldHi, C.gold, C.goldLo, 1.6);
+  clayRect(ctx, 6, 4, 10, 10, 2, C.goldHi, C.gold, C.goldLo, 1.6);
 
-  gold(ctx, -18, -16, 5, 10);
-  ctx.fillStyle = '#1f6b46';
-  ctx.beginPath();
-  ctx.ellipse(-15.5, -20, 7, 5, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = 'rgba(180, 255, 210, 0.25)';
-  ctx.beginPath();
-  ctx.ellipse(-17, -21, 3, 2, 0, 0, Math.PI * 2);
-  ctx.fill();
-  const lamp = ctx.createRadialGradient(-15, -20, 0, -15, -20, 16);
-  lamp.addColorStop(0, 'rgba(255, 230, 140, 0.35)');
-  lamp.addColorStop(1, 'rgba(255, 230, 140, 0)');
-  ctx.fillStyle = lamp;
-  ctx.beginPath();
-  ctx.arc(-15, -12, 14, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.save();
+  ctx.translate(-12, -12);
+  ctx.rotate(-0.35);
+  clayRect(ctx, 0, -3, 16, 6, 2, C.steelHi, C.steel, C.steelLo, 1.6);
+  ctx.restore();
+  ctx.save();
+  ctx.translate(12, -12);
+  ctx.rotate(0.35);
+  clayRect(ctx, 0, -3, 16, 6, 2, C.steelHi, C.steel, C.steelLo, 1.6);
+  ctx.restore();
 
+  usFlag(ctx, 16, -18, time, 0.5);
   for (let i = 0; i < 3 + t; i++) {
     const a = time * 1.5 + i * 2.1;
     ctx.save();
-    ctx.translate(Math.cos(a) * (16 + t * 2), Math.sin(a) * 8 - 10);
+    ctx.translate(Math.cos(a) * (15 + t * 2), Math.sin(a) * 7 - 12);
     ctx.rotate(a);
-    ctx.fillStyle = '#f7f1d8';
-    ctx.fillRect(-5, -3, 10, 7);
-    ctx.fillStyle = C.goldLo;
-    ctx.fillRect(-5, -3, 10, 1);
-    ctx.fillStyle = C.navy;
-    ctx.fillRect(-3, -1, 6, 1);
+    clayRect(ctx, -5, -3, 10, 7, 1.5, C.white, '#f0e8d0', '#d0c4a8', 1.4);
+    ctx.fillStyle = C.blue;
+    ctx.fillRect(-3, -1, 6, 1.2);
     ctx.restore();
   }
-  plaque(ctx, -10, 16, 20, 8, 'EO', C.navyDeep, C.goldHi, 7);
+  plaque(ctx, -10, 16, 20, 8, 'EO', 7);
 }
 
 export function drawTowerArt(
@@ -1033,208 +765,192 @@ export function drawTowerArt(
   ctx.restore();
 }
 
-function alienArt(ctx: CanvasRenderingContext2D, angle: number, bob: number, time: number): void {
-  ctx.rotate(angle);
-  contact(ctx, 1, 16, 12, 4.5);
-  ctx.translate(0, Math.sin(bob) * 1.2);
-  ctx.fillStyle = C.magared;
-  ctx.beginPath();
-  ctx.ellipse(1, 3, 13, 9, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#7a0c1c';
-  ctx.beginPath();
-  ctx.ellipse(4, 5, 11, 7.5, 0.1, 0, Math.PI * 2);
-  ctx.fill();
-  const body = ctx.createLinearGradient(-12, -8, 12, 10);
-  body.addColorStop(0, '#ff4a5a');
-  body.addColorStop(0.35, C.magared);
-  body.addColorStop(1, '#6a0814');
-  ctx.fillStyle = body;
-  ctx.beginPath();
-  ctx.ellipse(0, 0, 12, 14, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = 'rgba(255,220,220,0.35)';
-  ctx.beginPath();
-  ctx.ellipse(-4, -5, 5, 6, -0.3, 0, Math.PI * 2);
-  ctx.fill();
+function alienArt(ctx: CanvasRenderingContext2D, angle: number, bob: number, _time: number): void {
+  ctx.rotate(angle * 0.35);
+  const walk = Math.sin(bob) * 0.45;
+  ground(ctx, 1, 14, 10, 3.5);
+  ctx.save();
+  ctx.translate(-5, 10);
+  ctx.rotate(-0.25 + walk);
+  clayOval(ctx, 0, 0, 3.2, 5.5, 0.15, C.oceanHi, C.ocean, C.oceanLo, 1.6);
+  ctx.restore();
+  ctx.save();
+  ctx.translate(5, 10);
+  ctx.rotate(0.25 - walk);
+  clayOval(ctx, 0, 0, 3.2, 5.5, -0.15, C.oceanHi, C.ocean, C.oceanLo, 1.6);
+  ctx.restore();
 
-  gold(ctx, -11, 4, 22, 5);
-  star5(ctx, 0, 6.5, 5.2, 2.2);
+  clayBall(ctx, 0, -1, 12.5, C.oceanHi, C.ocean, C.oceanLo, 2);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(0, -1, 12.5, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = C.land;
+  ctx.beginPath();
+  ctx.ellipse(-4, -4, 5.5, 3.8, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(5, 1, 4.2, 3.2, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(-1, 6, 4.8, 2.6, 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = C.landLo;
+  ctx.beginPath();
+  ctx.ellipse(-3, -3, 3.2, 2.2, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  ctx.beginPath();
+  ctx.arc(0, -1, 12.5, 0, Math.PI * 2);
+  ink(ctx, 2);
+  ctx.stroke();
 
-  const visor = ctx.createLinearGradient(-8, -10, 8, 2);
-  visor.addColorStop(0, 'rgba(180, 255, 240, 0.55)');
-  visor.addColorStop(0.4, 'rgba(40, 80, 90, 0.55)');
-  visor.addColorStop(1, 'rgba(10, 20, 24, 0.7)');
-  ctx.fillStyle = visor;
+  ctx.fillStyle = INK;
   ctx.beginPath();
-  ctx.ellipse(0, -3, 9, 6.5, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = C.ink;
-  ctx.beginPath();
-  ctx.ellipse(-3.4, -3.2, 2.4, 3.2, -0.2, 0, Math.PI * 2);
+  ctx.ellipse(-3.4, -3, 1.7, 2.2, -0.15, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.ellipse(3.4, -3.2, 2.4, 3.2, 0.2, 0, Math.PI * 2);
+  ctx.ellipse(3.4, -3, 1.7, 2.2, 0.15, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = C.cyanHi;
+  ctx.fillStyle = C.white;
   ctx.beginPath();
-  ctx.arc(-4.2, -4.2, 0.8, 0, Math.PI * 2);
+  ctx.arc(-4, -3.8, 0.55, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(2.6, -4.2, 0.8, 0, Math.PI * 2);
+  ctx.arc(2.8, -3.8, 0.55, 0, Math.PI * 2);
   ctx.fill();
+  ink(ctx, 1.5);
+  ctx.beginPath();
+  ctx.moveTo(-3.6, -6.2);
+  ctx.lineTo(-1.2, -5.2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(3.6, -6.2);
+  ctx.lineTo(1.2, -5.2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 1.5, 3.2, 0.25, Math.PI - 0.25);
+  ctx.stroke();
 
-  ctx.fillStyle = '#9dffb0';
-  ctx.beginPath();
-  ctx.moveTo(-5.5, -13);
-  ctx.lineTo(-7.2, -21);
-  ctx.lineTo(-4.2, -13.5);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = C.gold;
-  ctx.beginPath();
-  ctx.arc(-7.4, -22.2, 2.3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = `rgba(157,255,176,${0.45 + Math.sin(time * 8) * 0.3})`;
-  ctx.beginPath();
-  ctx.arc(-7.4, -22.2, 1.1, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = '#9dffb0';
-  ctx.beginPath();
-  ctx.moveTo(5.5, -13);
-  ctx.lineTo(7.2, -21);
-  ctx.lineTo(4.2, -13.5);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = C.gold;
-  ctx.beginPath();
-  ctx.arc(7.4, -22.2, 2.3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = `rgba(157,255,176,${0.45 + Math.sin(time * 8 + 1) * 0.3})`;
-  ctx.beginPath();
-  ctx.arc(7.4, -22.2, 1.1, 0, Math.PI * 2);
-  ctx.fill();
+  clayRect(ctx, -7, -16, 14, 4, 1.5, C.goldHi, C.gold, C.goldLo, 1.6);
+  tri(ctx, -6, -16, -4, -21, -2, -16, C.goldHi, C.goldLo, 1.4);
+  tri(ctx, 2, -16, 4, -21, 6, -16, C.goldHi, C.goldLo, 1.4);
+  tri(ctx, -2, -16, 0, -22, 2, -16, C.goldHi, C.goldLo, 1.4);
+  clayBall(ctx, 0, -16.5, 1.6, C.redHi, C.red, C.redLo, 1.2);
 }
 
-function droneArt(ctx: CanvasRenderingContext2D, _angle: number, bob: number, time: number): void {
-  const spin = bob * 14;
-  contact(ctx, 0, 14, 14, 4);
-  ctx.translate(0, Math.sin(bob) * 2);
-  const chrome = ctx.createLinearGradient(-16, -8, 16, 8);
-  chrome.addColorStop(0, C.steelHi);
-  chrome.addColorStop(0.35, '#3a4454');
-  chrome.addColorStop(0.7, '#1a222e');
-  chrome.addColorStop(1, '#0c1016');
-  box3(ctx, -15, -7, 30, 14, 5, '#2a3344', C.steelHi, C.ink);
-  ctx.fillStyle = chrome;
-  rr(ctx, -15, -7, 30, 14, 4);
-  ctx.fill();
-  ctx.fillStyle = C.magared;
-  ctx.fillRect(-11, -3, 22, 7);
-  ctx.fillStyle = '#fff';
-  ctx.font = '800 6px Impact, sans-serif';
+function droneArt(ctx: CanvasRenderingContext2D, angle: number, bob: number, time: number): void {
+  ctx.rotate(angle * 0.15);
+  ctx.translate(0, Math.sin(bob) * 1.4);
+  const spin = time * 10;
+  ground(ctx, 0, 14, 11, 3.2);
+  ctx.strokeStyle = C.steel;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.ellipse(0, 8, 12, 3.2, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(0, 8, 8, 2.1, spin * 0.02, 0, Math.PI * 2);
+  ctx.stroke();
+
+  clayRect(ctx, -13, -8, 26, 16, 4, C.steelHi, C.steelLo, INK);
+  clayRect(ctx, -9, -4, 18, 9, 2, C.redHi, C.red, C.redLo, 1.6);
+  ctx.fillStyle = C.white;
+  ctx.font = '800 6px Impact, Arial Black, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('FAKE', 0, 0.5);
-  ctx.fillStyle = '#ff3b3b';
+  ctx.fillText('FAKE', 0, 1);
+
+  clayBall(ctx, 0, -9, 7.5, '#d8eef8', '#4a88b8', '#102030', 2);
+  clayBall(ctx, 0, -9, 4.2, '#8ec8f8', '#1a4fa8', '#081428', 1.5);
+  blobHi(ctx, -2, -11, 1.8, 1.2, 0.7);
+  ctx.fillStyle = `rgba(200,16,46,${0.45 + Math.sin(time * 12) * 0.4})`;
   ctx.beginPath();
-  ctx.arc(0, 8, 3, 0, Math.PI * 2);
+  ctx.arc(0, -9, 1.4, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = 'rgba(80, 220, 255, 0.5)';
+
+  ink(ctx, 2);
   ctx.beginPath();
-  ctx.arc(0, 8, 1.6, 0, Math.PI * 2);
-  ctx.fill();
-  const arms = [
-    [-16, -9],
-    [16, -9],
-    [-16, 8],
-    [16, 8],
-  ] as const;
-  for (let i = 0; i < arms.length; i++) {
-    const [ax, ay] = arms[i]!;
-    ctx.fillStyle = C.steelLo;
-    ctx.fillRect(ax > 0 ? 10 : ax, ay - 1, ax > 0 ? ax - 10 : 10 - ax, 2);
+  ctx.moveTo(-13, 2);
+  ctx.lineTo(-20, 8);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(13, 2);
+  ctx.lineTo(20, 6);
+  ctx.stroke();
+  clayBall(ctx, -20, 9, 2.2, C.steelHi, C.steel, C.steelLo, 1.4);
+  clayOval(ctx, 22, 5, 3.5, 5.5, 0.4, C.steelHi, C.steel, INK, 1.5);
+  clayBall(ctx, 22, 0, 2.4, C.goldHi, C.gold, C.goldLo, 1.3);
+
+  for (const s of [-1, 1]) {
     ctx.save();
-    ctx.translate(ax, ay);
-    ctx.rotate(spin + i);
-    ctx.fillStyle = 'rgba(200, 210, 230, 0.55)';
+    ctx.translate(s * 14, -10);
+    ctx.rotate(spin);
+    ctx.fillStyle = 'rgba(200,210,230,0.55)';
     ctx.beginPath();
-    ctx.ellipse(0, 0, 9, 1.3, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 8, 1.2, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(0, 0, 9, 1.3, Math.PI / 2, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 8, 1.2, Math.PI / 2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = C.gold;
-    ctx.beginPath();
-    ctx.arc(0, 0, 1.6, 0, Math.PI * 2);
-    ctx.fill();
+    clayBall(ctx, 0, 0, 1.5, C.goldHi, C.gold, C.goldLo, 1.2);
     ctx.restore();
   }
-  ctx.fillStyle = `rgba(255,40,40,${0.4 + Math.sin(time * 12) * 0.4})`;
-  ctx.fillRect(-14, -6, 3, 2);
 }
 
 function bureauArt(ctx: CanvasRenderingContext2D, angle: number, bob: number, _time: number): void {
-  ctx.rotate(angle * 0.15);
-  ctx.translate(0, Math.sin(bob) * 0.6);
-  contact(ctx, 1, 18, 12, 4);
-  const wool = ctx.createLinearGradient(-12, -8, 12, 16);
-  wool.addColorStop(0, '#d5d8de');
-  wool.addColorStop(0.25, '#9aa0aa');
-  wool.addColorStop(0.7, '#6b7280');
-  wool.addColorStop(1, '#3f4450');
-  box3(ctx, -11, -8, 22, 24, 5, '#8b919c', '#d5d8de', '#3f4450');
-  ctx.fillStyle = wool;
-  ctx.fillRect(-11, -8, 22, 24);
-  ctx.fillStyle = 'rgba(255,255,255,0.2)';
-  ctx.fillRect(-10, -7, 6, 20);
-  ctx.fillStyle = '#e8eaee';
-  ctx.fillRect(-3, -6, 6, 16);
-  ctx.fillStyle = C.navy;
-  ctx.fillRect(-1.5, -6, 3, 15);
-  gold(ctx, -2, 2, 4, 2);
-  ctx.fillStyle = '#e8d5b8';
+  ctx.rotate(angle * 0.12);
+  ctx.translate(0, Math.sin(bob) * 0.5);
+  ground(ctx, 1, 16, 11, 3.8);
+
   ctx.beginPath();
-  ctx.ellipse(0, -15, 7.2, 7.6, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#c4a888';
+  ctx.moveTo(-2, 14);
+  ctx.quadraticCurveTo(-16, 10, -18, 16);
+  ctx.lineTo(-8, 16);
+  ctx.closePath();
+  paint(ctx, lin(ctx, -18, 10, -2, 16, C.redHi, C.red, C.redLo), 1.7);
+  clayOval(ctx, -16, 12, 4.5, 3.2, 0.2, C.redHi, C.red, C.redLo, 1.6);
+
+  clayOval(ctx, 0, 6, 11, 12, 0, C.robeHi, C.robe, C.robeLo, 2);
+  clayRect(ctx, -9, -2, 18, 18, 8, C.robeHi, C.robe, C.robeLo, 2);
   ctx.beginPath();
-  ctx.ellipse(2, -14, 5.5, 6, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#e8d5b8';
+  ctx.moveTo(-9, -4);
+  ctx.quadraticCurveTo(0, -22, 9, -4);
+  ctx.lineTo(7, 2);
+  ctx.quadraticCurveTo(0, -8, -7, 2);
+  ctx.closePath();
+  paint(ctx, lin(ctx, 0, -20, 0, 2, C.robeHi, C.robeLo), 2);
+
+  clayOval(ctx, 0, -8, 6.2, 6.6, 0, C.skin, C.skin, C.skinLo, 1.7);
+  ink(ctx, 1.4);
   ctx.beginPath();
-  ctx.ellipse(-1, -16, 6.2, 6.4, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = C.ink;
-  ctx.lineWidth = 1.3;
-  ctx.beginPath();
-  ctx.ellipse(-3.4, -16, 3.1, 2.4, -0.1, 0, Math.PI * 2);
+  ctx.ellipse(-2.6, -8.5, 2.6, 1.9, -0.1, 0, Math.PI * 2);
   ctx.stroke();
   ctx.beginPath();
-  ctx.ellipse(3.4, -16, 3.1, 2.4, 0.1, 0, Math.PI * 2);
+  ctx.ellipse(2.6, -8.5, 2.6, 1.9, 0.1, 0, Math.PI * 2);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(-0.4, -16);
-  ctx.lineTo(0.4, -16);
+  ctx.moveTo(-0.3, -8.5);
+  ctx.lineTo(0.3, -8.5);
   ctx.stroke();
-  ctx.fillStyle = C.ink;
+  ctx.fillStyle = INK;
   ctx.beginPath();
-  ctx.arc(-3.2, -16, 1.1, 0, Math.PI * 2);
+  ctx.arc(-2.5, -8.5, 0.85, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(3.2, -16, 1.1, 0, Math.PI * 2);
+  ctx.arc(2.5, -8.5, 0.85, 0, Math.PI * 2);
   ctx.fill();
-  box3(ctx, 9, 4, 12, 9, 3, '#6b3e18', C.woodHi, C.woodLo);
-  gold(ctx, 9, 4, 12, 2);
-  gold(ctx, -9, -4, 6, 4);
-  ctx.fillStyle = C.navyDeep;
-  ctx.font = '700 5px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = C.goldHi;
-  ctx.fillText('GS', -6, -2);
-  plaque(ctx, -12, 16, 24, 7, 'GS-15', '#4b5563', C.goldHi, 6);
+  ink(ctx, 1.5);
+  ctx.beginPath();
+  ctx.arc(0, -5.2, 2.2, 0.2, Math.PI - 0.2);
+  ctx.stroke();
+
+  clayRect(ctx, 7, 0, 11, 9, 2, C.woodHi, C.wood, C.woodLo, 1.6);
+  goldBand(ctx, 7, 0, 11, 2);
+  ctx.fillStyle = INK;
+  ctx.fillRect(9, 3, 7, 1);
+  ctx.fillRect(9, 5.5, 5, 1);
+  clayRect(ctx, -12, 2, 6, 8, 1.5, C.goldHi, C.gold, C.goldLo, 1.4);
 }
 
 export function drawEnemyArt(
@@ -1254,287 +970,194 @@ export function drawEnemyArt(
 }
 
 function lmFountain(ctx: CanvasRenderingContext2D, time: number): void {
-  contact(ctx, 1, 22, 16, 5);
-  box3(ctx, -16, 14, 32, 8, 6, C.marble, C.marbleHi, C.marbleDeep);
-  marble(ctx, -16, 14, 32, 8, 50);
-  box3(ctx, -11, 4, 22, 8, 5, C.marble, C.marbleHi, C.marbleLo);
-  marble(ctx, -11, 4, 22, 8, 51);
-  box3(ctx, -7, -6, 14, 8, 4, C.marble, C.marbleHi, C.marbleLo);
-  marble(ctx, -7, -6, 14, 8, 52);
-  gold(ctx, -3, -14, 6, 10);
-  ctx.fillStyle = C.cyan;
-  ctx.beginPath();
-  ctx.arc(0, -15, 2.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = C.gold;
-  ctx.lineWidth = 1.6;
-  ctx.lineCap = 'round';
+  ground(ctx, 1, 20, 15, 4.5);
+  clayOval(ctx, 0, 16, 16, 6, 0, C.white, '#efe8dc', '#c8c0b4');
+  clayOval(ctx, 0, 8, 11, 5, 0, C.white, '#f4efe6', '#c8c0b4');
+  clayOval(ctx, 0, 1, 7, 4, 0, C.white, '#f7f3ea', '#c8c0b4');
+  clayRect(ctx, -2.5, -12, 5, 10, 2, C.goldHi, C.gold, C.goldLo, 1.6);
+  clayBall(ctx, 0, -13, 2.4, C.oceanHi, C.ocean, C.oceanLo, 1.4);
+  ink(ctx, 1.7);
+  ctx.strokeStyle = '#6ad4e8';
   for (let i = 0; i < 6; i++) {
-    const a = (i / 6) * Math.PI * 2 + time * 1.4;
+    const a = (i / 6) * Math.PI * 2 + time * 1.5;
     ctx.beginPath();
-    ctx.moveTo(0, -14);
-    ctx.quadraticCurveTo(Math.cos(a) * 10, -4 + Math.sin(time * 3 + i) * 2, Math.cos(a) * 14, 8);
+    ctx.moveTo(0, -12);
+    ctx.quadraticCurveTo(Math.cos(a) * 9, -2 + Math.sin(time * 3 + i) * 2, Math.cos(a) * 13, 10);
     ctx.stroke();
   }
-  ctx.fillStyle = 'rgba(80, 200, 220, 0.35)';
+  ctx.fillStyle = 'rgba(80,210,230,0.4)';
   ctx.beginPath();
-  ctx.ellipse(0, 6, 8, 3, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 8, 7, 2.6, 0, 0, Math.PI * 2);
   ctx.fill();
 }
 
 function lmRoses(ctx: CanvasRenderingContext2D, time: number): void {
-  contact(ctx, 1, 18, 16, 5);
-  box3(ctx, -18, 6, 36, 12, 6, C.wood, C.woodHi, C.woodLo);
-  gold(ctx, -18, 6, 36, 3);
-  marble(ctx, -16, 8, 32, 8, 60);
-  ctx.fillStyle = '#1c5a32';
-  ctx.fillRect(-15, -4, 30, 12);
-  ctx.fillStyle = '#2a7a44';
-  ctx.fillRect(-14, -6, 28, 8);
+  ground(ctx, 1, 18, 15, 4.5);
+  clayRect(ctx, -17, 6, 34, 12, 4, C.woodHi, C.wood, C.woodLo);
+  goldBand(ctx, -17, 6, 34, 3);
+  clayRect(ctx, -15, -6, 30, 14, 4, C.grassHi, C.grass, C.grassLo, 1.8);
   for (let i = 0; i < 8; i++) {
     const rx = -12 + (i % 4) * 8 + (i > 3 ? 3 : 0);
     const ry = -8 - (i > 3 ? 6 : 0) + Math.sin(time * 2 + i) * 0.6;
-    ctx.fillStyle = i % 2 === 0 ? C.magared : '#e04050';
-    ctx.beginPath();
-    ctx.ellipse(rx, ry, 4, 3.4, 0.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = C.goldHi;
-    ctx.beginPath();
-    ctx.arc(rx, ry, 1, 0, Math.PI * 2);
-    ctx.fill();
+    clayOval(ctx, rx, ry, 4, 3.3, 0.2, C.redHi, C.red, C.redLo, 1.5);
+    clayBall(ctx, rx, ry, 1.1, C.goldHi, C.gold, C.goldLo, 1.1);
   }
 }
 
-function lmLincoln(ctx: CanvasRenderingContext2D, _time: number): void {
-  contact(ctx, 1, 22, 14, 5);
-  box3(ctx, -14, 12, 28, 10, 6, C.marble, C.marbleHi, C.marbleDeep);
-  marble(ctx, -14, 12, 28, 10, 70);
-  gold(ctx, -14, 12, 28, 2);
-  ctx.fillStyle = C.marbleLo;
-  ctx.fillRect(-9, 2, 18, 12);
-  marble(ctx, -9, 2, 18, 12, 71);
-  ctx.fillStyle = C.marble;
-  ctx.fillRect(-11, 6, 8, 8);
-  ctx.fillRect(3, 6, 8, 8);
-  ctx.fillRect(-6, -8, 12, 16);
-  marble(ctx, -6, -8, 12, 16, 72);
-  ctx.fillStyle = C.marbleHi;
-  ctx.beginPath();
-  ctx.ellipse(0, -12, 5.5, 6, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = C.marbleDeep;
-  ctx.fillRect(-5, -10, 10, 2);
-  ctx.fillRect(-3, -6, 6, 3);
+function lmLincoln(ctx: CanvasRenderingContext2D, time: number): void {
+  ground(ctx, 1, 20, 13, 4.5);
+  clayRect(ctx, -14, 12, 28, 10, 3, C.white, '#efe8dc', '#c8c0b4');
+  goldBand(ctx, -14, 12, 28, 3);
+  clayRect(ctx, -10, 2, 20, 12, 3, C.white, '#f4efe6', '#c8c0b4');
+  clayRect(ctx, -11, 6, 8, 8, 2, C.white, '#efe8dc', '#c0b8ac', 1.6);
+  clayRect(ctx, 3, 6, 8, 8, 2, C.white, '#efe8dc', '#c0b8ac', 1.6);
+  clayRect(ctx, -6, -8, 12, 16, 4, C.white, '#f7f3ea', '#c8c0b4');
+  clayOval(ctx, 0, -12, 5.5, 6, 0, C.white, '#f4efe6', '#c0b8ac');
+  clayRect(ctx, -5, -10, 10, 2.4, 1, C.stoneLo, C.stone, C.stoneHi, 1.4);
+  star5(ctx, 0, -20 + Math.sin(time * 2) * 0.3, 3.2, 1.4);
 }
 
 function lmPalm(ctx: CanvasRenderingContext2D, time: number): void {
-  contact(ctx, 1, 22, 10, 4);
+  ground(ctx, 1, 20, 9, 3.5);
   for (let i = 0; i < 7; i++) {
-    const yy = 16 - i * 5;
-    const ww = 7 - i * 0.3;
-    bevelRect(ctx, -ww * 0.5, yy, ww, 6, i % 2 === 0 ? '#8a5a28' : '#c4894a', C.woodHi, C.woodLo, 1);
+    clayRect(ctx, -4 + (i % 2) * 0.6, 14 - i * 5, 8 - i * 0.25, 7, 2.5, C.woodHi, C.wood, C.woodLo, 1.7);
   }
-  const sway = Math.sin(time * 1.6) * 0.12;
   ctx.save();
   ctx.translate(0, -18);
-  ctx.rotate(sway);
-  for (let i = 0; i < 8; i++) {
-    const a = -0.9 + i * 0.26;
-    ctx.save();
-    ctx.rotate(a);
-    ctx.fillStyle = i % 2 === 0 ? '#2f8a44' : '#c9a227';
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.quadraticCurveTo(18, -4, 26, 2);
-    ctx.quadraticCurveTo(14, 3, 0, 2);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
+  palmFrond(ctx, time, 1);
+  clayBall(ctx, -3, 2, 2.4, C.goldHi, C.gold, C.goldLo, 1.3);
+  clayBall(ctx, 3, 2, 2.4, C.goldHi, C.gold, C.goldLo, 1.3);
   ctx.restore();
 }
 
 function lmPool(ctx: CanvasRenderingContext2D, time: number): void {
-  contact(ctx, 2, 14, 18, 8);
-  ctx.fillStyle = C.goldLo;
+  ground(ctx, 2, 14, 16, 7);
+  clayOval(ctx, -3, 2, 19, 11, -0.28, C.goldHi, C.gold, C.goldLo);
+  clayOval(ctx, -3, 2, 16, 9, -0.28, C.oceanHi, C.ocean, C.oceanLo, 1.8);
+  ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+  ctx.lineWidth = 1.4;
   ctx.beginPath();
-  ctx.ellipse(-4, 2, 20, 12, -0.3, 0, Math.PI * 2);
-  ctx.fill();
-  gold(ctx, -22, -2, 6, 4);
-  ctx.fillStyle = C.gold;
-  ctx.beginPath();
-  ctx.ellipse(-4, 2, 18, 10.5, -0.3, 0, Math.PI * 2);
-  ctx.fill();
-  const water = ctx.createLinearGradient(-16, -8, 12, 12);
-  water.addColorStop(0, '#7ef0e4');
-  water.addColorStop(0.45, '#2aa8b8');
-  water.addColorStop(1, '#0e5a68');
-  ctx.fillStyle = water;
-  ctx.beginPath();
-  ctx.ellipse(-4, 2, 16, 9, -0.3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.ellipse(-6, 0, 10, 4, -0.3 + Math.sin(time) * 0.05, 0, Math.PI);
+  ctx.ellipse(-5, 0, 9, 3.4, -0.28 + Math.sin(time) * 0.05, 0, Math.PI);
   ctx.stroke();
 }
 
 function lmGolf(ctx: CanvasRenderingContext2D, time: number): void {
-  contact(ctx, 1, 12, 16, 6);
-  ctx.fillStyle = '#1c6a32';
-  ctx.beginPath();
-  ctx.ellipse(0, 6, 20, 10, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#3a9a52';
-  ctx.beginPath();
-  ctx.ellipse(-3, 4, 14, 7, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = C.ink;
-  ctx.beginPath();
-  ctx.arc(4, 6, 2.2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = C.steelHi;
-  ctx.fillRect(3.4, -16, 1.6, 22);
-  gold(ctx, 3, -18, 2.4, 3);
-  ctx.fillStyle = C.magared;
+  ground(ctx, 1, 12, 15, 5.5);
+  clayOval(ctx, 0, 6, 19, 9.5, 0, C.grassHi, C.grass, C.grassLo);
+  clayOval(ctx, -3, 4, 12, 6, 0, '#b8e878', C.grassHi, C.grass, 1.5);
+  clayBall(ctx, 4, 6, 2.3, INK, C.steelLo, INK, 1.4);
+  clayRect(ctx, 3.2, -16, 1.8, 22, 0.8, C.steelHi, C.steel, C.steelLo, 1.4);
+  goldBand(ctx, 2.6, -18, 3, 3);
   ctx.beginPath();
   ctx.moveTo(5, -16);
   ctx.lineTo(16, -12 + Math.sin(time * 3) * 1.2);
   ctx.lineTo(5, -8);
   ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = '#f4f1e8';
-  ctx.beginPath();
-  ctx.arc(-6, 8, 2, 0, Math.PI * 2);
-  ctx.fill();
+  paint(ctx, C.red, 1.5);
+  clayBall(ctx, -6, 8, 2.1, C.white, '#f0f0f0', C.stone, 1.4);
 }
 
 function lmCactus(ctx: CanvasRenderingContext2D, time: number): void {
-  contact(ctx, 1, 20, 10, 4);
-  bevelRect(ctx, -6, -8, 12, 28, '#2f7a3a', '#5aaa5a', '#1a4a22', 5);
-  bevelRect(ctx, -16, 0, 12, 8, '#2f7a3a', '#5aaa5a', '#1a4a22', 4);
-  bevelRect(ctx, 6, -4, 11, 8, '#2f7a3a', '#5aaa5a', '#1a4a22', 4);
-  ctx.strokeStyle = 'rgba(255,255,210,0.45)';
-  ctx.lineWidth = 1;
+  ground(ctx, 1, 18, 9, 3.5);
+  clayRect(ctx, -6, -8, 12, 28, 6, C.grassHi, C.grass, C.grassLo);
+  clayRect(ctx, -16, 0, 12, 8, 4, C.grassHi, C.grass, C.grassLo, 1.8);
+  clayRect(ctx, 6, -4, 11, 8, 4, C.grassHi, C.grass, C.grassLo, 1.8);
+  ink(ctx, 1.2);
+  ctx.strokeStyle = 'rgba(255,255,210,0.65)';
   for (let i = 0; i < 5; i++) {
     ctx.beginPath();
     ctx.moveTo(-4, -4 + i * 5);
     ctx.lineTo(-8, -6 + i * 5);
     ctx.stroke();
   }
-  ctx.fillStyle = C.gold;
-  ctx.beginPath();
-  ctx.ellipse(0, -12 + Math.sin(time * 2) * 0.4, 4, 3.2, 0, 0, Math.PI * 2);
-  ctx.fill();
+  clayOval(ctx, 0, -12 + Math.sin(time * 2) * 0.4, 4, 3.2, 0, C.goldHi, C.gold, C.goldLo, 1.4);
   star5(ctx, 0, -12, 3.2, 1.4);
 }
 
 function lmWatch(ctx: CanvasRenderingContext2D, time: number): void {
-  contact(ctx, 1, 22, 12, 4);
-  box3(ctx, -8, -4, 16, 26, 5, C.steel, C.steelHi, C.steelLo);
-  bevelRect(ctx, -8, -4, 16, 26, '#5a6574', C.steelHi, C.ink, 1);
-  box3(ctx, -12, -16, 24, 14, 6, C.steelHi, C.steelHi, C.steelLo);
-  bevelRect(ctx, -12, -16, 24, 14, '#8a96a8', C.steelHi, C.steelLo, 2);
-  mullionWindow(ctx, -6, -12, 12, 8, 2, 1, null);
-  gold(ctx, -12, -18, 24, 3);
-  const a = time * 1.3;
+  ground(ctx, 1, 20, 11, 3.8);
+  clayRect(ctx, -8, -4, 16, 26, 4, C.steelHi, C.steel, C.steelLo);
+  clayRect(ctx, -12, -16, 24, 14, 4, C.steelHi, C.steel, C.steelLo);
+  toyWindow(ctx, -6, -12, 12, 8, 2, 1);
+  goldBand(ctx, -12, -18, 24, 3);
   ctx.save();
   ctx.translate(8, -10);
-  ctx.rotate(a);
-  const beam = ctx.createLinearGradient(0, 0, 36, 0);
-  beam.addColorStop(0, 'rgba(255, 240, 160, 0.5)');
-  beam.addColorStop(1, 'rgba(255, 240, 160, 0)');
+  ctx.rotate(time * 1.3);
+  const beam = ctx.createLinearGradient(0, 0, 34, 0);
+  beam.addColorStop(0, 'rgba(255,240,160,0.5)');
+  beam.addColorStop(1, 'rgba(255,240,160,0)');
   ctx.fillStyle = beam;
   ctx.beginPath();
   ctx.moveTo(0, -3);
-  ctx.lineTo(36, -10);
-  ctx.lineTo(36, 10);
+  ctx.lineTo(34, -10);
+  ctx.lineTo(34, 10);
   ctx.lineTo(0, 3);
   ctx.closePath();
   ctx.fill();
-  gold(ctx, -3, -3, 6, 6);
+  clayRect(ctx, -3, -3, 6, 6, 2, C.goldHi, C.gold, C.goldLo, 1.5);
   ctx.restore();
 }
 
-function lmGate(ctx: CanvasRenderingContext2D, _time: number): void {
-  contact(ctx, 1, 20, 18, 5);
-  box3(ctx, -22, -8, 12, 28, 5, C.sand, C.sandHi, C.sandLo);
-  box3(ctx, 10, -8, 12, 28, 5, C.sand, C.sandHi, C.sandLo);
-  bevelRect(ctx, -22, -8, 12, 28, C.sand, C.sandHi, C.sandLo, 1);
-  bevelRect(ctx, 10, -8, 12, 28, C.sand, C.sandHi, C.sandLo, 1);
-  gold(ctx, -22, -10, 12, 3);
-  gold(ctx, 10, -10, 12, 3);
-  ctx.fillStyle = C.steelLo;
-  for (let i = 0; i < 6; i++) ctx.fillRect(-9 + i * 3.2, -2, 1.6, 20);
-  gold(ctx, -10, -4, 20, 3);
-  star5(ctx, 0, -8, 5, 2);
+function lmGate(ctx: CanvasRenderingContext2D, time: number): void {
+  ground(ctx, 1, 18, 16, 4.5);
+  clayRect(ctx, -22, -8, 12, 28, 4, C.sandHi, C.sand, C.sandLo);
+  clayRect(ctx, 10, -8, 12, 28, 4, C.sandHi, C.sand, C.sandLo);
+  goldBand(ctx, -22, -10, 12, 3);
+  goldBand(ctx, 10, -10, 12, 3);
+  for (let i = 0; i < 6; i++) {
+    clayRect(ctx, -9 + i * 3.2, -2, 1.8, 20, 0.8, C.steelHi, C.steel, C.steelLo, 1.3);
+  }
+  goldBand(ctx, -10, -4, 20, 3);
+  star5(ctx, 0, -8 + Math.sin(time) * 0.3, 5, 2);
 }
 
 function lmTaxi(ctx: CanvasRenderingContext2D, time: number): void {
-  contact(ctx, 2, 12, 16, 5);
+  ground(ctx, 2, 12, 15, 4.5);
   ctx.save();
-  ctx.rotate(-0.18);
-  box3(ctx, -18, -4, 34, 14, 6, '#f0d000', '#fff38a', '#b89000');
-  bevelRect(ctx, -18, -4, 34, 14, '#f0d000', '#fff38a', '#b89000', 3);
-  ctx.fillStyle = C.navyDeep;
-  ctx.fillRect(-10, -12, 18, 9);
-  ctx.fillStyle = 'rgba(160,210,255,0.35)';
+  ctx.rotate(-0.16);
+  clayRect(ctx, -18, -4, 34, 14, 5, '#ffe44a', '#f0d000', '#b89000');
+  clayRect(ctx, -10, -12, 18, 9, 3, C.blueHi, C.blue, C.blueLo, 1.7);
+  ctx.fillStyle = 'rgba(180,220,255,0.45)';
   ctx.fillRect(-8, -11, 6, 7);
   ctx.fillRect(0, -11, 6, 7);
-  ctx.fillStyle = C.ink;
-  ctx.fillRect(-16, 6, 8, 8);
-  ctx.fillRect(10, 6, 8, 8);
-  ctx.fillStyle = C.steel;
-  ctx.beginPath();
-  ctx.arc(-12, 12, 3.5, 0, Math.PI * 2);
-  ctx.arc(14, 12, 3.5, 0, Math.PI * 2);
-  ctx.fill();
-  gold(ctx, -4, -16, 8, 5);
-  ctx.fillStyle = C.ink;
-  ctx.font = '800 5px Impact, sans-serif';
+  clayBall(ctx, -12, 12, 4.2, C.steelLo, INK, INK, 1.6);
+  clayBall(ctx, 14, 12, 4.2, C.steelLo, INK, INK, 1.6);
+  goldBand(ctx, -4, -16, 8, 5);
+  ctx.fillStyle = INK;
+  ctx.font = '800 5px Impact, Arial Black, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('TAXI', -1, 4);
+  ctx.textBaseline = 'middle';
+  ctx.fillText('TAXI', -1, 3);
   ctx.fillStyle = `rgba(255,220,80,${0.4 + Math.sin(time * 10) * 0.3})`;
   ctx.fillRect(-3, -15, 6, 3);
   ctx.restore();
 }
 
 function lmNews(ctx: CanvasRenderingContext2D, time: number): void {
-  contact(ctx, 1, 18, 14, 5);
-  box3(ctx, -12, -4, 24, 22, 6, C.wood, C.woodHi, C.woodLo);
-  bevelRect(ctx, -12, -4, 24, 22, C.wood, C.woodHi, C.woodLo, 2);
-  ctx.fillStyle = C.magared;
-  ctx.beginPath();
-  ctx.moveTo(-16, -4);
-  ctx.lineTo(0, -16);
-  ctx.lineTo(16, -4);
-  ctx.closePath();
-  ctx.fill();
-  gold(ctx, -16, -5, 32, 2);
-  ctx.fillStyle = '#f4f1e8';
-  ctx.fillRect(-9, 0, 8, 10);
-  ctx.fillRect(1, 0, 8, 10);
-  ctx.fillStyle = C.magared;
-  ctx.font = '800 5px Impact, sans-serif';
+  ground(ctx, 1, 18, 13, 4.5);
+  clayRect(ctx, -12, -4, 24, 22, 4, C.woodHi, C.wood, C.woodLo);
+  tri(ctx, -16, -4, 0, -16, 16, -4, C.redHi, C.redLo);
+  goldBand(ctx, -16, -5, 32, 2.5);
+  clayRect(ctx, -9, 0, 8, 10, 1.5, C.white, '#f4f1e8', '#d8d0c0', 1.4);
+  clayRect(ctx, 1, 0, 8, 10, 1.5, C.white, '#f4f1e8', '#d8d0c0', 1.4);
+  ctx.fillStyle = C.red;
+  ctx.font = '800 5px Impact, Arial Black, sans-serif';
   ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
   ctx.fillText('FAKE', 0, 6 + Math.sin(time * 2) * 0.3);
 }
 
 function lmBillboard(ctx: CanvasRenderingContext2D, time: number): void {
-  contact(ctx, 1, 22, 10, 4);
-  ctx.fillStyle = C.steelLo;
-  ctx.fillRect(-3, 0, 6, 22);
-  gold(ctx, -22, -22, 44, 24);
-  box3(ctx, -20, -20, 40, 20, 5, C.navy, C.navyMid, C.navyDeep);
-  ctx.fillStyle = C.navy;
-  ctx.fillRect(-20, -20, 40, 20);
+  ground(ctx, 1, 20, 9, 3.5);
+  clayRect(ctx, -3, 0, 6, 22, 2, C.steelHi, C.steel, C.steelLo, 1.7);
+  clayRect(ctx, -22, -22, 44, 24, 4, C.goldHi, C.gold, C.goldLo);
+  clayRect(ctx, -20, -20, 40, 20, 3, C.blueHi, C.blue, C.blueLo);
   ctx.fillStyle = C.goldHi;
-  ctx.font = '800 8px Impact, sans-serif';
+  ctx.font = '800 8px Impact, Arial Black, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('WINNING', 0, -12);
-  ctx.fillStyle = `rgba(255, 243, 176, ${0.45 + Math.sin(time * 5) * 0.4})`;
+  ctx.fillStyle = `rgba(255,243,176,${0.45 + Math.sin(time * 5) * 0.4})`;
   ctx.fillText('WINNING', 0, -12);
   star5(ctx, -14, -6, 4, 1.6);
   star5(ctx, 14, -6, 4, 1.6);
@@ -1572,14 +1195,11 @@ export function drawTile(
   seed: number,
 ): void {
   const pad = 1;
-  bevelRect(ctx, x + pad, y + pad, size - pad * 2, size - pad * 2, themeGrass, themeHi, 'rgba(0,0,0,0.28)', 3);
+  clayRect(ctx, x + pad, y + pad, size - pad * 2, size - pad * 2, 6, themeHi, themeGrass, 'rgba(0,0,0,0.22)', 1.6);
   ctx.fillStyle = themeHi;
-  ctx.globalAlpha = 0.18 + hash(seed) * 0.12;
+  ctx.globalAlpha = 0.2 + hash(seed) * 0.12;
   ctx.beginPath();
-  ctx.moveTo(x + 4, y + size - 6);
-  ctx.quadraticCurveTo(x + size * 0.4, y + 8, x + size - 6, y + 10);
-  ctx.quadraticCurveTo(x + size * 0.6, y + size * 0.4, x + 8, y + 12);
-  ctx.closePath();
+  ctx.ellipse(x + size * 0.32, y + size * 0.3, size * 0.22, size * 0.12, -0.4, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = 1;
   const tufts = 2 + Math.floor(hash(seed * 3.2) * 3);
@@ -1587,18 +1207,19 @@ export function drawTile(
     const tx = x + 8 + hash(seed + i * 4.1) * (size - 16);
     const ty = y + 10 + hash(seed + i * 7.7) * (size - 18);
     ctx.fillStyle = hash(seed + i) > 0.55 ? C.gold : themeHi;
-    ctx.globalAlpha = 0.28;
+    ctx.globalAlpha = 0.32;
     ctx.beginPath();
     ctx.ellipse(tx, ty, 3.5, 2, hash(i) * 0.8, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.globalAlpha = 1;
   ctx.strokeStyle = grid;
-  ctx.lineWidth = 1;
-  ctx.strokeRect(x + 3, y + 3, size - 6, size - 6);
+  ctx.lineWidth = 1.2;
+  ctx.lineJoin = 'round';
+  rr(ctx, x + 3, y + 3, size - 6, size - 6, 5);
+  ctx.stroke();
   if (hash(seed * 5) > 0.78) {
-    ctx.fillStyle = C.gold;
-    ctx.globalAlpha = 0.22;
+    ctx.globalAlpha = 0.28;
     star5(ctx, x + size * 0.5, y + size * 0.5, 6, 2.6);
     ctx.globalAlpha = 1;
   }

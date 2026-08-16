@@ -2,8 +2,9 @@ import { type DifficultyId, type MapId } from './campaign.ts';
 import { Synth } from './audio.ts';
 import { FrameLoop, TraumaCamera, View } from './engine.ts';
 import { FX } from './fx.ts';
-import { bindHud, paintHud, type HudHandles } from './hud.ts';
+import { bindHud, hideMenus, paintHud, type HudHandles, type HudPhase } from './hud.ts';
 import { GameMap } from './map.ts';
+import { paintPortraits } from './portraits.ts';
 import { Renderer } from './render.ts';
 import { Sim } from './sim.ts';
 import { CELL, type TowerId } from './types.ts';
@@ -18,7 +19,7 @@ export class Game {
   private readonly sim: Sim;
   private readonly renderer: Renderer;
   private readonly hud: HudHandles;
-  private phase: 'title' | 'play' | 'pause' | 'end' = 'title';
+  private phase: HudPhase = 'title';
   private hudTick = 0;
   private ambient = 0;
   private selectedMap: MapId = 'lawn';
@@ -37,6 +38,7 @@ export class Game {
       () => this.draw(),
     );
     this.bind(root, canvas);
+    paintPortraits(root);
     paintHud(this.hud, this.sim, 60, this.audio.muted, false, this.phase);
     this.loop.start();
   }
@@ -45,6 +47,7 @@ export class Game {
     const fit = (): void => {
       this.view.resize();
       this.renderer.resize(this.view.dpr, this.view.scale);
+      paintPortraits(root);
     };
     const ro = new ResizeObserver(fit);
     ro.observe(canvas.parentElement ?? canvas);
@@ -143,11 +146,51 @@ export class Game {
 
     root.querySelector('#btn-start')?.addEventListener('click', () => {
       this.audio.unlock();
+      this.audio.click();
+      hideMenus(this.hud);
+      this.applyCampaign(false);
+      this.setPhase('select');
+    });
+    root.querySelector('#btn-deploy')?.addEventListener('click', () => {
+      this.audio.unlock();
       this.audio.wave();
+      hideMenus(this.hud);
       this.applyCampaign(true);
       this.setPhase('play');
     });
+    root.querySelector('#btn-select-back')?.addEventListener('click', () => {
+      this.audio.click();
+      this.setPhase('title');
+    });
+    root.querySelector('#btn-options')?.addEventListener('click', () => {
+      this.audio.click();
+      this.hud.overlayInfo?.classList.add('hidden');
+      this.hud.overlayOptions?.classList.toggle('hidden');
+    });
+    root.querySelector('#btn-opt-close')?.addEventListener('click', () => {
+      this.hud.overlayOptions?.classList.add('hidden');
+    });
+    root.querySelector('#btn-opt-mute')?.addEventListener('click', () => {
+      this.audio.unlock();
+      this.audio.toggleMute();
+      paintHud(this.hud, this.sim, this.loop.fps, this.audio.muted, this.phase === 'pause', this.phase);
+    });
+    root.querySelector('#btn-info')?.addEventListener('click', () => {
+      this.audio.click();
+      this.hud.overlayOptions?.classList.add('hidden');
+      this.hud.overlayInfo?.classList.toggle('hidden');
+      paintPortraits(root);
+    });
+    root.querySelector('#btn-info-close')?.addEventListener('click', () => {
+      this.hud.overlayInfo?.classList.add('hidden');
+    });
     root.querySelector('#btn-resume')?.addEventListener('click', () => this.setPhase('play'));
+    const toHq = (): void => {
+      hideMenus(this.hud);
+      this.setPhase('title');
+    };
+    root.querySelector('#btn-pause-hq')?.addEventListener('click', toHq);
+    root.querySelector('#btn-end-hq')?.addEventListener('click', toHq);
     root.querySelector('#btn-again')?.addEventListener('click', () => {
       this.audio.unlock();
       this.applyCampaign(true);
@@ -193,9 +236,9 @@ export class Game {
     if (!resetPlay) this.sim.reset();
   }
 
-  private setPhase(p: 'title' | 'play' | 'pause' | 'end'): void {
+  private setPhase(p: HudPhase): void {
     this.phase = p;
-    paintHud(this.hud, this.sim, this.loop.fps, this.audio.muted, p === 'pause', p === 'pause' ? 'pause' : p === 'title' ? 'title' : p === 'end' ? 'end' : 'play');
+    paintHud(this.hud, this.sim, this.loop.fps, this.audio.muted, p === 'pause', p);
   }
 
   private step(dt: number): void {
@@ -207,8 +250,7 @@ export class Game {
     this.hudTick += dt;
     if (this.hudTick > 0.12) {
       this.hudTick = 0;
-      const overlay = this.phase === 'title' ? 'title' : this.phase === 'pause' ? 'pause' : this.phase === 'end' ? 'end' : 'play';
-      paintHud(this.hud, this.sim, this.loop.fps, this.audio.muted, this.phase === 'pause', overlay);
+      paintHud(this.hud, this.sim, this.loop.fps, this.audio.muted, this.phase === 'pause', this.phase);
     }
   }
 

@@ -617,7 +617,7 @@ export class Sim {
       if (u >= 1) {
         this.aoe(b.tx, b.ty, b.aoe, b.dmg);
         this.fx.boom(b.tx, b.ty);
-        this.cam.bang();
+        this.cam.hit(0.14);
         this.audio.boom();
         b.t = 99;
       }

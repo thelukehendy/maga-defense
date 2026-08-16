@@ -143,15 +143,15 @@ export const MAPS: Record<MapId, MapDef> = {
     victory: 'The lawn is mowed. The fountain sparkles. Cable news is furious. Tremendous.',
     defeat: 'They walked right up the steps. Approval: zero. The roses wilt. Sad!',
     theme: {
-      skyTop: '#071433',
-      skyBot: '#0c1c2e',
-      grass: '#14361f',
-      grassHi: '#1c4a2a',
-      pathEdge: '#8a6a1a',
-      pathFill: '#d9c7a2',
+      skyTop: '#4eb4f2',
+      skyBot: '#d7f0ff',
+      grass: '#2f9a46',
+      grassHi: '#4ec85f',
+      pathEdge: '#7a3414',
+      pathFill: '#c86a38',
       pathRunner: '#c8102e',
-      grid: 'rgba(230,195,92,0.16)',
-      star: '#fff4c2',
+      grid: 'rgba(255,255,255,0.16)',
+      star: '#fffdf2',
     },
     path: cells((add) => {
       for (let x = 0; x <= 13; x++) add(x, 1);
@@ -192,15 +192,15 @@ export const MAPS: Record<MapId, MapDef> = {
     victory: 'The orchestra plays. Membership is up. The pool remains members-only.',
     defeat: 'Someone wore sneakers on the marble. The club is ruined. So sad.',
     theme: {
-      skyTop: '#0a2048',
-      skyBot: '#12304a',
-      grass: '#0e3d36',
-      grassHi: '#165c4e',
+      skyTop: '#3aa0e8',
+      skyBot: '#ffe7b8',
+      grass: '#168a62',
+      grassHi: '#22b07a',
       pathEdge: '#c9a227',
       pathFill: '#f0d48a',
       pathRunner: '#9b1b30',
-      grid: 'rgba(240,212,138,0.18)',
-      star: '#ffe9a0',
+      grid: 'rgba(255,255,255,0.18)',
+      star: '#fff6d0',
     },
     path: cells((add) => {
       for (let x = 0; x <= 10; x++) add(x, 8);
@@ -243,15 +243,15 @@ export const MAPS: Record<MapId, MapDef> = {
     victory: 'The ridge holds. The wall is still there. Everybody said it could not be done.',
     defeat: 'They walked around. They always walk around. Ratings crater in the dust.',
     theme: {
-      skyTop: '#1a140c',
-      skyBot: '#3a2414',
-      grass: '#5a3a1c',
-      grassHi: '#6e4a24',
-      pathEdge: '#4a5560',
-      pathFill: '#c4b8a0',
+      skyTop: '#6ec4f4',
+      skyBot: '#f3d08a',
+      grass: '#c4a060',
+      grassHi: '#d8b878',
+      pathEdge: '#6a4a28',
+      pathFill: '#d2b48c',
       pathRunner: '#8a5a20',
-      grid: 'rgba(232,196,120,0.14)',
-      star: '#ffe6b0',
+      grid: 'rgba(255,255,255,0.14)',
+      star: '#fff4d4',
     },
     path: cells((add) => {
       for (let x = 0; x <= 4; x++) add(x, 2);
@@ -291,19 +291,19 @@ export const MAPS: Record<MapId, MapDef> = {
     name: 'Fifth Avenue',
     subtitle: 'Traffic, tickers, and a gold tower',
     briefing:
-      'Midtown after dark. Taxicabs. A newsstand that has never been right once. The swarm wants the lobby of the gold tower. You want them stuck in traffic until the markets open.',
+      'Midtown in the golden hour. Taxicabs. A newsstand that has never been right once. The swarm wants the lobby of the gold tower. You want them stuck in traffic until the markets open.',
     victory: 'The ticker is green. The lobby is velvet-roped. The city pretends it always liked you.',
     defeat: 'They took the elevator. The doorman quit. Opening bell is a disaster.',
     theme: {
-      skyTop: '#050814',
-      skyBot: '#12182c',
-      grass: '#1a2030',
-      grassHi: '#252c40',
-      pathEdge: '#e6c35c',
-      pathFill: '#3a3f4c',
+      skyTop: '#5aa8e8',
+      skyBot: '#f2c878',
+      grass: '#3a8a50',
+      grassHi: '#4caa64',
+      pathEdge: '#5a4a38',
+      pathFill: '#8a8490',
       pathRunner: '#f0d78c',
-      grid: 'rgba(80,120,255,0.16)',
-      star: '#cfe0ff',
+      grid: 'rgba(255,255,255,0.14)',
+      star: '#fff6e0',
     },
     path: cells((add) => {
       for (let y = 0; y <= 6; y++) add(1, y);
@@ -358,16 +358,16 @@ export const TOWER_LORE: Record<
     title: 'Truth Tower',
     motto: 'FACTS DON’T CARE ABOUT YOUR PATHING',
     story:
-      'A neon obelisk poured from leftover debate-stage trussing. It does not persuade. It does not listen. It recites, very quickly, until the target is too embarrassed to continue existing.',
+      'A neon-and-stone fact-checker with a satellite dish. It recites, very quickly, until the target is too embarrassed to continue existing.',
     how: 'Highest fire rate. Low damage. Best against swarms and drones. Place on corners where the path doubles back.',
     upgrades: ['FACT strobe', 'Prime-time klieg', 'UNPRECEDENTED BEAM'],
   },
   trebuchet: {
-    title: 'Tariff Trebuchet',
+    title: 'Tariff Cannon',
     motto: 'IF IT’S HEAVY, TAX IT',
     story:
-      'A gilded siege engine that lobs solid-gold “TAX” boulders on a lazy, insulting arc. The impact is not a metaphor. Nearby enemies pay collective duties.',
-    how: 'Slow, huge, area damage. Screen-shakes on impact. Lead the target — the boulder is theatrical on purpose.',
+      'A bright-blue siege cannon that lobs solid-gold “TAX” shots on a lazy, insulting arc. The impact is not a metaphor. Nearby enemies pay collective duties.',
+    how: 'Slow, huge, area damage. Lead the target — the TAX shot is theatrical on purpose.',
     upgrades: ['Import duty', 'Retaliatory levy', 'EMERGENCY TARIFF'],
   },
   brick: {
@@ -394,23 +394,23 @@ export const ENEMY_LORE: Record<
 > = {
   alien: {
     title: 'Commie Alien',
-    motto: 'WEAK. NUMEROUS. RED.',
+    motto: 'WEAK. NUMEROUS. CROWNED.',
     story:
-      'A budget invasion force from a planet that nationalized its saucers. They are individually pathetic and collectively a staffing problem. They pop like confetti if you look at them with enough FACT.',
+      'A walking globe in a tiny gold crown — a budget invasion from a planet that nationalized its saucers. Individually pathetic. Collectively a staffing problem. Truth Towers pop them like confetti.',
     how: 'Fast ground swarm. Low HP. Walls stop them. Truth Towers melt them. Do not let a clump leak — death by a thousand approval cuts.',
   },
   drone: {
     title: 'Fake News Drone',
     motto: 'LIVE FROM SOMEWHERE INACCURATE',
     story:
-      'A flying chyron with rotors. It does not land. It does not respect masonry. It prints FAKE in midair until somebody lasers the lens. Bureaucrats hate them. So do you.',
+      'A flying news camera with stick arms, a mic, and no respect for masonry. It prints FAKE in midair until somebody lasers the lens.',
     how: 'Flying. Ignores mini-walls. Fast. Medium HP. Prioritize Truth Towers and Trebuchet splash along flyovers.',
   },
   bureaucrat: {
     title: 'Deep State Bureaucrat',
     motto: 'GS-15 AND UNFIREABLE',
     story:
-      'A grey suit with a briefcase full of process. Moves like a continuing resolution. Soaks damage that would embarrass a battleship. When it reaches the steps, the rating agencies weep.',
+      'A short, hooded clerk with glasses, a clipboard, and a roll of red tape. Moves like a continuing resolution. Soaks damage that would embarrass a battleship.',
     how: 'Slow ground tank. Massive HP. Chews walls. Needs Trebuchet splash plus a desk buff. Never leave one alive at the end of a wave.',
   },
 };

@@ -114,19 +114,19 @@ export class TraumaCamera {
   }
 
   bang(): void {
-    this.hit(1);
-    this.flash = 1;
+    this.hit(0.16);
+    this.flash = Math.max(this.flash, 0.22);
   }
 
   sting(): void {
-    this.hit(0.34);
-    this.flash = Math.max(this.flash, 0.35);
+    this.hit(0.12);
+    this.flash = Math.max(this.flash, 0.18);
   }
 
   update(dt: number): void {
-    this.trauma = Math.max(0, this.trauma - dt * 1.45);
-    this.flash = Math.max(0, this.flash - dt * 2.4);
-    const mag = this.trauma * this.trauma * 46;
+    this.trauma = Math.max(0, this.trauma - dt * 2.2);
+    this.flash = Math.max(0, this.flash - dt * 3.2);
+    const mag = this.trauma * this.trauma * 7;
     this.sx = (Math.random() * 2 - 1) * mag;
     this.sy = (Math.random() * 2 - 1) * mag;
   }

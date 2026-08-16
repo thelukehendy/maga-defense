@@ -4,17 +4,17 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0b1d4a" />
-    <meta name="description" content="MAGA Defense: The Tremendous Tower — a satirical 2D tower defense." />
-    <title>MAGA Defense: The Tremendous Tower</title>
+    <meta name="theme-color" content="#1a4fa8" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="description" content="MAGA Defense: The Tremendous Tower Game — a satirical 2D tower defense." />
+    <title>MAGA! Defense — The Tremendous Tower Game</title>
   </head>
   <body>
     <div id="app" class="shell">
       <header class="hud-top">
         <div class="brand">
-          <span class="brand-kicker">OFFICIAL CAMPAIGN SIMULATOR</span>
+          <span class="brand-kicker">THE TREMENDOUS TOWER GAME</span>
           <h1>MAGA DEFENSE</h1>
-          <span class="brand-sub">The Tremendous Tower</span>
           <span id="mission-name" class="mission-name">South Lawn</span>
         </div>
         <div class="stats">
@@ -42,7 +42,6 @@
           <button id="btn-speed" type="button" class="tool">1×</button>
           <button id="btn-mute" type="button" class="tool">SOUND ON</button>
           <button id="btn-pause" type="button" class="tool">PAUSE</button>
-          <button id="btn-codex" type="button" class="tool">CODEX</button>
         </div>
       </header>
 
@@ -52,60 +51,36 @@
 
       <footer class="hud-bottom">
         <div class="arsenal" role="toolbar" aria-label="Tower arsenal">
-          <button
-            type="button"
-            class="card selected"
-            data-tower="truth"
-            title="FACTS DON’T CARE ABOUT YOUR PATHING — Highest fire rate. Low damage. Best against swarms and drones. Place on corners where the path doubles back."
-          >
-            <span class="icon truth">⚡</span>
+          <button type="button" class="card selected" data-tower="truth">
+            <canvas class="icon-canvas" data-portrait="tower:truth" width="36" height="36"></canvas>
             <span class="name">Truth Tower</span>
-            <span class="meta">R 2.6 · Rapid FACT lasers</span>
+            <span class="meta">Rapid FACT laser</span>
             <span class="cost">$80</span>
-            <kbd>1</kbd>
           </button>
-          <button
-            type="button"
-            class="card"
-            data-tower="trebuchet"
-            title="IF IT’S HEAVY, TAX IT — Slow, huge, area damage. Screen-shakes on impact. Lead the target — the boulder is theatrical on purpose."
-          >
-            <span class="icon treb">💰</span>
-            <span class="name">Tariff Trebuchet</span>
-            <span class="meta">R 3.4 · HUGE tax boulders</span>
+          <button type="button" class="card" data-tower="trebuchet">
+            <canvas class="icon-canvas" data-portrait="tower:trebuchet" width="36" height="36"></canvas>
+            <span class="name">Tariff Cannon</span>
+            <span class="meta">HUGE TAX shots</span>
             <span class="cost">$190</span>
-            <kbd>2</kbd>
           </button>
-          <button
-            type="button"
-            class="card"
-            data-tower="brick"
-            title="AND MEXICO IS SENDING THE MORTAR — Fires a wall onto the path ahead of a ground enemy. Drones fly over. Walls decay and can be smashed."
-          >
-            <span class="icon brick">🧱</span>
+          <button type="button" class="card" data-tower="brick">
+            <canvas class="icon-canvas" data-portrait="tower:brick" width="36" height="36"></canvas>
             <span class="name">Brick-Layer</span>
-            <span class="meta">R 3.1 · Mini-walls on track</span>
+            <span class="meta">MAGA walls</span>
             <span class="cost">$115</span>
-            <kbd>3</kbd>
           </button>
-          <button
-            type="button"
-            class="card"
-            data-tower="desk"
-            title="SIGNED. SEALED. RAPID. — Does not shoot. Buffs fire rate of towers in its aura. Stack desks to cover a whole killbox. Upgrade the aura, not the ego."
-          >
-            <span class="icon desk">📜</span>
+          <button type="button" class="card" data-tower="desk">
+            <canvas class="icon-canvas" data-portrait="tower:desk" width="36" height="36"></canvas>
             <span class="name">EO Desk</span>
-            <span class="meta">R 2.3 · Fire-rate aura</span>
+            <span class="meta">Fire-rate aura</span>
             <span class="cost">$165</span>
-            <kbd>4</kbd>
           </button>
         </div>
         <aside id="inspect" class="inspect" aria-live="polite">
           <p class="inspect-kicker">SITUATION DOCK</p>
           <h3 id="inspect-title">ARSENAL INTEL</h3>
           <p id="inspect-body">Tap a tower on the field, or pick a card to preview the briefing.</p>
-          <p id="inspect-stats">Select · Place · Upgrade · Hold the marble</p>
+          <p id="inspect-stats">Select · Place · Upgrade · Hold the lawn</p>
         </aside>
         <div class="actions">
           <button id="btn-send" type="button" class="cta">START WAVE 1</button>
@@ -114,131 +89,150 @@
         </div>
       </footer>
 
-      <div id="overlay-title" class="overlay overlay-scroll">
-        <div class="panel hq">
-          <p class="kicker">CAMPAIGN HEADQUARTERS · CLASSIFIED GOLD</p>
-          <h2>MAGA DEFENSE</h2>
-          <p class="sub">The Tremendous Tower</p>
+      <div id="overlay-title" class="overlay overlay-hero">
+        <img class="hero-art" src="./title-hero.png" alt="" />
+        <div class="hero-scrim"></div>
+        <div class="hero-ui">
+          <p class="hero-banner">YOU WILL TIRE OF WINNING!</p>
+          <h2 class="hero-title"><span>MAGA!</span> DEFENSE</h2>
+          <p class="hero-sub">The Tremendous Tower Game</p>
+          <button id="btn-start" type="button" class="btn-start">START GAME</button>
+          <div class="hero-row">
+            <button id="btn-options" type="button" class="btn-blue">OPTIONS</button>
+            <button id="btn-info" type="button" class="btn-blue">INFO</button>
+          </div>
+        </div>
+      </div>
 
-          <section class="crawl" aria-label="Campaign briefing">
-            <p class="section-label">Situation Room</p>
-            <div class="crawl-gold">
-              <p class="crawl-line">They said the lawn could not be held.</p>
-              <p class="crawl-line">They said the palazzo was indefensible.</p>
-              <p class="crawl-line">They said the wall was a vibe.</p>
-              <p class="crawl-line">They said Fifth Avenue belongs to the swarm.</p>
-              <p class="crawl-line punch">You have donations, four towers, and a very good feeling.</p>
-              <p class="crawl-line punch">Keep them off the marble. The rest is history. Very, very winning history.</p>
-            </div>
-            <p class="pitch">
-              Place towers. Drain the swamp. Protect the lawn. Campaign donations buy firepower.
-              If the swarm reaches the House, approval collapses. Sad!
-            </p>
-          </section>
-
+      <div id="overlay-select" class="overlay overlay-scroll hidden">
+        <div class="panel hq mission">
+          <p class="kicker">CHOOSE YOUR BATTLEFIELD</p>
+          <h2>DEPLOY</h2>
+          <p class="sub">Map · Press temperature · Tremendous outcomes</p>
           <section class="diffs" aria-label="Difficulty">
-            <p class="section-label">Select the Press Temperature</p>
+            <p class="section-label">Press Temperature</p>
             <div class="diff-grid">
               <button type="button" class="diff-btn diff-easy" data-diff="easy">
                 <span class="diff-tag">CABLE NEWS</span>
                 <span class="diff-name">Fair &amp; Balanced</span>
-                <span class="diff-blurb">Extra donations. Softer swarm. A very friendly press.</span>
+                <span class="diff-blurb">Extra donations. Softer swarm.</span>
               </button>
               <button type="button" class="diff-btn diff-normal selected" data-diff="normal">
                 <span class="diff-tag">RALLY DEFAULT</span>
                 <span class="diff-name">Tremendous</span>
-                <span class="diff-blurb">The real deal. Ratings, walls, and a winding lawn.</span>
+                <span class="diff-blurb">The real deal.</span>
               </button>
               <button type="button" class="diff-btn diff-hard" data-diff="hard">
                 <span class="diff-tag">SPECIAL COUNSEL</span>
                 <span class="diff-name">Witch Hunt</span>
-                <span class="diff-blurb">Leaner war chest. Meaner swamp. They are coming faster.</span>
+                <span class="diff-blurb">Leaner wallet. Meaner swamp.</span>
               </button>
               <button type="button" class="diff-btn diff-insane" data-diff="insane">
                 <span class="diff-tag">UNPRECEDENTED</span>
                 <span class="diff-name">SAD!</span>
-                <span class="diff-blurb">Everyone is against you. Still winnable. Barely.</span>
+                <span class="diff-blurb">Everyone is against you.</span>
               </button>
             </div>
           </section>
-
           <section class="maps" aria-label="Battlefield select">
-            <p class="section-label">Choose the Battlefield</p>
+            <p class="section-label">Battlefield</p>
             <div class="map-grid">
               <button type="button" class="plaque selected" data-map="lawn">
                 <span class="plaque-seal">01</span>
                 <span class="plaque-name">South Lawn</span>
                 <span class="plaque-sub">Protect the People’s House</span>
-                <span class="plaque-brief">Night falls on Pennsylvania Avenue.<br />Hold the fountain, the roses, and the House.</span>
+                <span class="plaque-brief">Hold the fountain, the roses, and the House.</span>
               </button>
               <button type="button" class="plaque" data-map="palazzo">
                 <span class="plaque-seal">02</span>
                 <span class="plaque-name">Mar-a-Lago Drive</span>
-                <span class="plaque-sub">Gold, palms, and a very exclusive gate</span>
-                <span class="plaque-brief">Weekend at the club. They want the ballroom steps.<br />Keep sneakers off the marble.</span>
+                <span class="plaque-sub">Gold, palms, exclusive gate</span>
+                <span class="plaque-brief">Keep sneakers off the marble.</span>
               </button>
               <button type="button" class="plaque" data-map="border">
                 <span class="plaque-seal">03</span>
                 <span class="plaque-name">Frontier Ridge</span>
-                <span class="plaque-sub">Steel, dust, and a very finished wall</span>
-                <span class="plaque-brief">High desert. The wall is finished.<br />Drones ignore steel; everything else stacks up.</span>
+                <span class="plaque-sub">Steel, dust, finished wall</span>
+                <span class="plaque-brief">Drones ignore steel; everything else stacks up.</span>
               </button>
               <button type="button" class="plaque" data-map="avenue">
                 <span class="plaque-seal">04</span>
                 <span class="plaque-name">Fifth Avenue</span>
-                <span class="plaque-sub">Traffic, tickers, and a gold tower</span>
-                <span class="plaque-brief">Midtown after dark. Trap them in traffic.<br />Do not let the swarm take the gold lobby.</span>
+                <span class="plaque-sub">Traffic, tickers, gold tower</span>
+                <span class="plaque-brief">Trap them in traffic. Hold the lobby.</span>
               </button>
             </div>
           </section>
+          <p class="pitch">Tap a tower card, then tap grass to build. On phones: first tap previews range, second tap confirms. Drones fly over walls.</p>
+          <div class="hero-row" style="width: 100%; max-width: 520px; margin: 12px auto 0">
+            <button id="btn-select-back" type="button" class="btn-blue">BACK</button>
+            <button id="btn-deploy" type="button" class="btn-start">PLAY MISSION</button>
+          </div>
+        </div>
+      </div>
 
-          <section class="dossiers" aria-label="Tower and enemy dossiers">
-            <p class="section-label">Dossiers — Towers &amp; Threats</p>
-            <div class="dossier-grid">
-              <article class="dossier tower">
-                <h3>⚡ Truth Tower</h3>
-                <p class="motto">FACTS DON’T CARE ABOUT YOUR PATHING</p>
-                <p class="how">Highest fire rate. Low damage. Best against swarms and drones. Place on corners where the path doubles back.</p>
-              </article>
-              <article class="dossier tower">
-                <h3>💰 Tariff Trebuchet</h3>
-                <p class="motto">IF IT’S HEAVY, TAX IT</p>
-                <p class="how">Slow, huge, area damage. Screen-shakes on impact. Lead the target — the boulder is theatrical on purpose.</p>
-              </article>
-              <article class="dossier tower">
-                <h3>🧱 Brick-Layer Cannon</h3>
-                <p class="motto">AND MEXICO IS SENDING THE MORTAR</p>
-                <p class="how">Fires a wall onto the path ahead of a ground enemy. Drones fly over. Walls decay and can be smashed.</p>
-              </article>
-              <article class="dossier tower">
-                <h3>📜 Executive Order Desk</h3>
-                <p class="motto">SIGNED. SEALED. RAPID.</p>
-                <p class="how">Does not shoot. Buffs fire rate of towers in its aura. Stack desks to cover a whole killbox. Upgrade the aura, not the ego.</p>
-              </article>
-              <article class="dossier foe">
-                <h3>👽 Commie Alien</h3>
-                <p class="motto">WEAK. NUMEROUS. RED.</p>
-                <p class="how">Fast ground swarm. Low HP. Walls stop them. Truth Towers melt them. Do not let a clump leak — death by a thousand approval cuts.</p>
-              </article>
-              <article class="dossier foe">
-                <h3>📡 Fake News Drone</h3>
-                <p class="motto">LIVE FROM SOMEWHERE INACCURATE</p>
-                <p class="how">Flying. Ignores mini-walls. Fast. Medium HP. Prioritize Truth Towers and Trebuchet splash along flyovers.</p>
-              </article>
-              <article class="dossier foe">
-                <h3>🗂️ Deep State Bureaucrat</h3>
-                <p class="motto">GS-15 AND UNFIREABLE</p>
-                <p class="how">Slow ground tank. Massive HP. Chews walls. Needs Trebuchet splash plus a desk buff. Never leave one alive at the end of a wave.</p>
-              </article>
-            </div>
-          </section>
+      <div id="overlay-options" class="overlay hidden">
+        <div class="panel slim">
+          <p class="kicker">OPTIONS</p>
+          <h2>SETTINGS</h2>
+          <p class="pitch">Sound uses a tiny on-device synth. No accounts. No cloud. Tremendous privacy.</p>
+          <div class="opt-row">
+            <button id="btn-opt-mute" type="button" class="btn-blue">SOUND ON</button>
+          </div>
+          <button id="btn-opt-close" type="button" class="cta">CLOSE</button>
+        </div>
+      </div>
 
-          <ul class="how">
-            <li>Tap a tower card, then tap grass to build. On phones: first tap previews range, second tap confirms.</li>
-            <li>Drones fly over walls. Bureaucrats soak damage. Aliens swarm.</li>
-            <li>Space sends the next wave. S sells a selected tower. Upgrade from the inspect dock.</li>
-          </ul>
-          <button id="btn-start" type="button" class="cta huge">MAKE THE PATH GREAT</button>
+      <div id="overlay-info" class="overlay overlay-scroll hidden">
+        <div class="panel hq codex">
+          <p class="kicker">FIELD GUIDE</p>
+          <h2>INFO</h2>
+          <p class="sub">Towers and threats — portraits match the battlefield</p>
+          <div class="dossier-grid info-grid">
+            <article class="dossier tower">
+              <canvas class="portrait" data-portrait="tower:truth" width="160" height="88"></canvas>
+              <h3>Truth Tower</h3>
+              <p class="motto">FACTS DON’T CARE ABOUT YOUR PATHING</p>
+              <p class="how">Stone fact-checker with a dish. Highest fire rate, low damage. Melts swarms and drones. Place on corners.</p>
+            </article>
+            <article class="dossier tower">
+              <canvas class="portrait" data-portrait="tower:trebuchet" width="160" height="88"></canvas>
+              <h3>Tariff Cannon</h3>
+              <p class="motto">IF IT’S HEAVY, TAX IT</p>
+              <p class="how">Blue siege cannon. Slow, huge area TAX shots. Lead the target. Best vs bureaucrats.</p>
+            </article>
+            <article class="dossier tower">
+              <canvas class="portrait" data-portrait="tower:brick" width="160" height="88"></canvas>
+              <h3>Brick-Layer</h3>
+              <p class="motto">AND MEXICO IS SENDING THE MORTAR</p>
+              <p class="how">Fires a MAGA wall onto the path. Ground units stack up. Drones fly over. Walls decay and can be smashed.</p>
+            </article>
+            <article class="dossier tower">
+              <canvas class="portrait" data-portrait="tower:desk" width="160" height="88"></canvas>
+              <h3>EO Desk</h3>
+              <p class="motto">SIGNED. SEALED. RAPID.</p>
+              <p class="how">Does not shoot. Buffs fire rate of towers in its aura. Stack desks over a killbox.</p>
+            </article>
+            <article class="dossier foe">
+              <canvas class="portrait" data-portrait="enemy:alien" width="160" height="88"></canvas>
+              <h3>Commie Alien</h3>
+              <p class="motto">WEAK. NUMEROUS. CROWNED.</p>
+              <p class="how">Walking globe swarm. Low HP. Walls stop them. Truth Towers melt them. Don’t let a clump leak.</p>
+            </article>
+            <article class="dossier foe">
+              <canvas class="portrait" data-portrait="enemy:drone" width="160" height="88"></canvas>
+              <h3>Fake News Drone</h3>
+              <p class="motto">LIVE FROM SOMEWHERE INACCURATE</p>
+              <p class="how">Flying news camera. Ignores mini-walls. Medium HP. Cover flyovers with Truth and TAX splash.</p>
+            </article>
+            <article class="dossier foe">
+              <canvas class="portrait" data-portrait="enemy:bureaucrat" width="160" height="88"></canvas>
+              <h3>Deep State Bureaucrat</h3>
+              <p class="motto">GS-15 AND UNFIREABLE</p>
+              <p class="how">Hooded clerk with red tape. Slow tank. Chews walls. Needs TAX splash plus a desk buff.</p>
+            </article>
+          </div>
+          <button id="btn-info-close" type="button" class="cta">CLOSE</button>
         </div>
       </div>
 
@@ -247,6 +241,9 @@
           <h2>PAUSED</h2>
           <p class="pitch">The deep state waits for no one, but we can make an exception.</p>
           <button id="btn-resume" type="button" class="cta">RESUME THE RALLY</button>
+          <div class="opt-row">
+            <button id="btn-pause-hq" type="button" class="btn-blue">MAIN MENU</button>
+          </div>
         </div>
       </div>
 
@@ -255,52 +252,9 @@
           <h2 id="end-title">YOU'RE FIRED</h2>
           <p id="end-body" class="pitch"></p>
           <button id="btn-again" type="button" class="cta huge">PLAY AGAIN — BIGGER THIS TIME</button>
-        </div>
-      </div>
-
-      <div id="overlay-codex" class="overlay overlay-scroll hidden">
-        <div class="panel hq codex">
-          <p class="kicker">FIELD CODEX · FOR YOUR EYES ONLY</p>
-          <h2>THE BRIEFING</h2>
-          <p class="sub">Towers, threats, and tremendous advice</p>
-          <div class="dossier-grid">
-            <article class="dossier tower">
-              <h3>⚡ Truth Tower</h3>
-              <p class="motto">FACTS DON’T CARE ABOUT YOUR PATHING</p>
-              <p class="how">Highest fire rate. Low damage. Best against swarms and drones. Place on corners where the path doubles back. Upgrades: FACT strobe → Prime-time klieg → UNPRECEDENTED BEAM.</p>
-            </article>
-            <article class="dossier tower">
-              <h3>💰 Tariff Trebuchet</h3>
-              <p class="motto">IF IT’S HEAVY, TAX IT</p>
-              <p class="how">Slow, huge, area damage. Lead the target — the boulder is theatrical on purpose. Upgrades: Import duty → Retaliatory levy → EMERGENCY TARIFF.</p>
-            </article>
-            <article class="dossier tower">
-              <h3>🧱 Brick-Layer Cannon</h3>
-              <p class="motto">AND MEXICO IS SENDING THE MORTAR</p>
-              <p class="how">Fires a wall onto the path ahead of a ground enemy. Drones fly over. Upgrades: Prefab section → Rebar core → FINISHED WALL.</p>
-            </article>
-            <article class="dossier tower">
-              <h3>📜 Executive Order Desk</h3>
-              <p class="motto">SIGNED. SEALED. RAPID.</p>
-              <p class="how">Does not shoot. Buffs nearby fire rate. Stack desks to cover a killbox. Upgrades: Acting director → Cabinet session → DAY-ONE ORDER.</p>
-            </article>
-            <article class="dossier foe">
-              <h3>👽 Commie Alien</h3>
-              <p class="motto">WEAK. NUMEROUS. RED.</p>
-              <p class="how">Fast ground swarm. Low HP. Walls stop them. Truth Towers melt them. Do not let a clump leak — death by a thousand approval cuts.</p>
-            </article>
-            <article class="dossier foe">
-              <h3>📡 Fake News Drone</h3>
-              <p class="motto">LIVE FROM SOMEWHERE INACCURATE</p>
-              <p class="how">Flying. Ignores mini-walls. Fast. Medium HP. Prioritize Truth Towers and Trebuchet splash along flyovers.</p>
-            </article>
-            <article class="dossier foe">
-              <h3>🗂️ Deep State Bureaucrat</h3>
-              <p class="motto">GS-15 AND UNFIREABLE</p>
-              <p class="how">Slow ground tank. Massive HP. Chews walls. Needs Trebuchet splash plus a desk buff. Never leave one alive at the end of a wave.</p>
-            </article>
+          <div class="opt-row">
+            <button id="btn-end-hq" type="button" class="btn-blue">MAIN MENU</button>
           </div>
-          <button id="btn-codex-close" type="button" class="cta">CLOSE THE CODEX</button>
         </div>
       </div>
     </div>
