@@ -1018,8 +1018,8 @@ canvas.portrait {
     padding-right: max(8px, var(--safe-r));
   }
   .hud-top {
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-wrap: nowrap;
+    justify-content: space-between;
     gap: 6px;
   }
   .brand-kicker,
@@ -1034,16 +1034,22 @@ canvas.portrait {
   }
   .arsenal {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
   }
   .card .name {
-    font-size: 11px;
-    line-height: 1.1;
+    display: none;
+  }
+  .card {
+    min-height: 44px;
+    padding: 4px;
+    grid-template-columns: 1fr;
+    justify-items: center;
   }
   .actions {
     min-width: 0;
     width: 100%;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
   .actions .cta,
   .actions .ghost {
@@ -1057,11 +1063,7 @@ canvas.portrait {
   }
   .card {
     min-height: 44px;
-    padding: 6px 8px;
-  }
-  .card .name {
-    font-size: 12px;
-    padding-right: 28px;
+    padding: 4px;
   }
   .card .meta,
   .card kbd {
@@ -1089,12 +1091,23 @@ canvas.portrait {
     display: none;
   }
   #overlay-select .hero-row {
-    position: sticky;
+    position: fixed;
+    left: 0;
+    right: 0;
     bottom: 0;
-    width: 100%;
+    z-index: 7;
+    width: auto;
     max-width: none;
-    padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(180deg, transparent, #0b1d4a 30%);
+    padding: 8px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(180deg, transparent, #0b1d4a 28%);
+  }
+  #overlay-select .panel {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+  #overlay-info .cta {
+    position: sticky;
+    bottom: 8px;
+    z-index: 2;
   }
   .tool {
     min-height: 44px;
@@ -1104,7 +1117,7 @@ canvas.portrait {
 
 @media (max-width: 900px) and (orientation: portrait) {
   .stage {
-    min-height: 42dvh;
+    min-height: 0;
   }
   .hud-top {
     gap: 4px 8px;
@@ -1164,9 +1177,10 @@ canvas.portrait {
     white-space: nowrap;
   }
   .hud-bottom {
-    gap: 6px;
-    padding-top: 6px;
-    padding-bottom: max(6px, calc(6px + var(--safe-b)));
+    gap: 4px;
+    padding-top: 4px;
+    max-height: 28dvh;
+    padding-bottom: max(4px, calc(4px + var(--safe-b)));
   }
   .overlay.overlay-scroll,
   #overlay-select,
@@ -1222,34 +1236,15 @@ canvas.portrait {
     flex-wrap: nowrap;
     align-items: stretch;
     gap: 6px;
+    max-height: 72px;
     padding-bottom: max(4px, calc(4px + var(--safe-b)));
   }
-  .arsenal {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
-  }
-  .card {
-    min-height: 44px;
-    padding: 4px 6px;
-    grid-template-columns: 28px 1fr;
-  }
-  .card .icon,
-  .card .icon-canvas {
-    width: 28px;
-    height: 28px;
-  }
-  .actions {
-    width: auto;
-    min-width: 120px;
-    max-width: 160px;
-    flex-direction: column;
-  }
   .inspect {
-    max-width: 168px;
-    min-width: 120px;
+    flex: 0 1 96px;
+    max-width: 96px;
+    min-width: 0;
     width: auto;
-    flex: 0 1 168px;
-    padding: 4px 8px;
+    padding: 4px 6px;
   }
   .inspect-kicker,
   #inspect-body {
@@ -1312,7 +1307,15 @@ canvas.portrait {
   .dossier-grid,
   .dossier-grid.info-grid,
   #overlay-info .dossier-grid.info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dossier:has(canvas.portrait) {
     grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+  #overlay-select .pitch {
+    display: none;
   }
   .dossier.foe {
     grid-column: auto;

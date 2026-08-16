@@ -134,14 +134,14 @@ export class Renderer {
 
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
-    ctx.strokeStyle = theme.pathEdge;
-    ctx.lineWidth = 50;
+    ctx.strokeStyle = '#7a0c1c';
+    ctx.lineWidth = 48;
     this.strokePath(ctx);
-    ctx.strokeStyle = mixHex(theme.pathFill, '#efe0c4', 0.42);
-    ctx.lineWidth = 42;
+    ctx.strokeStyle = '#c8102e';
+    ctx.lineWidth = 38;
     this.strokePath(ctx);
     this.stampBricks(ctx);
-    ctx.strokeStyle = 'rgba(255, 252, 245, 0.32)';
+    ctx.strokeStyle = 'rgba(255, 252, 245, 0.28)';
     ctx.lineWidth = 1.4;
     ctx.setLineDash([7, 11]);
     this.strokePath(ctx);
@@ -288,20 +288,12 @@ export class Renderer {
   }
 
   private stampBricks(ctx: CanvasRenderingContext2D): void {
-    const theme = this.map.def.theme;
-    const bricks = [
-      theme.pathFill,
-      mixHex(theme.pathFill, theme.pathEdge, 0.24),
-      mixHex(theme.pathFill, '#fff4e4', 0.18),
-      mixHex(theme.pathFill, theme.pathRunner, 0.2),
-    ];
-    const hi = mixHex(theme.pathFill, '#fff', 0.28);
-    const lo = mixHex(theme.pathFill, theme.pathEdge, 0.4);
-    const bw = 14;
-    const bh = 8.5;
-    const gap = 1.7;
+    const bricks = ['#c8102e', '#e04050', '#a01024', '#f24a58'];
+    const bw = 15;
+    const bh = 9;
+    const gap = 2.2;
     ctx.save();
-    this.clipToPath(ctx, 20);
+    this.clipToPath(ctx, 17);
     let next = 0;
     let row = 0;
     for (const s of this.map.samples) {
@@ -311,19 +303,17 @@ export class Renderer {
       ctx.translate(s.x, s.y);
       ctx.rotate(s.angle);
       for (let lane = -1; lane <= 1; lane++) {
-        const ox = ((row + lane + 3) & 1) === 0 ? 0 : 5;
+        const ox = ((row + lane + 3) & 1) === 0 ? 0 : 6;
         const by = lane * (bh + gap);
         ctx.fillStyle = bricks[(row * 3 + lane + 4) & 3]!;
-        ctx.fillRect(ox - bw / 2, by - bh / 2, bw, bh);
-        ctx.fillStyle = hi;
-        ctx.globalAlpha = 0.38;
-        ctx.fillRect(ox - bw / 2, by - bh / 2, bw, bh * 0.32);
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = lo;
-        ctx.fillRect(ox - bw / 2, by + bh / 2 - 1.8, bw, 1.8);
-        ctx.strokeStyle = theme.pathEdge;
-        ctx.lineWidth = 0.7;
-        ctx.strokeRect(ox - bw / 2, by - bh / 2, bw, bh);
+        ctx.beginPath();
+        ctx.roundRect(ox - bw / 2, by - bh / 2, bw, bh, 1.6);
+        ctx.fill();
+        ctx.fillStyle = '#ff6a78';
+        ctx.fillRect(ox - bw / 2 + 1, by - bh / 2 + 0.5, bw - 2, bh * 0.28);
+        ctx.strokeStyle = '#0c1838';
+        ctx.lineWidth = 2;
+        ctx.stroke();
       }
       ctx.restore();
       row++;
@@ -366,7 +356,7 @@ export class Renderer {
       const s = 0.55 + seeded(i * 7.1) * 0.5;
       this.cloud(ctx, drift, y, s, 0.28 + seeded(i) * 0.12);
     }
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < 3; i++) {
       const x = seeded(i * 11.3) * WORLD_W;
       const y = 40 + seeded(i * 17.9) * (WORLD_H - 50);
       const tw = 0.25 + Math.abs(Math.sin(time * (1.4 + seeded(i) * 2) + i)) * 0.75;
@@ -509,18 +499,20 @@ export class Renderer {
     const pulse = 0.88 + (w.life / w.maxLife) * 0.12;
     ctx.globalAlpha = pulse;
     const bw = 52;
-    const bh = 30;
-    for (let g = 3; g >= 1; g--) {
-      ctx.globalAlpha = pulse * (0.1 * g);
-      ctx.fillStyle = '#c8102e';
-      ctx.fillRect(-bw / 2 - g * 3, -bh / 2 - g * 2, bw + g * 6, bh + g * 4);
-    }
-    ctx.globalAlpha = pulse;
+    const bh = 28;
     ctx.fillStyle = '#e6c35c';
-    ctx.fillRect(-bw / 2, -bh / 2, bw, bh);
-    ctx.strokeStyle = '#8a6a18';
-    ctx.lineWidth = 2.2;
-    ctx.strokeRect(-bw / 2, -bh / 2, bw, bh);
+    ctx.fillRect(-bw / 2 - 2, -bh / 2 - 2, bw + 4, bh + 4);
+    ctx.strokeStyle = '#0c1838';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(-bw / 2 - 2, -bh / 2 - 2, bw + 4, bh + 4);
+    for (let i = 0; i < 5; i++) {
+      const mx = -bw / 2 - 2 + i * ((bw + 4) / 5);
+      ctx.fillStyle = '#c8102e';
+      ctx.fillRect(mx + 1, -bh / 2 - 8, (bw + 4) / 5 - 3, 8);
+      ctx.strokeStyle = '#0c1838';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(mx + 1, -bh / 2 - 8, (bw + 4) / 5 - 3, 8);
+    }
 
     const mortar = 2.5;
     const inset = 3;
@@ -548,7 +540,7 @@ export class Renderer {
         const maga = (row === 0 && col === 1) || (row === 1 && col === 0);
         if (maga && rw > 12) {
           ctx.fillStyle = '#fffef8';
-          ctx.font = '800 6px Impact, sans-serif';
+          ctx.font = '800 9px Impact, sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText('MAGA', x + rw / 2, y + brickH / 2 + 0.4);

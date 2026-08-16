@@ -2,7 +2,7 @@ import type { LandmarkKind } from './campaign.ts';
 import { CELL, type EnemyId, type TowerId } from './types.ts';
 
 const INK = '#0c1838';
-const INK_W = 2.2;
+const INK_W = 3;
 
 const C = {
   red: '#c8102e',
@@ -98,13 +98,6 @@ function blobHi(ctx: CanvasRenderingContext2D, x: number, y: number, rx: number,
   ctx.fill();
 }
 
-function blobLo(ctx: CanvasRenderingContext2D, x: number, y: number, rx: number, ry: number, a = 0.2): void {
-  ctx.fillStyle = `rgba(90,40,12,${a})`;
-  ctx.beginPath();
-  ctx.ellipse(x, y, rx, ry, 0.35, 0, Math.PI * 2);
-  ctx.fill();
-}
-
 function clayRect(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -122,8 +115,7 @@ function clayRect(
   ctx.save();
   rr(ctx, x, y, w, h, r);
   ctx.clip();
-  blobHi(ctx, x + w * 0.28, y + h * 0.22, w * 0.3, h * 0.16, 0.42);
-  blobLo(ctx, x + w * 0.74, y + h * 0.78, w * 0.32, h * 0.2, 0.16);
+  blobHi(ctx, x + w * 0.28, y + h * 0.18, w * 0.34, h * 0.14, 0.4);
   ctx.restore();
 }
 
@@ -284,12 +276,15 @@ function toyWindow(
 }
 
 function toyColumn(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
-  clayRect(ctx, x - 1, y + h - 6, w + 2, 6, 2, C.white, '#e8e0d4', '#b8b0a4', 1.8);
-  clayRect(ctx, x + w * 0.12, y + 6, w * 0.76, h - 12, w * 0.38, C.white, '#f2eee6', '#c8c0b4', 1.9);
-  goldBand(ctx, x + w * 0.08, y + 5, w * 0.84, 3);
-  goldBand(ctx, x + w * 0.08, y + h - 10, w * 0.84, 3);
-  clayRect(ctx, x, y, w, 7, 2.5, C.white, '#efeae0', '#c4bcb0', 1.8);
-  blobHi(ctx, x + w * 0.32, y + h * 0.35, w * 0.12, h * 0.22, 0.35);
+  clayRect(ctx, x - 2, y + h - 7, w + 4, 7, 2, C.goldHi, C.gold, C.goldLo, 2.2);
+  clayRect(ctx, x + w * 0.18, y + 7, w * 0.64, h - 14, w * 0.3, C.white, '#e8e2d6', C.blueLo, 2.4);
+  ctx.fillStyle = C.blueLo;
+  ctx.globalAlpha = 0.35;
+  ctx.fillRect(x + w * 0.18, y + 7, w * 0.18, h - 14);
+  ctx.globalAlpha = 1;
+  goldBand(ctx, x + w * 0.06, y + 6, w * 0.88, 4);
+  goldBand(ctx, x + w * 0.06, y + h - 11, w * 0.88, 4);
+  clayRect(ctx, x - 1, y, w + 2, 8, 2.5, C.goldHi, C.gold, C.goldLo, 2.2);
 }
 
 function woodDoor(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
@@ -412,11 +407,11 @@ function lawnKeep(ctx: CanvasRenderingContext2D, x: number, y: number, w: number
   ground(ctx, cx, y + h * 0.94, w * 0.44, h * 0.055);
   leakRim(ctx, x, y, w, h, time, leak);
 
-  clayRect(ctx, x + w * 0.06, y + h * 0.86, w * 0.88, h * 0.1, 5, C.stoneHi, C.stone, C.stoneLo);
-  goldBand(ctx, x + w * 0.06, y + h * 0.86, w * 0.88, 4);
-  clayRect(ctx, x + w * 0.12, y + h * 0.78, w * 0.76, h * 0.09, 5, C.white, '#efe8dc', '#c8c0b4');
-  goldBand(ctx, x + w * 0.12, y + h * 0.78, w * 0.76, 3.5);
-  clayRect(ctx, x + w * 0.18, y + h * 0.71, w * 0.64, h * 0.08, 4, C.white, '#f6f1e8', '#d0c8bc');
+  clayRect(ctx, x + w * 0.06, y + h * 0.86, w * 0.88, h * 0.1, 5, C.stoneHi, C.blueLo, C.blueLo, 3);
+  goldBand(ctx, x + w * 0.06, y + h * 0.86, w * 0.88, 5);
+  clayRect(ctx, x + w * 0.12, y + h * 0.78, w * 0.76, h * 0.09, 5, C.white, '#efe8dc', C.blueLo, 3);
+  goldBand(ctx, x + w * 0.12, y + h * 0.78, w * 0.76, 4);
+  clayRect(ctx, x + w * 0.18, y + h * 0.71, w * 0.64, h * 0.08, 4, C.goldHi, C.gold, C.goldLo, 3);
 
   const wingY = y + h * 0.52;
   const wingH = h * 0.22;
@@ -456,16 +451,17 @@ function lawnKeep(ctx: CanvasRenderingContext2D, x: number, y: number, w: number
   const pR = bx + bw * 0.78;
   const pBase = colY + 4;
   const pPeak = pBase - h * 0.09;
-  tri(ctx, pL, pBase, cx, pPeak, pR, pBase, C.white, '#d8d0c4');
-  goldBand(ctx, pL - 2, pBase - 2, pR - pL + 4, 4);
-  star5(ctx, cx, (pPeak + pBase) * 0.5 + 1, 8, 3.4);
+  tri(ctx, pL, pBase, cx, pPeak, pR, pBase, C.blueHi, C.blueLo, 3.2);
+  goldBand(ctx, pL - 2, pBase - 3, pR - pL + 4, 5);
+  star5(ctx, cx, (pPeak + pBase) * 0.5 + 1, 11, 4.6);
 
-  const domeY = by + 4;
-  clayOval(ctx, cx, domeY, bw * 0.22, h * 0.12, 0, C.white, '#f4efe6', '#c0b8ac');
-  goldBand(ctx, cx - bw * 0.2, domeY + h * 0.02, bw * 0.4, 4);
-  clayRect(ctx, cx - 4, y + h * 0.08, 8, h * 0.12, 2, C.goldHi, C.gold, C.goldLo, 1.7);
-  clayBall(ctx, cx, y + h * 0.07, 5.5, C.goldHi, C.gold, C.goldLo, 1.6);
-  star5(ctx, cx, y + h * 0.02, 6, 2.5);
+  const drumW = bw * 0.28;
+  clayRect(ctx, cx - drumW * 0.5, by - h * 0.04, drumW, h * 0.08, 3, C.blueHi, C.blue, C.blueLo, 2.6);
+  goldBand(ctx, cx - drumW * 0.52, by - h * 0.01, drumW + 4, 4);
+  clayOval(ctx, cx, by + 2, bw * 0.2, h * 0.11, 0, C.goldHi, C.white, C.blueLo, 2.8);
+  clayRect(ctx, cx - 4, y + h * 0.08, 8, h * 0.12, 2, C.goldHi, C.gold, C.goldLo, 2);
+  clayBall(ctx, cx, y + h * 0.07, 6, C.goldHi, C.gold, C.goldLo, 2);
+  star5(ctx, cx, y + h * 0.02, 7, 3);
 
   usFlag(ctx, x + w * 0.14, y + h * 0.28, time, 0.85);
   usFlag(ctx, x + w * 0.86, y + h * 0.28, time + 0.4, 0.85);
@@ -768,189 +764,149 @@ export function drawTowerArt(
 function alienArt(ctx: CanvasRenderingContext2D, angle: number, bob: number, _time: number): void {
   ctx.rotate(angle * 0.35);
   const walk = Math.sin(bob) * 0.45;
-  ground(ctx, 1, 14, 10, 3.5);
   ctx.save();
-  ctx.translate(-5, 10);
-  ctx.rotate(-0.25 + walk);
-  clayOval(ctx, 0, 0, 3.2, 5.5, 0.15, C.oceanHi, C.ocean, C.oceanLo, 1.6);
+  ctx.translate(-6, 11);
+  ctx.rotate(-0.3 + walk);
+  clayOval(ctx, 0, 0, 3.6, 6.2, 0.15, C.oceanHi, C.ocean, C.oceanLo, 2.2);
   ctx.restore();
   ctx.save();
-  ctx.translate(5, 10);
-  ctx.rotate(0.25 - walk);
-  clayOval(ctx, 0, 0, 3.2, 5.5, -0.15, C.oceanHi, C.ocean, C.oceanLo, 1.6);
+  ctx.translate(6, 11);
+  ctx.rotate(0.3 - walk);
+  clayOval(ctx, 0, 0, 3.6, 6.2, -0.15, C.oceanHi, C.ocean, C.oceanLo, 2.2);
   ctx.restore();
 
-  clayBall(ctx, 0, -1, 12.5, C.oceanHi, C.ocean, C.oceanLo, 2);
+  clayBall(ctx, 0, -1, 13.5, C.oceanHi, C.ocean, C.oceanLo, 3);
   ctx.save();
   ctx.beginPath();
-  ctx.arc(0, -1, 12.5, 0, Math.PI * 2);
+  ctx.arc(0, -1, 13.5, 0, Math.PI * 2);
   ctx.clip();
   ctx.fillStyle = C.land;
   ctx.beginPath();
-  ctx.ellipse(-4, -4, 5.5, 3.8, -0.4, 0, Math.PI * 2);
+  ctx.ellipse(-5, -5, 6.2, 4.2, -0.4, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.ellipse(5, 1, 4.2, 3.2, 0.3, 0, Math.PI * 2);
+  ctx.ellipse(6, 1, 5, 3.6, 0.3, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.ellipse(-1, 6, 4.8, 2.6, 0.1, 0, Math.PI * 2);
+  ctx.ellipse(-1, 7, 5.4, 3, 0.1, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = C.landLo;
+  ink(ctx, 1.8);
+  ctx.strokeStyle = C.landLo;
   ctx.beginPath();
-  ctx.ellipse(-3, -3, 3.2, 2.2, -0.4, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.ellipse(-5, -5, 6.2, 4.2, -0.4, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(6, 1, 5, 3.6, 0.3, 0, Math.PI * 2);
+  ctx.stroke();
   ctx.restore();
+
+  ink(ctx, 2.6);
+  ctx.strokeStyle = C.gold;
   ctx.beginPath();
-  ctx.arc(0, -1, 12.5, 0, Math.PI * 2);
-  ink(ctx, 2);
+  ctx.ellipse(0, -1, 13.2, 4.2, 0.12, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, -1, 13.5, 0, Math.PI * 2);
+  ink(ctx, 3);
   ctx.stroke();
 
-  ctx.fillStyle = INK;
-  ctx.beginPath();
-  ctx.ellipse(-3.4, -3, 1.7, 2.2, -0.15, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(3.4, -3, 1.7, 2.2, 0.15, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = C.white;
-  ctx.beginPath();
-  ctx.arc(-4, -3.8, 0.55, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(2.8, -3.8, 0.55, 0, Math.PI * 2);
-  ctx.fill();
-  ink(ctx, 1.5);
-  ctx.beginPath();
-  ctx.moveTo(-3.6, -6.2);
-  ctx.lineTo(-1.2, -5.2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(3.6, -6.2);
-  ctx.lineTo(1.2, -5.2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(0, 1.5, 3.2, 0.25, Math.PI - 0.25);
-  ctx.stroke();
+  clayRect(ctx, -11, 2, 22, 5, 2, C.redHi, C.red, C.redLo, 2);
+  star5(ctx, 0, 4.5, 3.4, 1.4);
 
-  clayRect(ctx, -7, -16, 14, 4, 1.5, C.goldHi, C.gold, C.goldLo, 1.6);
-  tri(ctx, -6, -16, -4, -21, -2, -16, C.goldHi, C.goldLo, 1.4);
-  tri(ctx, 2, -16, 4, -21, 6, -16, C.goldHi, C.goldLo, 1.4);
-  tri(ctx, -2, -16, 0, -22, 2, -16, C.goldHi, C.goldLo, 1.4);
-  clayBall(ctx, 0, -16.5, 1.6, C.redHi, C.red, C.redLo, 1.2);
+  clayRect(ctx, -9, -18, 18, 5.5, 2, C.goldHi, C.gold, C.goldLo, 2.4);
+  tri(ctx, -8, -18, -5, -26, -2, -18, C.goldHi, C.goldLo, 2);
+  tri(ctx, 2, -18, 5, -26, 8, -18, C.goldHi, C.goldLo, 2);
+  tri(ctx, -3, -18, 0, -28, 3, -18, C.goldHi, C.goldLo, 2);
+  clayBall(ctx, 0, -18, 2.2, C.redHi, C.red, C.redLo, 1.8);
 }
 
 function droneArt(ctx: CanvasRenderingContext2D, angle: number, bob: number, time: number): void {
   ctx.rotate(angle * 0.15);
   ctx.translate(0, Math.sin(bob) * 1.4);
   const spin = time * 10;
-  ground(ctx, 0, 14, 11, 3.2);
-  ctx.strokeStyle = C.steel;
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  ctx.ellipse(0, 8, 12, 3.2, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.ellipse(0, 8, 8, 2.1, spin * 0.02, 0, Math.PI * 2);
-  ctx.stroke();
-
-  clayRect(ctx, -13, -8, 26, 16, 4, C.steelHi, C.steelLo, INK);
-  clayRect(ctx, -9, -4, 18, 9, 2, C.redHi, C.red, C.redLo, 1.6);
-  ctx.fillStyle = C.white;
-  ctx.font = '800 6px Impact, Arial Black, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('FAKE', 0, 1);
-
-  clayBall(ctx, 0, -9, 7.5, '#d8eef8', '#4a88b8', '#102030', 2);
-  clayBall(ctx, 0, -9, 4.2, '#8ec8f8', '#1a4fa8', '#081428', 1.5);
-  blobHi(ctx, -2, -11, 1.8, 1.2, 0.7);
-  ctx.fillStyle = `rgba(200,16,46,${0.45 + Math.sin(time * 12) * 0.4})`;
-  ctx.beginPath();
-  ctx.arc(0, -9, 1.4, 0, Math.PI * 2);
-  ctx.fill();
-
-  ink(ctx, 2);
-  ctx.beginPath();
-  ctx.moveTo(-13, 2);
-  ctx.lineTo(-20, 8);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(13, 2);
-  ctx.lineTo(20, 6);
-  ctx.stroke();
-  clayBall(ctx, -20, 9, 2.2, C.steelHi, C.steel, C.steelLo, 1.4);
-  clayOval(ctx, 22, 5, 3.5, 5.5, 0.4, C.steelHi, C.steel, INK, 1.5);
-  clayBall(ctx, 22, 0, 2.4, C.goldHi, C.gold, C.goldLo, 1.3);
 
   for (const s of [-1, 1]) {
     ctx.save();
-    ctx.translate(s * 14, -10);
+    ctx.translate(s * 16, -12);
     ctx.rotate(spin);
-    ctx.fillStyle = 'rgba(200,210,230,0.55)';
+    ctx.strokeStyle = C.blueLo;
+    ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.ellipse(0, 0, 8, 1.2, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.ellipse(0, 0, 9, 2.4, 0, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.beginPath();
-    ctx.ellipse(0, 0, 8, 1.2, Math.PI / 2, 0, Math.PI * 2);
-    ctx.fill();
-    clayBall(ctx, 0, 0, 1.5, C.goldHi, C.gold, C.goldLo, 1.2);
+    ctx.ellipse(0, 0, 9, 2.4, Math.PI / 2, 0, Math.PI * 2);
+    ctx.stroke();
+    clayBall(ctx, 0, 0, 2.2, C.goldHi, C.gold, C.goldLo, 2);
     ctx.restore();
   }
+
+  clayRect(ctx, -14, -7, 22, 16, 4, C.steelHi, C.steel, INK, 3);
+  clayRect(ctx, 6, -5, 16, 10, 3, C.steelHi, C.blue, C.blueLo, 2.6);
+  clayOval(ctx, 22, 0, 5.5, 6.5, 0, C.blueHi, C.blue, INK, 2.4);
+  clayBall(ctx, 24, 0, 2.4, C.redHi, C.red, C.redLo, 1.8);
+
+  clayRect(ctx, -12, 2, 20, 8, 2, C.redHi, C.red, C.redLo, 2.2);
+  ctx.fillStyle = C.white;
+  ctx.font = '800 9px Impact, Arial Black, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('FAKE', -2, 6.5);
+
+  ink(ctx, 2.4);
+  ctx.beginPath();
+  ctx.moveTo(-10, 6);
+  ctx.lineTo(-18, 12);
+  ctx.stroke();
+  clayOval(ctx, -20, 13, 3.2, 5, 0.5, C.steelHi, C.gold, C.goldLo, 2);
 }
 
 function bureauArt(ctx: CanvasRenderingContext2D, angle: number, bob: number, _time: number): void {
   ctx.rotate(angle * 0.12);
   ctx.translate(0, Math.sin(bob) * 0.5);
-  ground(ctx, 1, 16, 11, 3.8);
 
   ctx.beginPath();
   ctx.moveTo(-2, 14);
-  ctx.quadraticCurveTo(-16, 10, -18, 16);
+  ctx.quadraticCurveTo(-18, 9, -20, 16);
   ctx.lineTo(-8, 16);
   ctx.closePath();
-  paint(ctx, lin(ctx, -18, 10, -2, 16, C.redHi, C.red, C.redLo), 1.7);
-  clayOval(ctx, -16, 12, 4.5, 3.2, 0.2, C.redHi, C.red, C.redLo, 1.6);
+  paint(ctx, lin(ctx, -20, 10, -2, 16, C.redHi, C.red, C.redLo), 2.2);
+  clayOval(ctx, -18, 12, 5, 3.4, 0.2, C.redHi, C.red, C.redLo, 2);
 
-  clayOval(ctx, 0, 6, 11, 12, 0, C.robeHi, C.robe, C.robeLo, 2);
-  clayRect(ctx, -9, -2, 18, 18, 8, C.robeHi, C.robe, C.robeLo, 2);
+  clayOval(ctx, 0, 7, 12, 13, 0, C.robeHi, C.robe, C.robeLo, 3);
+  clayRect(ctx, -10, -1, 20, 18, 8, C.robeHi, C.robe, C.robeLo, 3);
   ctx.beginPath();
-  ctx.moveTo(-9, -4);
-  ctx.quadraticCurveTo(0, -22, 9, -4);
-  ctx.lineTo(7, 2);
-  ctx.quadraticCurveTo(0, -8, -7, 2);
+  ctx.moveTo(-11, -2);
+  ctx.quadraticCurveTo(0, -24, 11, -2);
+  ctx.lineTo(8, 3);
+  ctx.quadraticCurveTo(0, -10, -8, 3);
   ctx.closePath();
-  paint(ctx, lin(ctx, 0, -20, 0, 2, C.robeHi, C.robeLo), 2);
+  paint(ctx, lin(ctx, 0, -22, 0, 3, C.robeHi, C.robeLo), 3);
+  goldBand(ctx, -8, -6, 16, 3);
 
-  clayOval(ctx, 0, -8, 6.2, 6.6, 0, C.skin, C.skin, C.skinLo, 1.7);
-  ink(ctx, 1.4);
+  clayOval(ctx, 0, -8, 6.8, 7, 0, C.skin, C.skin, C.skinLo, 2.2);
+  clayRect(ctx, -7, -11, 14, 3.5, 1.5, C.goldHi, C.gold, C.goldLo, 2);
+  ink(ctx, 2);
   ctx.beginPath();
-  ctx.ellipse(-2.6, -8.5, 2.6, 1.9, -0.1, 0, Math.PI * 2);
+  ctx.ellipse(-2.8, -8.2, 3.2, 2.4, -0.1, 0, Math.PI * 2);
   ctx.stroke();
   ctx.beginPath();
-  ctx.ellipse(2.6, -8.5, 2.6, 1.9, 0.1, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(-0.3, -8.5);
-  ctx.lineTo(0.3, -8.5);
+  ctx.ellipse(2.8, -8.2, 3.2, 2.4, 0.1, 0, Math.PI * 2);
   ctx.stroke();
   ctx.fillStyle = INK;
   ctx.beginPath();
-  ctx.arc(-2.5, -8.5, 0.85, 0, Math.PI * 2);
+  ctx.arc(-2.7, -8.2, 1.1, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(2.5, -8.5, 0.85, 0, Math.PI * 2);
+  ctx.arc(2.7, -8.2, 1.1, 0, Math.PI * 2);
   ctx.fill();
-  ink(ctx, 1.5);
-  ctx.beginPath();
-  ctx.arc(0, -5.2, 2.2, 0.2, Math.PI - 0.2);
-  ctx.stroke();
 
-  clayRect(ctx, 7, 0, 11, 9, 2, C.woodHi, C.wood, C.woodLo, 1.6);
-  goldBand(ctx, 7, 0, 11, 2);
+  clayRect(ctx, 6, -2, 16, 14, 2, C.white, '#f4f1e8', C.goldLo, 2.4);
+  clayRect(ctx, 7, -4, 14, 3, 1, C.goldHi, C.gold, C.goldLo, 1.8);
   ctx.fillStyle = INK;
-  ctx.fillRect(9, 3, 7, 1);
-  ctx.fillRect(9, 5.5, 5, 1);
-  clayRect(ctx, -12, 2, 6, 8, 1.5, C.goldHi, C.gold, C.goldLo, 1.4);
+  ctx.fillRect(9, 2, 10, 1.6);
+  ctx.fillRect(9, 5.5, 8, 1.6);
+  ctx.fillRect(9, 9, 6, 1.6);
 }
 
 export function drawEnemyArt(
@@ -970,22 +926,23 @@ export function drawEnemyArt(
 }
 
 function lmFountain(ctx: CanvasRenderingContext2D, time: number): void {
-  ground(ctx, 1, 20, 15, 4.5);
-  clayOval(ctx, 0, 16, 16, 6, 0, C.white, '#efe8dc', '#c8c0b4');
-  clayOval(ctx, 0, 8, 11, 5, 0, C.white, '#f4efe6', '#c8c0b4');
-  clayOval(ctx, 0, 1, 7, 4, 0, C.white, '#f7f3ea', '#c8c0b4');
-  clayRect(ctx, -2.5, -12, 5, 10, 2, C.goldHi, C.gold, C.goldLo, 1.6);
-  clayBall(ctx, 0, -13, 2.4, C.oceanHi, C.ocean, C.oceanLo, 1.4);
-  ink(ctx, 1.7);
-  ctx.strokeStyle = '#6ad4e8';
-  for (let i = 0; i < 6; i++) {
-    const a = (i / 6) * Math.PI * 2 + time * 1.5;
+  ground(ctx, 1, 20, 16, 4.5);
+  clayOval(ctx, 0, 16, 17, 6.5, 0, C.blueHi, C.blue, C.blueLo, 3);
+  goldBand(ctx, -16, 13, 32, 4);
+  clayOval(ctx, 0, 8, 11, 5, 0, C.white, C.blueHi, C.blueLo, 2.6);
+  goldBand(ctx, -10, 6, 20, 3);
+  clayRect(ctx, -3, -12, 6, 12, 2, C.goldHi, C.gold, C.goldLo, 2.2);
+  clayBall(ctx, 0, -14, 3.2, C.goldHi, C.gold, C.goldLo, 2);
+  ink(ctx, 2.2);
+  ctx.strokeStyle = C.blueHi;
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2 + time * 1.5;
     ctx.beginPath();
     ctx.moveTo(0, -12);
-    ctx.quadraticCurveTo(Math.cos(a) * 9, -2 + Math.sin(time * 3 + i) * 2, Math.cos(a) * 13, 10);
+    ctx.quadraticCurveTo(Math.cos(a) * 8, -2 + Math.sin(time * 3 + i) * 2, Math.cos(a) * 12, 10);
     ctx.stroke();
   }
-  ctx.fillStyle = 'rgba(80,210,230,0.4)';
+  ctx.fillStyle = 'rgba(76,127,214,0.45)';
   ctx.beginPath();
   ctx.ellipse(0, 8, 7, 2.6, 0, 0, Math.PI * 2);
   ctx.fill();
@@ -993,28 +950,29 @@ function lmFountain(ctx: CanvasRenderingContext2D, time: number): void {
 
 function lmRoses(ctx: CanvasRenderingContext2D, time: number): void {
   ground(ctx, 1, 18, 15, 4.5);
-  clayRect(ctx, -17, 6, 34, 12, 4, C.woodHi, C.wood, C.woodLo);
+  clayRect(ctx, -17, 6, 34, 12, 4, C.woodHi, C.wood, C.woodLo, 2.4);
   goldBand(ctx, -17, 6, 34, 3);
-  clayRect(ctx, -15, -6, 30, 14, 4, C.grassHi, C.grass, C.grassLo, 1.8);
-  for (let i = 0; i < 8; i++) {
-    const rx = -12 + (i % 4) * 8 + (i > 3 ? 3 : 0);
-    const ry = -8 - (i > 3 ? 6 : 0) + Math.sin(time * 2 + i) * 0.6;
-    clayOval(ctx, rx, ry, 4, 3.3, 0.2, C.redHi, C.red, C.redLo, 1.5);
-    clayBall(ctx, rx, ry, 1.1, C.goldHi, C.gold, C.goldLo, 1.1);
+  clayRect(ctx, -15, -6, 30, 14, 4, C.grassHi, C.grass, C.grassLo, 2.2);
+  for (let i = 0; i < 6; i++) {
+    const rx = -11 + (i % 3) * 11;
+    const ry = -10 - (i > 2 ? 8 : 0) + Math.sin(time * 2 + i) * 0.6;
+    clayOval(ctx, rx, ry, 7, 6, 0.15, C.redHi, C.red, C.redLo, 2.2);
+    clayBall(ctx, rx, ry, 2.2, C.goldHi, C.gold, C.goldLo, 1.6);
   }
 }
 
 function lmLincoln(ctx: CanvasRenderingContext2D, time: number): void {
-  ground(ctx, 1, 20, 13, 4.5);
-  clayRect(ctx, -14, 12, 28, 10, 3, C.white, '#efe8dc', '#c8c0b4');
-  goldBand(ctx, -14, 12, 28, 3);
-  clayRect(ctx, -10, 2, 20, 12, 3, C.white, '#f4efe6', '#c8c0b4');
-  clayRect(ctx, -11, 6, 8, 8, 2, C.white, '#efe8dc', '#c0b8ac', 1.6);
-  clayRect(ctx, 3, 6, 8, 8, 2, C.white, '#efe8dc', '#c0b8ac', 1.6);
-  clayRect(ctx, -6, -8, 12, 16, 4, C.white, '#f7f3ea', '#c8c0b4');
-  clayOval(ctx, 0, -12, 5.5, 6, 0, C.white, '#f4efe6', '#c0b8ac');
-  clayRect(ctx, -5, -10, 10, 2.4, 1, C.stoneLo, C.stone, C.stoneHi, 1.4);
-  star5(ctx, 0, -20 + Math.sin(time * 2) * 0.3, 3.2, 1.4);
+  ground(ctx, 1, 20, 16, 4.5);
+  clayRect(ctx, -16, 14, 32, 8, 3, C.white, C.blueLo, C.blueLo, 2.6);
+  goldBand(ctx, -16, 14, 32, 3);
+  clayRect(ctx, -13, 2, 26, 14, 3, C.blueHi, C.blue, C.blueLo, 2.6);
+  const colW = 4.2;
+  for (let i = 0; i < 4; i++) {
+    toyColumn(ctx, -10 + i * 6.6, 3, colW, 12);
+  }
+  tri(ctx, -12, 3, 0, -10 + Math.sin(time * 2) * 0.2, 12, 3, C.blueHi, C.blueLo, 2.6);
+  goldBand(ctx, -12, 2, 24, 3);
+  star5(ctx, 0, -2, 5.5, 2.3);
 }
 
 function lmPalm(ctx: CanvasRenderingContext2D, time: number): void {
