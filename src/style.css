@@ -53,6 +53,7 @@ body {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   min-width: 0;
+  min-height: 0;
   user-select: none;
   -webkit-user-select: none;
   background:
@@ -70,6 +71,8 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
+  min-height: 0;
+  flex: 0 0 auto;
   background: linear-gradient(180deg, #12285c, #0b1d4a);
   border-block: 3px solid var(--gold);
   box-shadow: inset 0 0 0 1px #8a6a1a, 0 8px 24px rgba(0, 0, 0, 0.35);
@@ -245,14 +248,20 @@ body {
 
 .stage {
   position: relative;
+  min-width: 0;
   min-height: 0;
-  background: #050b18;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #4eb4f2;
 }
 
 #game {
   display: block;
   width: 100%;
   height: 100%;
+  min-width: 0;
+  min-height: 0;
   touch-action: none;
   cursor: crosshair;
 }
@@ -594,7 +603,7 @@ body {
   height: 100%;
   max-width: none;
   object-fit: cover;
-  object-position: 68% 42%;
+  object-position: 58% 40%;
   pointer-events: none;
   user-select: none;
   z-index: 0;
@@ -624,7 +633,9 @@ body {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  overflow: visible;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   pointer-events: auto;
   margin:
     max(12px, var(--safe-t))
@@ -734,6 +745,7 @@ body {
   display: none !important;
 }
 
+/* Drop HUD from the grid so title/select/etc. get the full stage height. */
 .shell:has(#overlay-title:not(.hidden)) .hud-top,
 .shell:has(#overlay-title:not(.hidden)) .hud-bottom,
 .shell:has(#overlay-select:not(.hidden)) .hud-top,
@@ -746,8 +758,7 @@ body {
 .shell:has(#overlay-pause:not(.hidden)) .hud-bottom,
 .shell:has(#overlay-end:not(.hidden)) .hud-top,
 .shell:has(#overlay-end:not(.hidden)) .hud-bottom {
-  visibility: hidden;
-  pointer-events: none;
+  display: none;
 }
 
 .panel {
@@ -1083,6 +1094,53 @@ canvas.portrait {
   .dossier-grid.info-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  /* Mid desktop: absolute $ costs collide with tower names (~134px cards). */
+  .card .cost {
+    position: static;
+    top: auto;
+    right: auto;
+    grid-column: 2;
+    justify-self: start;
+    font-size: 13px;
+  }
+  .card kbd {
+    display: none;
+  }
+}
+
+/*
+ * Deploy CTA dead zone: 2-col maps (≤1100) make the panel taller than many
+ * desktop heights, while the sticky bar used to start only at ≤900.
+ * Keep PLAY MISSION on-screen and leave scroll room under the bar.
+ */
+@media (max-width: 1100px), (max-height: 820px) {
+  #overlay-select .hero-row {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 7;
+    width: auto;
+    max-width: none;
+    margin: 0;
+    padding: 8px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    background:
+      linear-gradient(180deg, transparent, #0b1d4a 22%),
+      linear-gradient(180deg, #16305e, #0b1d4a);
+    border-top: 3px solid var(--gold);
+    box-shadow: inset 0 1px 0 #8a6a1a, 0 -8px 24px rgba(0, 0, 0, 0.35);
+  }
+  #overlay-select .panel {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+  #overlay-select .plaque,
+  #overlay-select .diff-btn {
+    min-height: 64px;
+  }
+  #overlay-select .plaque-brief,
+  #overlay-select .diff-blurb {
+    display: none;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1166,22 +1224,12 @@ canvas.portrait {
     min-width: 0;
     min-height: 44px;
   }
-  .hud-bottom {
-    flex-direction: column;
-    align-items: stretch;
-  }
   .stat {
     min-width: 0;
     padding: 4px 8px;
   }
   .stat strong {
     font-size: 16px;
-  }
-  .inspect {
-    max-width: none;
-    min-width: 0;
-    width: 100%;
-    flex: 1 1 auto;
   }
   .plaque {
     transform: none;
@@ -1191,24 +1239,8 @@ canvas.portrait {
   .diff-blurb {
     display: none;
   }
-  #overlay-select .hero-row {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 7;
-    width: auto;
-    max-width: none;
-    margin: 0;
-    padding: 8px 12px calc(10px + env(safe-area-inset-bottom, 0px));
-    background:
-      linear-gradient(180deg, transparent, #0b1d4a 22%),
-      linear-gradient(180deg, #16305e, #0b1d4a);
-    border-top: 3px solid var(--gold);
-    box-shadow: inset 0 1px 0 #8a6a1a, 0 -8px 24px rgba(0, 0, 0, 0.35);
-  }
   #overlay-select .panel {
-    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   }
   #overlay-info .cta {
     position: static;
@@ -1221,7 +1253,18 @@ canvas.portrait {
   }
 }
 
+/* Stack play chrome only in portrait — keep row HUD on short landscape desktops. */
 @media (max-width: 900px) and (orientation: portrait) {
+  .hud-bottom {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .inspect {
+    max-width: none;
+    min-width: 0;
+    width: 100%;
+    flex: 1 1 auto;
+  }
   .stage {
     min-height: 0;
     max-height: none;
@@ -1321,17 +1364,35 @@ canvas.portrait {
     -webkit-box-orient: vertical;
   }
   .hud-bottom {
-    gap: 3px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'arsenal arsenal'
+      'inspect actions';
+    gap: 3px 8px;
     padding-top: 3px;
     max-height: none;
-    flex: 0 0 auto;
+    align-items: stretch;
     padding-bottom: max(3px, calc(3px + var(--safe-b)));
   }
   .arsenal {
+    grid-area: arsenal;
     flex: 0 0 auto;
   }
+  .inspect {
+    grid-area: inspect;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+  }
+  .actions {
+    grid-area: actions;
+    width: auto;
+    min-width: 0;
+    flex-direction: row;
+  }
   .card {
-    min-height: 52px;
+    min-height: 44px;
     padding: 3px 2px 4px;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto auto;
@@ -1384,11 +1445,11 @@ canvas.portrait {
   .overlay.overlay-hero .hero-img,
   .overlay.overlay-hero .hero-bg,
   .overlay.overlay-hero > img {
-    inset: auto 0 0 0;
-    top: -10%;
-    bottom: auto;
-    height: 110%;
-    object-position: 70% 46%;
+    inset: 0;
+    top: 0;
+    height: 100%;
+    object-fit: cover;
+    object-position: 62% 38%;
   }
   .overlay.overlay-hero .hero-scrim {
     background:
@@ -1400,7 +1461,10 @@ canvas.portrait {
   .overlay.overlay-hero .hero-menu {
     width: 100%;
     max-width: none;
-    max-height: none;
+    max-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     align-self: end;
     align-items: center;
     justify-content: flex-end;
@@ -1427,12 +1491,68 @@ canvas.portrait {
     margin-inline: auto;
   }
   .overlay.overlay-hero .hero-title {
-    font-size: clamp(44px, 14vw, 64px);
+    font-size: clamp(32px, 8vh, 56px);
   }
   .btn-start,
   .cta.start,
   .hero-row {
     width: 100%;
+  }
+}
+
+@media (max-height: 700px) {
+  .hud-top {
+    gap: 6px;
+    padding-top: max(4px, var(--safe-t));
+    padding-bottom: 4px;
+  }
+  .brand-kicker,
+  .brand-sub {
+    display: none;
+  }
+  .stat {
+    padding: 4px 8px;
+  }
+  .stat strong {
+    font-size: 18px;
+  }
+  .cta {
+    min-height: 44px;
+  }
+}
+
+@media (max-height: 700px) and (orientation: landscape) {
+  .hud-bottom {
+    gap: 6px;
+    padding-top: 4px;
+    padding-bottom: max(4px, calc(4px + var(--safe-b)));
+  }
+  .card {
+    min-height: 56px;
+    padding: 6px 8px;
+  }
+  /* Desktop/short: don't stack WAVE/UPGRADE/SELL into a 148px column. */
+  .actions {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    min-width: 0;
+    gap: 4px;
+  }
+  .actions .cta,
+  .actions .ghost {
+    flex: 0 1 auto;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+  .inspect {
+    flex: 0 1 140px;
+    min-width: 0;
+    max-width: 160px;
+  }
+  #inspect-body {
+    display: none;
   }
 }
 
@@ -1450,14 +1570,135 @@ canvas.portrait {
     padding-top: max(4px, var(--safe-t));
     padding-bottom: 4px;
   }
+  .stat.tiny {
+    display: none;
+  }
+  .overlay:not(.overlay-hero),
+  .overlay.overlay-scroll,
+  #overlay-select,
+  #overlay-options,
+  #overlay-info,
+  #overlay-pause,
+  #overlay-end {
+    padding:
+      max(6px, var(--safe-t))
+      max(8px, var(--safe-r))
+      max(8px, var(--safe-b))
+      max(8px, var(--safe-l));
+    overflow-x: hidden;
+    overflow-y: auto;
+    align-content: start;
+    place-items: start center;
+  }
+  .panel,
+  .panel.hq,
+  .panel.slim,
+  .panel.mission {
+    padding: 12px 14px 16px;
+    max-width: 100%;
+  }
+  .panel h2 {
+    font-size: clamp(22px, 6vh, 32px);
+  }
+  #overlay-info .cta {
+    position: static;
+    margin-top: 10px;
+    width: 100%;
+  }
+  .overlay.overlay-hero {
+    align-items: center;
+    justify-items: start;
+    overflow: hidden;
+    padding: 0;
+    place-items: unset;
+  }
+  .overlay.overlay-hero .hero-art,
+  .overlay.overlay-hero .hero-img,
+  .overlay.overlay-hero .hero-bg,
+  .overlay.overlay-hero > img {
+    inset: 0;
+    top: 0;
+    height: 100%;
+    object-fit: cover;
+    object-position: 60% 40%;
+  }
+  .overlay.overlay-hero .hero-scrim {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(7, 16, 36, 0.9) 0%,
+        rgba(7, 16, 36, 0.58) 28%,
+        rgba(7, 16, 36, 0.16) 48%,
+        transparent 64%
+      );
+  }
+  .overlay.overlay-hero .hero-ui,
+  .overlay.overlay-hero .hero-copy,
+  .overlay.overlay-hero .hero-menu {
+    width: min(340px, 46%);
+    max-height: calc(100% - 16px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 12px 14px 12px;
+    margin:
+      8px
+      10px
+      max(10px, var(--safe-b))
+      max(10px, var(--safe-l));
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .overlay.overlay-hero .hero-banner {
+    font-size: 10px;
+    padding: 5px 14px;
+    margin-bottom: 8px;
+  }
+  .overlay.overlay-hero .hero-title {
+    font-size: clamp(28px, 6.5vh, 40px);
+  }
+  .overlay.overlay-hero .hero-rule {
+    margin: 8px 0 6px;
+  }
+  .overlay.overlay-hero .hero-sub {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+  .overlay.overlay-hero .hero-actions {
+    margin-top: 10px;
+    gap: 8px;
+  }
+  .overlay.overlay-hero .btn-start {
+    min-height: 44px;
+    font-size: 20px;
+  }
+  .hero-row {
+    margin-top: 8px;
+    width: 100%;
+  }
+  .btn-start,
+  .cta.start {
+    min-height: 44px;
+    font-size: 18px;
+  }
+}
+
+/* Short LANDSCAPE only — row HUD + side-by-side Deploy (not portrait keyboard). */
+@media (max-height: 540px) and (orientation: landscape) {
   .hud-bottom {
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: stretch;
     gap: 6px;
-    max-height: 76px;
-    overflow: hidden;
-    padding-bottom: max(4px, calc(4px + var(--safe-b)));
+    /* Budget for safe-area: never clip 44px actions under home-indicator padding. */
+    max-height: none;
+    overflow: visible;
+    padding-top: 2px;
+    padding-bottom: max(2px, var(--safe-b));
   }
   .arsenal {
     flex: 1 1 0;
@@ -1466,10 +1707,10 @@ canvas.portrait {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .card {
-    min-height: 0;
-    max-height: 100%;
-    padding: 3px 5px 4px;
-    grid-template-columns: 24px minmax(0, 1fr);
+    min-height: 44px;
+    max-height: none;
+    padding: 2px 4px;
+    grid-template-columns: 22px minmax(0, 1fr);
   }
   .card .icon,
   .card .icon-canvas {
@@ -1477,9 +1718,7 @@ canvas.portrait {
     height: 24px;
   }
   .card .name {
-    display: block;
-    font-size: 10px;
-    text-align: left;
+    display: none;
   }
   .card .cost {
     font-size: 11px;
@@ -1525,7 +1764,6 @@ canvas.portrait {
     font-size: 12px;
     padding: 0 8px;
   }
-  /* Fixed deploy CTA covers difficulty on short landscape — keep it in-flow sticky. */
   #overlay-select .hero-row {
     position: static;
     left: auto;
@@ -1603,116 +1841,23 @@ canvas.portrait {
   #overlay-select .diff-blurb {
     display: none;
   }
-  #overlay-info .cta {
-    position: static;
-    margin-top: 10px;
-    width: 100%;
+}
+
+/* Portrait keyboard / short height: keep vertical Deploy + fixed CTA; don't crush HUD. */
+@media (max-height: 540px) and (orientation: portrait) {
+  .hud-bottom {
+    max-height: none;
+    overflow: visible;
   }
-  .stat.tiny {
+  #overlay-select .plaque,
+  #overlay-select .diff-btn {
+    min-height: 48px;
+    padding: 6px 8px;
+  }
+  #overlay-select .plaque-sub,
+  #overlay-select .plaque-brief,
+  #overlay-select .diff-blurb {
     display: none;
-  }
-  .overlay:not(.overlay-hero),
-  .overlay.overlay-scroll,
-  #overlay-select,
-  #overlay-options,
-  #overlay-info,
-  #overlay-pause,
-  #overlay-end {
-    padding:
-      max(6px, var(--safe-t))
-      max(8px, var(--safe-r))
-      max(8px, var(--safe-b))
-      max(8px, var(--safe-l));
-    overflow-x: hidden;
-    overflow-y: auto;
-    align-content: start;
-    place-items: start center;
-  }
-  .panel,
-  .panel.hq,
-  .panel.slim,
-  .panel.mission {
-    padding: 12px 14px 16px;
-    max-width: 100%;
-  }
-  .panel h2 {
-    font-size: clamp(22px, 6vh, 32px);
-  }
-  .overlay.overlay-hero {
-    align-items: center;
-    justify-items: start;
-    overflow: hidden;
-    padding: 0;
-    place-items: unset;
-  }
-  .overlay.overlay-hero .hero-art,
-  .overlay.overlay-hero .hero-img,
-  .overlay.overlay-hero .hero-bg,
-  .overlay.overlay-hero > img {
-    inset: 0;
-    top: 0;
-    height: 100%;
-    object-position: 76% 40%;
-  }
-  .overlay.overlay-hero .hero-scrim {
-    background:
-      linear-gradient(180deg, rgba(10, 28, 58, 0.28) 0%, transparent 14%),
-      radial-gradient(ellipse 52% 90% at 0% 50%, rgba(6, 16, 36, 0.58) 0%, rgba(6, 16, 36, 0.18) 50%, transparent 74%);
-  }
-  .overlay.overlay-hero .hero-ui,
-  .overlay.overlay-hero .hero-copy,
-  .overlay.overlay-hero .hero-menu {
-    width: min(340px, 46%);
-    max-height: calc(100% - 16px);
-    justify-content: center;
-    align-items: flex-start;
-    padding: 12px 14px 12px;
-    margin:
-      8px
-      10px
-      max(10px, var(--safe-b))
-      max(10px, var(--safe-l));
-    background:
-      linear-gradient(165deg, rgba(16, 42, 92, 0.94) 0%, rgba(8, 20, 44, 0.96) 55%, rgba(6, 14, 32, 0.97) 100%);
-    border: 3px solid var(--gold);
-    border-radius: 12px;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 243, 176, 0.32),
-      inset 0 0 0 1px #8a6a1a,
-      0 6px 0 #5a3e10,
-      0 12px 24px rgba(0, 0, 0, 0.4);
-  }
-  .overlay.overlay-hero .hero-banner {
-    font-size: 10px;
-    padding: 5px 14px;
-    margin-bottom: 8px;
-  }
-  .overlay.overlay-hero .hero-title {
-    font-size: clamp(28px, 6.5vh, 40px);
-  }
-  .overlay.overlay-hero .hero-rule {
-    margin: 8px 0 6px;
-  }
-  .overlay.overlay-hero .hero-sub {
-    font-size: 10px;
-    letter-spacing: 0.12em;
-  }
-  .overlay.overlay-hero .hero-actions {
-    margin-top: 10px;
-    gap: 8px;
-  }
-  .overlay.overlay-hero .btn-start {
-    min-height: 44px;
-    font-size: 20px;
-  }
-  .hero-row {
-    margin-top: 8px;
-    width: 100%;
-  }
-  .btn-start,
-  .cta.start {
-    min-height: 44px;
-    font-size: 18px;
   }
 }
 
@@ -1786,8 +1931,8 @@ canvas.portrait {
     gap: 3px;
   }
   .tool {
-    min-width: 36px;
-    min-height: 40px;
+    min-width: 44px;
+    min-height: 44px;
     padding: 0 5px;
     font-size: 10px;
     letter-spacing: 0.04em;

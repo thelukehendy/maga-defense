@@ -44,15 +44,41 @@ export class Game {
   }
 
   private bind(root: HTMLElement, canvas: HTMLCanvasElement): void {
-    const fit = (): void => {
+    let fitRaf = 0;
+    let lastBakeKey = '';
+    const syncShell = (): void => {
+      const vv = window.visualViewport;
+      if (!vv) return;
+      const h = `${Math.max(1, Math.round(vv.height))}px`;
+      root.style.height = h;
+      root.style.maxHeight = h;
+    };
+    const apply = (): void => {
+      syncShell();
       this.view.resize();
-      this.renderer.resize(this.view.dpr, this.view.scale);
-      paintPortraits(root);
+      const key = `${this.view.dpr.toFixed(3)}:${this.view.scale.toFixed(4)}`;
+      if (key !== lastBakeKey) {
+        lastBakeKey = key;
+        this.renderer.resize(this.view.dpr, this.view.scale);
+      }
+    };
+    const fit = (): void => {
+      if (fitRaf) return;
+      fitRaf = requestAnimationFrame(() => {
+        fitRaf = 0;
+        apply();
+      });
     };
     const ro = new ResizeObserver(fit);
     ro.observe(canvas.parentElement ?? canvas);
+    const onViewport = (): void => {
+      window.scrollTo(0, 0);
+      fit();
+    };
+    window.visualViewport?.addEventListener('resize', onViewport);
+    window.visualViewport?.addEventListener('scroll', onViewport);
     window.addEventListener('resize', fit);
-    fit();
+    apply();
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && this.phase === 'play') this.setPhase('pause');
     });
@@ -184,7 +210,7 @@ export class Game {
       this.audio.click();
       this.hud.overlayOptions?.classList.add('hidden');
       this.hud.overlayInfo?.classList.toggle('hidden');
-      paintPortraits(root);
+      requestAnimationFrame(() => paintPortraits(root));
     });
     root.querySelector('#btn-info-close')?.addEventListener('click', () => {
       this.hud.overlayInfo?.classList.add('hidden');
@@ -281,9 +307,8 @@ export class Game {
 
   private draw(): void {
     const { ctx } = this.view;
-    ctx.setTransform(this.view.dpr, 0, 0, this.view.dpr, 0, 0);
-    ctx.fillStyle = '#050b18';
-    ctx.fillRect(0, 0, this.view.cssW, this.view.cssH);
+    const theme = this.sim.map.def.theme;
+    this.view.paintLetterbox(theme.skyTop, theme.skyBot, theme.grassHi, theme.grass);
     this.view.applyWorld(ctx, this.cam.shakeX, this.cam.shakeY);
     this.renderer.draw(ctx, this.sim, this.fx, this.sim.time + this.ambient, this.cam.flash);
     ctx.setTransform(this.view.dpr, 0, 0, this.view.dpr, 0, 0);

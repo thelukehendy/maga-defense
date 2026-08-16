@@ -163,9 +163,9 @@ export function paintHud(
   hud.fps.textContent = `${Math.round(fps)} FPS`;
   const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 420px)').matches;
   hud.speedBtn.textContent = `${sim.speed}×`;
-  hud.muteBtn.textContent = muted ? (narrow ? 'MUTE' : 'SOUND OFF') : narrow ? 'SND' : 'SOUND ON';
+  hud.muteBtn.textContent = muted ? (narrow ? 'MUTE' : 'SOUND OFF') : narrow ? 'SOUND' : 'SOUND ON';
   if (hud.optMuteBtn) hud.optMuteBtn.textContent = muted ? 'SOUND OFF' : 'SOUND ON';
-  hud.pauseBtn.textContent = paused ? (narrow ? 'GO' : 'RESUME') : narrow ? 'STOP' : 'PAUSE';
+  hud.pauseBtn.textContent = paused ? (narrow ? 'GO' : 'RESUME') : 'PAUSE';
   hud.sendBtn.disabled = !sim.waveReady();
   hud.sendBtn.classList.toggle('pulse', sim.waveReady());
   hud.sendBtn.textContent = sim.wave === 0

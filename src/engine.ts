@@ -75,20 +75,58 @@ export class View {
     this.cssH = cssH;
     const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
     this.dpr = dpr;
-    this.canvas.width = Math.floor(cssW * dpr);
-    this.canvas.height = Math.floor(cssH * dpr);
+    const bw = Math.max(1, Math.floor(cssW * dpr));
+    const bh = Math.max(1, Math.floor(cssH * dpr));
+    if (this.canvas.width !== bw || this.canvas.height !== bh) {
+      this.canvas.width = bw;
+      this.canvas.height = bh;
+    }
     this.canvas.style.width = `${cssW}px`;
     this.canvas.style.height = `${cssH}px`;
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const fitW = cssW / WORLD_W;
-    const fitH = cssH / WORLD_H;
-    // Portrait phones: cover-crop so the lawn fills the stage (no 244px postage stamp).
-    // Landscape/desktop: contain so the full map stays visible.
-    const portrait = cssH > cssW * 1.05;
-    const fit = portrait ? Math.max(fitW, fitH) : Math.min(fitW, fitH);
+    const fit = Math.min(cssW / WORLD_W, cssH / WORLD_H);
     this.scale = fit;
     this.offsetX = (cssW - WORLD_W * fit) / 2;
     this.offsetY = (cssH - WORLD_H * fit) / 2;
+  }
+
+  /**
+   * Letterbox outside the contained world. Gutters must NOT look like placeable
+   * lawn — pointerToWorld returns null there.
+   */
+  paintLetterbox(skyTop: string, skyBot: string, _grassHi: string, _grass: string): void {
+    const { ctx } = this;
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    const wx = this.offsetX;
+    const wy = this.offsetY;
+    const ww = WORLD_W * this.scale;
+    const wh = WORLD_H * this.scale;
+    // Deep frame — reads as matte, not battlefield.
+    ctx.fillStyle = '#071428';
+    ctx.fillRect(0, 0, this.cssW, this.cssH);
+    // Soft sky wash only in the top band (above the world), never side grass.
+    if (wy > 0.5) {
+      const g = ctx.createLinearGradient(0, 0, 0, wy);
+      g.addColorStop(0, skyTop);
+      g.addColorStop(1, skyBot);
+      ctx.fillStyle = g;
+      ctx.globalAlpha = 0.55;
+      ctx.fillRect(0, 0, this.cssW, wy);
+      ctx.globalAlpha = 1;
+    }
+    // Subtle edge fade into the world rect so the matte doesn’t hard-cut.
+    if (wx > 0.5) {
+      ctx.fillStyle = skyBot;
+      ctx.globalAlpha = 0.22;
+      ctx.fillRect(0, wy, wx, wh);
+      ctx.globalAlpha = 1;
+    }
+    if (wx + ww < this.cssW - 0.5) {
+      ctx.fillStyle = skyBot;
+      ctx.globalAlpha = 0.22;
+      ctx.fillRect(wx + ww, wy, this.cssW - (wx + ww), wh);
+      ctx.globalAlpha = 1;
+    }
   }
 
   pointerToWorld(clientX: number, clientY: number): { x: number; y: number } | null {
