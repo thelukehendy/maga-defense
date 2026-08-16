@@ -161,17 +161,30 @@ export function paintHud(
   hud.approvalText.textContent = `${sim.approval}%`;
   hud.wave.textContent = `${Math.min(sim.wave, MAX_WAVES)}/${MAX_WAVES}`;
   hud.fps.textContent = `${Math.round(fps)} FPS`;
+  const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 420px)').matches;
   hud.speedBtn.textContent = `${sim.speed}×`;
-  hud.muteBtn.textContent = muted ? 'SOUND OFF' : 'SOUND ON';
+  hud.muteBtn.textContent = muted ? (narrow ? 'MUTE' : 'SOUND OFF') : narrow ? 'SND' : 'SOUND ON';
   if (hud.optMuteBtn) hud.optMuteBtn.textContent = muted ? 'SOUND OFF' : 'SOUND ON';
-  hud.pauseBtn.textContent = paused ? 'RESUME' : 'PAUSE';
+  hud.pauseBtn.textContent = paused ? (narrow ? 'GO' : 'RESUME') : narrow ? 'STOP' : 'PAUSE';
   hud.sendBtn.disabled = !sim.waveReady();
   hud.sendBtn.classList.toggle('pulse', sim.waveReady());
-  hud.sendBtn.textContent = sim.wave === 0 ? 'START WAVE 1' : sim.waveReady() ? 'SEND NEXT WAVE' : 'WAVE INCOMING';
+  hud.sendBtn.textContent = sim.wave === 0
+    ? narrow
+      ? 'WAVE 1'
+      : 'START WAVE 1'
+    : sim.waveReady()
+      ? narrow
+        ? 'NEXT'
+        : 'SEND NEXT WAVE'
+      : narrow
+        ? '…'
+        : 'WAVE INCOMING';
   hud.sellBtn.disabled = !sim.selected;
   hud.sellBtn.textContent = sim.selected
     ? `SELL $${Math.round(sim.selected.costPaid * SELL_RATIO)}`
-    : 'SELL TOWER';
+    : narrow
+      ? 'SELL'
+      : 'SELL TOWER';
 
   const mapName = sim.map?.def?.name;
   if (hud.missionName && mapName) hud.missionName.textContent = mapName;

@@ -1696,6 +1696,60 @@ canvas.portrait {
   }
   .overlay.overlay-hero .hero-title {
     font-size: clamp(36px, 12vw, 52px);
+    line-height: 0.92;
+  }
+}
+
+@media (max-width: 420px) and (orientation: portrait) {
+  .brand {
+    display: none;
+  }
+  .stats {
+    gap: 3px;
+    justify-content: flex-start;
+  }
+  .stat {
+    padding: 3px 5px;
+  }
+  .stat strong,
+  #stat-donations,
+  #stat-wave,
+  #approval-text {
+    font-size: 13px;
+  }
+  .approval {
+    width: 42px;
+    height: 10px;
+  }
+  .tools {
+    gap: 3px;
+  }
+  .tool {
+    min-width: 36px;
+    min-height: 40px;
+    padding: 0 5px;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+  .card .name {
+    display: none;
+  }
+  .card {
+    min-height: 48px;
+    padding: 4px 2px;
+  }
+  .actions .cta,
+  .actions .ghost {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    min-height: 44px;
+  }
+  .overlay.overlay-hero .hero-title {
+    font-size: clamp(32px, 11vw, 44px);
+    line-height: 0.95;
+  }
+  .overlay.overlay-hero .hero-title span {
+    font-size: 1.05em;
   }
 }
 
