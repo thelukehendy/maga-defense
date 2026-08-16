@@ -1,6 +1,7 @@
 export const CELL = 64;
-export const COLS = 16;
-export const ROWS = 10;
+/** Portrait-primary board: ~phone aspect so contain-fit fills the screen. */
+export const COLS = 10;
+export const ROWS = 18;
 export const WORLD_W = COLS * CELL;
 export const WORLD_H = ROWS * CELL;
 export const STEP = 1 / 60;

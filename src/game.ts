@@ -25,6 +25,7 @@ export class Game {
   private selectedMap: MapId = 'lawn';
   private selectedDiff: DifficultyId = 'normal';
   private readonly coarse = window.matchMedia('(pointer: coarse)').matches;
+  private refit: (() => void) | null = null;
 
   constructor(root: HTMLElement, canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
@@ -55,8 +56,21 @@ export class Game {
     };
     const apply = (): void => {
       syncShell();
-      this.view.resize();
-      const key = `${this.view.dpr.toFixed(3)}:${this.view.scale.toFixed(4)}`;
+      const playing = this.phase === 'play' || this.phase === 'pause' || this.phase === 'end';
+      const top = root.querySelector<HTMLElement>('.hud-top');
+      const bot = root.querySelector<HTMLElement>('.hud-bottom');
+      const topH = playing && top && getComputedStyle(top).display !== 'none' ? top.offsetHeight : 0;
+      const botH = playing && bot && getComputedStyle(bot).display !== 'none' ? bot.offsetHeight : 0;
+      let insetL = 0;
+      let insetR = 0;
+      if (playing && top && topH > 0) {
+        const tr = top.getBoundingClientRect();
+        const sr = (canvas.parentElement ?? canvas).getBoundingClientRect();
+        insetL = Math.max(0, tr.left - sr.left);
+        insetR = Math.max(0, sr.right - tr.right);
+      }
+      this.view.resize(topH, botH, insetL, insetR);
+      const key = `${this.view.dpr.toFixed(3)}:${this.view.scale.toFixed(4)}:${topH}:${botH}:${insetL}`;
       if (key !== lastBakeKey) {
         lastBakeKey = key;
         this.renderer.resize(this.view.dpr, this.view.scale);
@@ -71,6 +85,10 @@ export class Game {
     };
     const ro = new ResizeObserver(fit);
     ro.observe(canvas.parentElement ?? canvas);
+    const topEl = root.querySelector('.hud-top');
+    const botEl = root.querySelector('.hud-bottom');
+    if (topEl) ro.observe(topEl);
+    if (botEl) ro.observe(botEl);
     const onViewport = (): void => {
       window.scrollTo(0, 0);
       fit();
@@ -78,6 +96,7 @@ export class Game {
     window.visualViewport?.addEventListener('resize', onViewport);
     window.visualViewport?.addEventListener('scroll', onViewport);
     window.addEventListener('resize', fit);
+    this.refit = fit;
     apply();
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && this.phase === 'play') this.setPhase('pause');
@@ -286,6 +305,7 @@ export class Game {
   private setPhase(p: HudPhase): void {
     this.phase = p;
     paintHud(this.hud, this.sim, this.loop.fps, this.audio.muted, p === 'pause', p);
+    this.refit?.();
   }
 
   private step(dt: number): void {

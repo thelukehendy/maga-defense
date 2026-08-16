@@ -153,29 +153,34 @@ export const MAPS: Record<MapId, MapDef> = {
       grid: 'rgba(255,255,255,0.16)',
       star: '#fffdf2',
     },
+    // Portrait: spawn at top, keep at bottom. S-curve through the lawn.
     path: cells((add) => {
-      for (let x = 0; x <= 13; x++) add(x, 1);
-      for (let y = 2; y <= 4; y++) add(13, y);
-      for (let x = 12; x >= 2; x--) add(x, 4);
-      for (let y = 5; y <= 7; y++) add(2, y);
-      for (let x = 3; x <= 12; x++) add(x, 7);
-      add(12, 8);
+      for (let y = 0; y <= 2; y++) add(1, y);
+      for (let x = 2; x <= 8; x++) add(x, 2);
+      for (let y = 3; y <= 5; y++) add(8, y);
+      for (let x = 7; x >= 1; x--) add(x, 5);
+      for (let y = 6; y <= 9; y++) add(1, y);
+      for (let x = 2; x <= 7; x++) add(x, 9);
+      for (let y = 10; y <= 13; y++) add(7, y);
+      for (let x = 6; x >= 3; x--) add(x, 13);
+      for (let y = 14; y <= 14; y++) add(3, y);
+      add(4, 14);
     }),
     house: [
-      [13, 7],
-      [14, 7],
-      [15, 7],
-      [13, 8],
-      [14, 8],
-      [15, 8],
-      [13, 9],
-      [14, 9],
-      [15, 9],
+      [3, 15],
+      [4, 15],
+      [5, 15],
+      [3, 16],
+      [4, 16],
+      [5, 16],
+      [3, 17],
+      [4, 17],
+      [5, 17],
     ],
     landmarks: [
-      { kind: 'fountain', c: 7, r: 2 },
-      { kind: 'roses', c: 5, r: 8 },
-      { kind: 'lincoln', c: 10, r: 5 },
+      { kind: 'fountain', c: 4, r: 3 },
+      { kind: 'roses', c: 6, r: 7 },
+      { kind: 'lincoln', c: 2, r: 11 },
     ],
     flavor: [
       'The South Lawn has seen worse picnics.',
@@ -202,31 +207,33 @@ export const MAPS: Record<MapId, MapDef> = {
       grid: 'rgba(255,255,255,0.18)',
       star: '#fff6d0',
     },
+    // Service drive → pool loop → ballroom steps (bottom keep).
     path: cells((add) => {
-      for (let x = 0; x <= 10; x++) add(x, 8);
-      for (let y = 7; y >= 2; y--) add(10, y);
-      for (let x = 9; x >= 2; x--) add(x, 2);
-      for (let y = 3; y <= 5; y++) add(2, y);
-      for (let x = 3; x <= 12; x++) add(x, 5);
-      add(12, 4);
-      add(12, 3);
+      for (let y = 0; y <= 3; y++) add(8, y);
+      for (let x = 7; x >= 1; x--) add(x, 3);
+      for (let y = 4; y <= 7; y++) add(1, y);
+      for (let x = 2; x <= 8; x++) add(x, 7);
+      for (let y = 8; y <= 10; y++) add(8, y);
+      for (let x = 7; x >= 2; x--) add(x, 10);
+      for (let y = 11; y <= 14; y++) add(2, y);
+      for (let x = 3; x <= 5; x++) add(x, 14);
     }),
     house: [
-      [13, 1],
-      [14, 1],
-      [15, 1],
-      [13, 2],
-      [14, 2],
-      [15, 2],
-      [13, 3],
-      [14, 3],
-      [15, 3],
+      [3, 15],
+      [4, 15],
+      [5, 15],
+      [3, 16],
+      [4, 16],
+      [5, 16],
+      [3, 17],
+      [4, 17],
+      [5, 17],
     ],
     landmarks: [
-      { kind: 'palm', c: 4, r: 7 },
-      { kind: 'palm', c: 7, r: 7 },
-      { kind: 'pool', c: 6, r: 3 },
-      { kind: 'golf', c: 8, r: 9 },
+      { kind: 'palm', c: 3, r: 1 },
+      { kind: 'palm', c: 6, r: 5 },
+      { kind: 'pool', c: 4, r: 8 },
+      { kind: 'golf', c: 7, r: 12 },
     ],
     flavor: [
       'Jackets required. Aliens excepted.',
@@ -253,32 +260,34 @@ export const MAPS: Record<MapId, MapDef> = {
       grid: 'rgba(255,255,255,0.14)',
       star: '#fff4d4',
     },
+    // Ridge switchbacks down to the finished wall / keep.
     path: cells((add) => {
-      for (let x = 0; x <= 4; x++) add(x, 2);
-      for (let y = 3; y <= 8; y++) add(4, y);
-      for (let x = 5; x <= 11; x++) add(x, 8);
-      for (let y = 7; y >= 3; y--) add(11, y);
-      for (let x = 12; x <= 12; x++) add(x, 3);
-      add(12, 4);
-      add(12, 5);
-      add(12, 6);
+      for (let y = 0; y <= 2; y++) add(2, y);
+      for (let x = 3; x <= 7; x++) add(x, 2);
+      for (let y = 3; y <= 6; y++) add(7, y);
+      for (let x = 6; x >= 1; x--) add(x, 6);
+      for (let y = 7; y <= 10; y++) add(1, y);
+      for (let x = 2; x <= 8; x++) add(x, 10);
+      for (let y = 11; y <= 13; y++) add(8, y);
+      for (let x = 7; x >= 4; x--) add(x, 13);
+      add(4, 14);
     }),
     house: [
-      [13, 5],
-      [14, 5],
-      [15, 5],
-      [13, 6],
-      [14, 6],
-      [15, 6],
-      [13, 7],
-      [14, 7],
-      [15, 7],
+      [3, 15],
+      [4, 15],
+      [5, 15],
+      [3, 16],
+      [4, 16],
+      [5, 16],
+      [3, 17],
+      [4, 17],
+      [5, 17],
     ],
     landmarks: [
-      { kind: 'cactus', c: 1, r: 5 },
-      { kind: 'cactus', c: 7, r: 4 },
-      { kind: 'watch', c: 6, r: 1 },
-      { kind: 'gate', c: 9, r: 6 },
+      { kind: 'cactus', c: 3, r: 4 },
+      { kind: 'cactus', c: 5, r: 8 },
+      { kind: 'watch', c: 4, r: 1 },
+      { kind: 'gate', c: 6, r: 11 },
     ],
     flavor: [
       'The wall has a gift shop now.',
@@ -305,29 +314,33 @@ export const MAPS: Record<MapId, MapDef> = {
       grid: 'rgba(255,255,255,0.14)',
       star: '#fff6e0',
     },
+    // Midtown grid: avenue → crosstown → lobby approach.
     path: cells((add) => {
-      for (let y = 0; y <= 6; y++) add(1, y);
-      for (let x = 2; x <= 8; x++) add(x, 6);
-      for (let y = 5; y >= 2; y--) add(8, y);
-      for (let x = 9; x <= 12; x++) add(x, 2);
-      for (let y = 3; y <= 8; y++) add(12, y);
+      for (let y = 0; y <= 4; y++) add(1, y);
+      for (let x = 2; x <= 6; x++) add(x, 4);
+      for (let y = 5; y <= 7; y++) add(6, y);
+      for (let x = 5; x >= 2; x--) add(x, 7);
+      for (let y = 8; y <= 11; y++) add(2, y);
+      for (let x = 3; x <= 8; x++) add(x, 11);
+      for (let y = 12; y <= 14; y++) add(8, y);
+      for (let x = 7; x >= 4; x--) add(x, 14);
     }),
     house: [
-      [13, 6],
-      [14, 6],
-      [15, 6],
-      [13, 7],
-      [14, 7],
-      [15, 7],
-      [13, 8],
-      [14, 8],
-      [15, 8],
+      [3, 15],
+      [4, 15],
+      [5, 15],
+      [3, 16],
+      [4, 16],
+      [5, 16],
+      [3, 17],
+      [4, 17],
+      [5, 17],
     ],
     landmarks: [
-      { kind: 'taxi', c: 4, r: 4 },
-      { kind: 'newsstand', c: 6, r: 8 },
-      { kind: 'billboard', c: 3, r: 1 },
-      { kind: 'taxi', c: 10, r: 4 },
+      { kind: 'taxi', c: 3, r: 2 },
+      { kind: 'billboard', c: 7, r: 1 },
+      { kind: 'newsstand', c: 4, r: 9 },
+      { kind: 'taxi', c: 7, r: 12 },
     ],
     flavor: [
       'The ticker never sleeps. Neither should you.',

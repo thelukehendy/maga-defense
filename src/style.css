@@ -50,18 +50,13 @@ body {
   max-height: 100dvh;
   overflow: hidden;
   overscroll-behavior: none;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  /* Single full-bleed stage; HUD floats on top (Clash-style). */
+  display: block;
   min-width: 0;
   min-height: 0;
   user-select: none;
   -webkit-user-select: none;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      #071428 0 28px,
-      #0a1836 28px 56px
-    );
+  background: #071428;
 }
 
 .hud-top,
@@ -72,20 +67,29 @@ body {
   justify-content: space-between;
   padding: 8px 12px;
   min-height: 0;
-  flex: 0 0 auto;
-  background: linear-gradient(180deg, #12285c, #0b1d4a);
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  background: linear-gradient(180deg, rgba(18, 40, 92, 0.94), rgba(11, 29, 74, 0.9));
   border-block: 3px solid var(--gold);
   box-shadow: inset 0 0 0 1px #8a6a1a, 0 8px 24px rgba(0, 0, 0, 0.35);
-  z-index: 2;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .hud-top {
+  top: 0;
   padding-top: calc(8px + var(--safe-t));
-  min-width: 0;
+  border-top: none;
+  background: linear-gradient(180deg, rgba(12, 28, 68, 0.96), rgba(11, 29, 74, 0.82));
 }
 
 .hud-bottom {
-  min-width: 0;
+  bottom: 0;
+  padding-bottom: calc(8px + var(--safe-b));
+  border-bottom: none;
+  background: linear-gradient(0deg, rgba(12, 28, 68, 0.97), rgba(11, 29, 74, 0.88));
 }
 
 .brand h1 {
@@ -247,7 +251,9 @@ body {
 }
 
 .stage {
-  position: relative;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   min-width: 0;
   min-height: 0;
   width: 100%;
@@ -267,7 +273,6 @@ body {
 }
 
 .hud-bottom {
-  padding-bottom: calc(8px + var(--safe-b));
   gap: 10px;
 }
 
@@ -1956,6 +1961,116 @@ canvas.portrait {
   }
   .overlay.overlay-hero .hero-title span {
     font-size: 1.05em;
+  }
+}
+
+@media (min-aspect-ratio: 1 / 1) {
+  /* Desktop/landscape: portrait board is a centered pillar; dock HUD to it. */
+  .shell {
+    background:
+      radial-gradient(ellipse 70% 90% at 50% 45%, #0c2148 0%, #071428 62%),
+      #071428;
+  }
+  .hud-top,
+  .hud-bottom {
+    left: 50%;
+    right: auto;
+    width: min(100%, calc(100dvh * 640 / 1152));
+    max-width: min(560px, 100%);
+    transform: translateX(-50%);
+    border-inline: 3px solid var(--gold);
+  }
+  .hud-top {
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 6px 8px;
+    padding-top: max(6px, var(--safe-t));
+  }
+  .brand,
+  .brand-kicker,
+  .brand-sub,
+  .stat.tiny,
+  .stat .label {
+    display: none;
+  }
+  .mission-name {
+    display: none;
+  }
+  .stats {
+    justify-content: flex-start;
+    gap: 4px;
+    flex: 1;
+  }
+  .stat {
+    min-width: 0;
+    padding: 4px 6px;
+  }
+  .stat strong {
+    font-size: 14px;
+  }
+  .tools {
+    gap: 4px;
+  }
+  .tool {
+    min-width: 44px;
+    min-height: 40px;
+    padding: 0 6px;
+    font-size: 11px;
+  }
+  .hud-bottom {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 6px 8px calc(8px + var(--safe-b));
+  }
+  .arsenal {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    width: 100%;
+  }
+  .card {
+    min-height: 52px;
+    padding: 4px 4px 5px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    justify-items: center;
+    text-align: center;
+    column-gap: 0;
+  }
+  .card .icon,
+  .card .icon-canvas {
+    grid-row: auto;
+    width: 28px;
+    height: 28px;
+  }
+  .card .name {
+    display: none;
+  }
+  .card .meta,
+  .card kbd {
+    display: none;
+  }
+  .card .cost {
+    position: static;
+    font-size: 12px;
+    grid-column: auto;
+  }
+  .inspect {
+    display: none;
+  }
+  .actions {
+    flex-direction: row;
+    width: 100%;
+    min-width: 0;
+    gap: 4px;
+  }
+  .actions .cta,
+  .actions .ghost {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    font-size: 12px;
+    padding: 0 6px;
   }
 }
 

@@ -66,7 +66,7 @@ export class View {
     this.ctx = ctx;
   }
 
-  resize(): void {
+  resize(insetTop = 0, insetBottom = 0, insetLeft = 0, insetRight = 0): void {
     const parent = this.canvas.parentElement;
     if (!parent) return;
     const cssW = Math.max(1, parent.clientWidth);
@@ -84,10 +84,13 @@ export class View {
     this.canvas.style.width = `${cssW}px`;
     this.canvas.style.height = `${cssH}px`;
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const fit = Math.min(cssW / WORLD_W, cssH / WORLD_H);
+    // Fit the full world into the HUD-safe playfield (never under chrome).
+    const playW = Math.max(1, cssW - insetLeft - insetRight);
+    const playH = Math.max(1, cssH - insetTop - insetBottom);
+    const fit = Math.min(playW / WORLD_W, playH / WORLD_H);
     this.scale = fit;
-    this.offsetX = (cssW - WORLD_W * fit) / 2;
-    this.offsetY = (cssH - WORLD_H * fit) / 2;
+    this.offsetX = insetLeft + (playW - WORLD_W * fit) / 2;
+    this.offsetY = insetTop + (playH - WORLD_H * fit) / 2;
   }
 
   /**
