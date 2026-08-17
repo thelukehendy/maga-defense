@@ -43,7 +43,7 @@ export class Game {
     );
     this.bind(root, canvas);
     paintPortraits(root);
-    paintHud(this.hud, this.sim, 60, this.audio.muted, false, this.phase);
+    paintHud(this.hud, this.sim, 60, this.audio, false, this.phase);
     this.armTitleSplash(root);
     this.loop.start();
   }
@@ -195,12 +195,12 @@ export class Game {
       if (this.sim.waveReady()) {
         this.sim.startNextWave();
         // After starting a wave, the same control becomes Auto Start.
-        paintHud(this.hud, this.sim, this.loop.fps, this.audio.muted, this.phase === 'pause', this.phase);
+        paintHud(this.hud, this.sim, this.loop.fps, this.audio, this.phase === 'pause', this.phase);
         return;
       }
       this.sim.autoWaves = !this.sim.autoWaves;
       this.audio.click();
-      paintHud(this.hud, this.sim, this.loop.fps, this.audio.muted, this.phase === 'pause', this.phase);
+      paintHud(this.hud, this.sim, this.loop.fps, this.audio, this.phase === 'pause', this.phase);
     });
     this.hud.sellBtn.addEventListener('click', () => this.sim.trySell());
     this.hud.upgradeBtn?.addEventListener('click', () => {
@@ -227,7 +227,8 @@ export class Game {
     });
     this.hud.muteBtn.addEventListener('click', () => {
       this.audio.unlock();
-      this.audio.toggleMute();
+      this.audio.toggleSfx();
+      paintHud(this.hud, this.sim, this.loop.fps, this.audio, this.phase === 'pause', this.phase);
     });
     this.hud.pauseBtn.addEventListener('click', () => {
       if (this.phase === 'play') this.setPhase('pause');
@@ -254,6 +255,7 @@ export class Game {
     root.querySelector('#btn-deploy')?.addEventListener('click', () => {
       this.audio.unlock();
       this.audio.wave();
+      this.audio.voice('deploy');
       hideMenus(this.hud);
       this.applyCampaign(true);
       this.setPhase('play');
@@ -266,14 +268,20 @@ export class Game {
       this.audio.click();
       this.hud.overlayInfo?.classList.add('hidden');
       this.hud.overlayOptions?.classList.toggle('hidden');
+      paintHud(this.hud, this.sim, this.loop.fps, this.audio, this.phase === 'pause', this.phase);
     });
     root.querySelector('#btn-opt-close')?.addEventListener('click', () => {
       this.hud.overlayOptions?.classList.add('hidden');
     });
-    root.querySelector('#btn-opt-mute')?.addEventListener('click', () => {
+    root.querySelector('#btn-opt-music')?.addEventListener('click', () => {
       this.audio.unlock();
-      this.audio.toggleMute();
-      paintHud(this.hud, this.sim, this.loop.fps, this.audio.muted, this.phase === 'pause', this.phase);
+      this.audio.toggleMusic();
+      paintHud(this.hud, this.sim, this.loop.fps, this.audio, this.phase === 'pause', this.phase);
+    });
+    root.querySelector('#btn-opt-sfx')?.addEventListener('click', () => {
+      this.audio.unlock();
+      this.audio.toggleSfx();
+      paintHud(this.hud, this.sim, this.loop.fps, this.audio, this.phase === 'pause', this.phase);
     });
     root.querySelector('#btn-info')?.addEventListener('click', () => {
       this.audio.click();
@@ -290,6 +298,7 @@ export class Game {
     });
     const toHq = (): void => {
       hideMenus(this.hud);
+      this.audio.stopVoice();
       this.sim.reset();
       this.fx.clear();
       this.cam.clear();
@@ -363,7 +372,7 @@ export class Game {
 
   private setPhase(p: HudPhase): void {
     this.phase = p;
-    paintHud(this.hud, this.sim, this.loop.fps, this.audio.muted, p === 'pause', p);
+    paintHud(this.hud, this.sim, this.loop.fps, this.audio, p === 'pause', p);
     this.refit?.();
     if (p === 'play') {
       this.audio.unlock();
@@ -392,7 +401,7 @@ export class Game {
     this.hudTick += dt;
     if (this.hudTick > 0.12) {
       this.hudTick = 0;
-      paintHud(this.hud, this.sim, this.loop.fps, this.audio.muted, this.phase === 'pause', this.phase);
+      paintHud(this.hud, this.sim, this.loop.fps, this.audio, this.phase === 'pause', this.phase);
     }
   }
 

@@ -314,6 +314,8 @@ export class Sim {
     this.banner = `WAVE ${this.wave} — ${waveTitle(this.wave)}`;
     this.fx.say(WORLD_W / 2, WORLD_H * 0.42 + 28, flavor, '#fff3b0', 1.12);
     this.audio.wave();
+    if (this.wave === 1) this.audio.voice('waveOpen', true);
+    else if (this.wave !== 6 && this.wave !== 12) this.audio.voice('wave');
     this.beginEvent(this.wave);
     if (this.wave === 6 || this.wave === 12) this.spawnBoss();
   }
@@ -324,11 +326,23 @@ export class Sim {
     this.eventTitle = ev.title;
     this.eventBlurb = ev.blurb;
     this.eventLife = ev.id === 'finale' ? 4.4 : ev.life;
-    if (ev.id === 'tweet') this.tweetStorm = ev.life;
-    if (ev.id === 'drive') this.donationDrive = ev.life;
+    if (ev.id === 'tweet') {
+      this.tweetStorm = ev.life;
+      this.audio.voice('tweet');
+    }
+    if (ev.id === 'drive') {
+      this.donationDrive = ev.life;
+      this.audio.voice('drive', true);
+    }
     if (ev.id === 'blackout') this.blackout = ev.life;
-    if (ev.id === 'witch') this.witchHunt = ev.life;
-    if (ev.id === 'finale') this.finalRally = ev.life;
+    if (ev.id === 'witch') {
+      this.witchHunt = ev.life;
+      this.audio.voice('witch', true);
+    }
+    if (ev.id === 'finale') {
+      this.finalRally = ev.life;
+      this.audio.voice('finale', true);
+    }
     if (ev.id === 'coffee') this.coffee = ev.life;
     if (ev.id === 'prime') this.primeTime = ev.life;
     if (ev.id === 'caravan') {
@@ -352,7 +366,7 @@ export class Sim {
     this.credit(40);
     this.fx.patriotic(WORLD_W / 2, WORLD_H * 0.72, 1.1);
     this.fx.say(WORLD_W / 2, WORLD_H * 0.62, 'COVFEFE BONUS', '#fff3b0', 1.35);
-    this.audio.voiceLine();
+    this.audio.voice('covfefe', true);
     return true;
   }
 
@@ -448,6 +462,7 @@ export class Sim {
     if (t.tier >= MAX_TIER) {
       this.fx.say(t.x, t.y - 44, 'SPECIAL READY', '#3cf0ff', 1.15);
       this.cam.hit(0.22);
+      this.audio.voice('maxed');
     }
     return true;
   }
@@ -469,6 +484,17 @@ export class Sim {
     this.hitstop = Math.max(this.hitstop, 0.14);
     this.cam.bang();
     this.audio.special();
+    const cue =
+      t.kind === 'trebuchet'
+        ? 'specialTariff'
+        : t.kind === 'brick'
+          ? 'specialWall'
+          : t.kind === 'truth'
+            ? 'specialNova'
+            : t.kind === 'desk'
+              ? 'specialDesk'
+              : 'special';
+    this.audio.voice(cue, true);
     const name = SPECIAL_NAME[t.kind] ?? 'SPECIAL';
     this.fx.say(t.x, t.y - 28, name, '#fff3b0', 1.55);
     this.shock(t.x, t.y);
@@ -563,6 +589,7 @@ export class Sim {
     });
     this.fx.say(WORLD_W / 2, WORLD_H * 0.5, this.wave >= 12 ? 'THE BIGGEST CLERK' : 'SPECIAL COUNSEL', '#ff6b6b', 1.6);
     this.cam.bang();
+    if (this.wave < 12) this.audio.voice('boss', true);
   }
 
   private spawnEnemy(kind: EnemyId, opts?: { splitter?: boolean; elite?: boolean; dist?: number; route?: number }): void {
@@ -609,6 +636,7 @@ export class Sim {
         this.cam.hit(0.32);
         this.hitstop = Math.max(this.hitstop, n >= 18 ? 0.14 : 0.07);
         this.audio.combo();
+        this.audio.voice(n >= 18 ? 'comboBig' : 'combo', n >= 28);
         this.shock(x, y);
         if (n >= 20) this.feverLife = Math.max(this.feverLife, 5.5);
       }
@@ -642,7 +670,12 @@ export class Sim {
     }
     this.fx.say(e.x + 6, e.y - 36, `+$${pay}`, '#9dffb0', 0.95);
     this.audio.death();
-    if (Math.random() < 0.22 || e.elite || e.boss) this.audio.voiceLine();
+    if (e.boss) this.audio.voice('killBoss', true);
+    else if (e.elite && Math.random() < 0.45) this.audio.voice('killElite');
+    else if (e.kind === 'drone' && Math.random() < 0.14) this.audio.voice('killDrone');
+    else if (e.kind === 'bureaucrat' && Math.random() < 0.18) this.audio.voice('killBureau');
+    else if (e.kind === 'lobbyist' && Math.random() < 0.2) this.audio.voice('killLobby');
+    else if (Math.random() < 0.07) this.audio.voice('kill');
     if (e.splitter) {
       this.fx.say(e.x, e.y - 10, 'MARGIN OF ERROR', '#ffb38a', 1.05);
       this.spawnEnemy('alien', { splitter: false, elite: false, dist: Math.max(0, e.dist - 18), route: e.route });
@@ -887,7 +920,7 @@ export class Sim {
       if (this.wave >= MAX_WAVES) {
         this.won = true;
         this.banner = this.map.def.victory;
-        this.audio.victory();
+        this.audio.victory(this.leakCount <= 2 && this.approval >= this.diff.startApproval * 0.82);
         const keep = houseOrigin(this.map.def);
         this.fx.patriotic(keep.x + keep.w * 0.5, keep.y + keep.h * 0.45, 2.2);
         return;
@@ -902,6 +935,7 @@ export class Sim {
           this.perfectWaves += 1;
           this.banner = 'PERFECT WAVE — RATINGS THROUGH THE ROOF';
           this.fx.say(WORLD_W / 2, WORLD_H / 2 - 18, 'PERFECT RATINGS', '#fff3b0', 1.45);
+          this.audio.voice('perfect');
         } else {
           this.banner = 'WAVE CLEARED — RATINGS UP';
         }
@@ -957,7 +991,6 @@ export class Sim {
         this.streakT = 0;
         this.cam.sting();
         this.audio.leak();
-        this.audio.voiceLine('uhoh');
         this.fx.say(e.x, e.y - 30, `-${e.leak}% APPROVAL`, '#ff6b6b', 1.2);
         e.hp = 0;
         if (this.approval <= 0) {

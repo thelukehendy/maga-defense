@@ -1,3 +1,4 @@
+import type { Synth } from './audio.ts';
 import { ENEMY_LORE, MAX_TIER, MAP_ORDER, SPECIAL_NAME, TOWER_LORE, towerStats, UPGRADE_COST, wavePreview, END_QUOTES_LOSS, END_QUOTES_WIN } from './campaign.ts';
 import { getStars, rankTitle, rateStars, recordStars, starGlyphs } from './progress.ts';
 import type { Sim } from './sim.ts';
@@ -32,7 +33,8 @@ export type HudHandles = {
   inspectStats: HTMLElement | null;
   diffBtns: HTMLButtonElement[];
   mapCards: HTMLButtonElement[];
-  optMuteBtn: HTMLButtonElement | null;
+  optMusicBtn: HTMLButtonElement | null;
+  optSfxBtn: HTMLButtonElement | null;
   endStars: HTMLElement | null;
   endStats: HTMLElement | null;
   endRank: HTMLElement | null;
@@ -157,7 +159,8 @@ export function bindHud(root: HTMLElement): HudHandles {
     inspectStats: opt(root, '#inspect-stats'),
     diffBtns: [...root.querySelectorAll<HTMLButtonElement>('[data-diff]')],
     mapCards: [...root.querySelectorAll<HTMLButtonElement>('[data-map]')],
-    optMuteBtn: opt<HTMLButtonElement>(root, '#btn-opt-mute'),
+    optMusicBtn: opt<HTMLButtonElement>(root, '#btn-opt-music'),
+    optSfxBtn: opt<HTMLButtonElement>(root, '#btn-opt-sfx'),
     endStars: opt(root, '#end-stars'),
     endStats: opt(root, '#end-stats'),
     endRank: opt(root, '#end-rank'),
@@ -175,7 +178,7 @@ export function paintHud(
   hud: HudHandles,
   sim: Sim,
   fps: number,
-  muted: boolean,
+  audio: Synth,
   paused: boolean,
   phase: HudPhase,
 ): void {
@@ -196,8 +199,9 @@ export function paintHud(
   hud.fps.parentElement?.classList.toggle('hidden', !/(?:^|[?&])debug=1(?:&|$)/.test(location.search));
   const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 420px)').matches;
   hud.speedBtn.textContent = `${sim.speed}×`;
-  hud.muteBtn.textContent = muted ? (narrow ? 'MUTE' : 'SOUND OFF') : narrow ? 'SOUND' : 'SOUND ON';
-  if (hud.optMuteBtn) hud.optMuteBtn.textContent = muted ? 'SOUND OFF' : 'SOUND ON';
+  hud.muteBtn.textContent = audio.sfxMuted ? (narrow ? 'FX OFF' : 'EFFECTS OFF') : narrow ? 'FX' : 'EFFECTS ON';
+  if (hud.optMusicBtn) hud.optMusicBtn.textContent = audio.musicMuted ? 'MUSIC OFF' : 'MUSIC ON';
+  if (hud.optSfxBtn) hud.optSfxBtn.textContent = audio.sfxMuted ? 'EFFECTS OFF' : 'EFFECTS ON';
   hud.pauseBtn.textContent = paused ? (narrow ? 'GO' : 'RESUME') : 'PAUSE';
   if (sim.waveReady()) {
     hud.sendBtn.disabled = false;

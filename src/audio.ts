@@ -24,11 +24,102 @@ const SFX = {
   defeat: './audio/sfx-defeat.mp3',
 };
 
-const VOICE = {
-  sosad: './audio/voice-sosad.mp3',
-  fired: './audio/voice-fired.mp3',
-  uhoh: './audio/voice-uhoh.mp3',
+const B = './audio/bytes';
+
+type Clip = { src: string; dur: number; vol?: number };
+
+const C = {
+  ahNo: { src: `${B}/ah-no.mp3`, dur: 1.36, vol: 0.52 },
+  america: { src: `${B}/america.mp3`, dur: 1.12, vol: 0.5 },
+  americaAgain: { src: `${B}/america-great-again.mp3`, dur: 3.71, vol: 0.46 },
+  americaFirst: { src: `${B}/america-first.mp3`, dur: 7.34, vol: 0.42 },
+  byeBye: { src: `${B}/bye-bye.mp3`, dur: 1.52, vol: 0.54 },
+  china: { src: `${B}/china.mp3`, dur: 1.44, vol: 0.52 },
+  competition: { src: `${B}/competition.mp3`, dur: 1.44, vol: 0.52 },
+  donald: { src: `${B}/donald-trump.mp3`, dur: 1.06, vol: 0.5 },
+  eightBillion: { src: `${B}/eight-billion.mp3`, dur: 5.28, vol: 0.42 },
+  fantastic: { src: `${B}/fantastic.mp3`, dur: 0.86, vol: 0.56 },
+  friends: { src: `${B}/friends.mp3`, dur: 2.59, vol: 0.48 },
+  goodTime: { src: `${B}/have-a-good-time.mp3`, dur: 0.89, vol: 0.54 },
+  greatest: { src: `${B}/greatest-president.mp3`, dur: 3.19, vol: 0.46 },
+  lookAtThis: { src: `${B}/look-at-this-guy.mp3`, dur: 1.1, vol: 0.54 },
+  nasty: { src: `${B}/nasty.mp3`, dur: 1.57, vol: 0.52 },
+  no: { src: `${B}/no.mp3`, dur: 0.73, vol: 0.56 },
+  nobody: { src: `${B}/nobody-like-me.mp3`, dur: 2.53, vol: 0.48 },
+  promised: { src: `${B}/promised.mp3`, dur: 1.7, vol: 0.52 },
+  ringtone: { src: `${B}/ringtone.mp3`, dur: 6.84, vol: 0.4 },
+  thankYou: { src: `${B}/thank-you.mp3`, dur: 2.51, vol: 0.48 },
+  theyDont: { src: `${B}/they-dont-like-me.mp3`, dur: 2.04, vol: 0.5 },
+  toughGuy: { src: `${B}/tough-guy.mp3`, dur: 1.15, vol: 0.54 },
+  wrong: { src: `${B}/wrong.mp3`, dur: 0.65, vol: 0.56 },
+} as const satisfies Record<string, Clip>;
+
+export type VoiceCue =
+  | 'kill'
+  | 'killElite'
+  | 'killBoss'
+  | 'killDrone'
+  | 'killBureau'
+  | 'killLobby'
+  | 'leak'
+  | 'deny'
+  | 'wave'
+  | 'waveOpen'
+  | 'boss'
+  | 'special'
+  | 'specialTariff'
+  | 'specialWall'
+  | 'specialNova'
+  | 'specialDesk'
+  | 'combo'
+  | 'comboBig'
+  | 'perfect'
+  | 'covfefe'
+  | 'drive'
+  | 'witch'
+  | 'tweet'
+  | 'finale'
+  | 'deploy'
+  | 'maxed'
+  | 'victory'
+  | 'victoryBig'
+  | 'defeat';
+
+const POOLS: Record<VoiceCue, Clip[]> = {
+  kill: [C.byeBye, C.fantastic, C.wrong],
+  killElite: [C.lookAtThis, C.toughGuy, C.byeBye],
+  killBoss: [C.byeBye, C.nobody, C.promised],
+  killDrone: [C.wrong, C.no, C.ahNo],
+  killBureau: [C.toughGuy, C.lookAtThis, C.byeBye],
+  killLobby: [C.nasty, C.wrong, C.byeBye],
+  leak: [C.ahNo, C.no, C.theyDont, C.nasty],
+  deny: [C.no, C.wrong, C.ahNo],
+  wave: [C.goodTime, C.america, C.donald, C.competition],
+  waveOpen: [C.competition, C.goodTime],
+  boss: [C.lookAtThis, C.toughGuy],
+  special: [C.nobody, C.donald],
+  specialTariff: [C.china, C.nobody],
+  specialWall: [C.promised, C.nobody],
+  specialNova: [C.nobody, C.fantastic],
+  specialDesk: [C.nobody, C.promised],
+  combo: [C.fantastic, C.america],
+  comboBig: [C.nobody, C.americaAgain],
+  perfect: [C.fantastic, C.america, C.promised],
+  covfefe: [C.thankYou, C.fantastic],
+  drive: [C.eightBillion],
+  witch: [C.theyDont, C.nasty],
+  tweet: [C.friends, C.donald],
+  finale: [C.americaAgain, C.competition],
+  deploy: [C.goodTime, C.friends],
+  maxed: [C.promised, C.nobody],
+  victory: [C.americaAgain, C.greatest, C.thankYou],
+  victoryBig: [C.americaFirst, C.greatest],
+  defeat: [C.ringtone, C.theyDont, C.ahNo],
 };
+
+const MUSIC_VOL = { play: 0.42, menu: 0.28, duck: 0.11 };
+const MASTER_VOL = 0.18;
+const VOICE_GAP = 0.45;
 
 function tagAudio(el: HTMLAudioElement): HTMLAudioElement {
   el.preload = 'auto';
@@ -38,22 +129,50 @@ function tagAudio(el: HTMLAudioElement): HTMLAudioElement {
   return el;
 }
 
+function readFlag(key: string, fallback: boolean): boolean {
+  try {
+    const v = localStorage.getItem(key);
+    if (v === '1') return true;
+    if (v === '0') return false;
+  } catch {
+    /* private mode */
+  }
+  return fallback;
+}
+
+function writeFlag(key: string, v: boolean): void {
+  try {
+    localStorage.setItem(key, v ? '1' : '0');
+  } catch {
+    /* private mode */
+  }
+}
+
 export class Synth {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private noise: AudioBuffer | null = null;
   private silent: HTMLAudioElement | null = null;
   private bgm: HTMLAudioElement | null = null;
+  private voiceEl: HTMLAudioElement | null = null;
   private mapId = 'lawn';
   private unlocked = false;
-  muted = false;
+  private ducking = false;
+  private bedVol = MUSIC_VOL.play;
+  private voiceBusyUntil = 0;
+  private recent: string[] = [];
+  musicMuted = false;
+  sfxMuted = false;
 
   constructor() {
-    try {
-      this.muted = localStorage.getItem('maga-mute') === '1';
-    } catch {
-      this.muted = false;
-    }
+    const legacy = readFlag('maga-mute', false);
+    this.musicMuted = readFlag('maga-music', legacy);
+    this.sfxMuted = readFlag('maga-sfx', legacy);
+  }
+
+  /** True when both beds are off — HUD treats this as total mute. */
+  get muted(): boolean {
+    return this.musicMuted && this.sfxMuted;
   }
 
   get ready(): boolean {
@@ -83,7 +202,7 @@ export class Synth {
       const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new Ctx();
       this.master = this.ctx.createGain();
-      this.master.gain.value = this.muted ? 0 : 0.18;
+      this.master.gain.value = this.sfxMuted ? 0 : MASTER_VOL;
       this.master.connect(this.ctx.destination);
       this.noise = this.ctx.createBuffer(1, this.ctx.sampleRate * 1.2, this.ctx.sampleRate);
       const data = this.noise.getChannelData(0);
@@ -99,13 +218,13 @@ export class Synth {
   }
 
   playMusic(): void {
-    this.playBed(this.muted ? 0 : 0.42);
+    this.playBed(this.musicMuted ? 0 : MUSIC_VOL.play);
   }
 
   playMenu(): void {
     if (!this.unlocked) return;
     this.mapId = 'lawn';
-    this.playBed(this.muted ? 0 : 0.28);
+    this.playBed(this.musicMuted ? 0 : MUSIC_VOL.menu);
   }
 
   private playBed(volume: number): void {
@@ -117,8 +236,9 @@ export class Synth {
       this.bgm.loop = true;
       this.bgm.setAttribute('data-src', src);
     }
-    this.bgm.volume = volume;
-    if (this.muted || volume <= 0) {
+    this.bedVol = volume;
+    this.bgm.volume = this.ducking && volume > 0 ? MUSIC_VOL.duck : volume;
+    if (this.musicMuted || volume <= 0) {
       this.bgm.pause();
       return;
     }
@@ -131,32 +251,88 @@ export class Synth {
     this.bgm?.pause();
   }
 
-  setMuted(v: boolean): void {
-    this.muted = v;
-    try {
-      localStorage.setItem('maga-mute', v ? '1' : '0');
-    } catch {
-      /* private mode */
+  stopVoice(): void {
+    if (this.voiceEl) {
+      this.voiceEl.pause();
+      this.voiceEl = null;
     }
-    if (this.bgm) this.bgm.volume = v ? 0 : 0.42;
+    this.voiceBusyUntil = 0;
+    this.duck(false);
+  }
+
+  setMusicMuted(v: boolean): void {
+    this.musicMuted = v;
+    writeFlag('maga-music', v);
     if (v) this.bgm?.pause();
     else if (this.unlocked) this.playMusic();
-    if (this.master) this.master.gain.setTargetAtTime(v ? 0 : 0.18, this.now(), 0.02);
   }
 
-  toggleMute(): boolean {
-    this.setMuted(!this.muted);
-    return this.muted;
+  setSfxMuted(v: boolean): void {
+    this.sfxMuted = v;
+    writeFlag('maga-sfx', v);
+    if (v) this.stopVoice();
+    if (this.master) this.master.gain.setTargetAtTime(v ? 0 : MASTER_VOL, this.now(), 0.02);
   }
 
-  voiceLine(kind?: keyof typeof VOICE): void {
-    const keys = Object.keys(VOICE) as (keyof typeof VOICE)[];
-    const pick = kind ?? keys[Math.floor(Math.random() * keys.length)]!;
-    this.playSfx(VOICE[pick], 0.72);
+  toggleMusic(): boolean {
+    this.setMusicMuted(!this.musicMuted);
+    return this.musicMuted;
+  }
+
+  toggleSfx(): boolean {
+    this.setSfxMuted(!this.sfxMuted);
+    return this.sfxMuted;
+  }
+
+  voice(cue: VoiceCue, force = false): void {
+    if (!this.unlocked || this.sfxMuted) return;
+    const now = performance.now();
+    const busy = this.voiceEl && !this.voiceEl.paused && !this.voiceEl.ended;
+    if (!force && (busy || now < this.voiceBusyUntil)) return;
+    const pool = POOLS[cue];
+    if (!pool.length) return;
+    const pick = this.pickClip(pool);
+    this.playVoice(pick, force);
+  }
+
+  private pickClip(pool: Clip[]): Clip {
+    const fresh = pool.filter((c) => !this.recent.includes(c.src));
+    const bag = fresh.length ? fresh : pool;
+    const clip = bag[(Math.random() * bag.length) | 0]!;
+    this.recent.push(clip.src);
+    if (this.recent.length > 6) this.recent.shift();
+    return clip;
+  }
+
+  private playVoice(clip: Clip, force: boolean): void {
+    if (force) this.stopVoice();
+    const a = tagAudio(new Audio(clip.src));
+    a.volume = Math.max(0, Math.min(1, clip.vol ?? 0.5));
+    this.voiceEl = a;
+    this.voiceBusyUntil = performance.now() + (clip.dur + VOICE_GAP) * 1000;
+    this.duck(true);
+    const done = (): void => {
+      if (this.voiceEl !== a) return;
+      this.voiceEl = null;
+      this.duck(false);
+    };
+    a.addEventListener('ended', done);
+    a.addEventListener('error', done);
+    void a.play().catch(done);
+  }
+
+  private duck(on: boolean): void {
+    this.ducking = on;
+    if (!this.bgm || this.musicMuted || this.bedVol <= 0) return;
+    this.bgm.volume = on ? MUSIC_VOL.duck : this.bedVol;
+  }
+
+  private sfxOn(): boolean {
+    return this.unlocked && !this.sfxMuted;
   }
 
   private playSfx(src: string, volume = 0.5): void {
-    if (this.muted || !this.unlocked) return;
+    if (!this.sfxOn()) return;
     const a = tagAudio(new Audio(src));
     a.volume = Math.max(0, Math.min(1, volume));
     void a.play().catch(() => {
@@ -179,6 +355,7 @@ export class Synth {
     gain = 0.12,
     slide?: number,
   ): void {
+    if (!this.sfxOn()) return;
     const ctx = this.ctx;
     const out = this.out();
     if (!ctx || !out) return;
@@ -198,6 +375,7 @@ export class Synth {
   }
 
   private burst(dur: number, freq: number, q: number, gain: number): void {
+    if (!this.sfxOn()) return;
     const ctx = this.ctx;
     const out = this.out();
     const buf = this.noise;
@@ -227,6 +405,7 @@ export class Synth {
   deny(): void {
     this.playSfx(SFX.deny, 0.45);
     this.tone(180, 0.16, 'sawtooth', 0.08, 90);
+    this.voice('deny');
   }
 
   truth(): void {
@@ -262,6 +441,7 @@ export class Synth {
   leak(): void {
     this.playSfx(SFX.leak, 0.55);
     this.tone(320, 0.35, 'sawtooth', 0.08, 90);
+    this.voice('leak');
   }
 
   wave(): void {
@@ -272,8 +452,9 @@ export class Synth {
     });
   }
 
-  victory(): void {
-    this.playSfx(SFX.victory, 0.6);
+  victory(big = false): void {
+    this.playSfx(SFX.victory, 0.55);
+    this.voice(big ? 'victoryBig' : 'victory', true);
     const notes = [523, 659, 784, 1046, 784, 1046];
     notes.forEach((n, i) => {
       window.setTimeout(() => this.tone(n, 0.22, 'triangle', 0.08), i * 110);
@@ -281,8 +462,8 @@ export class Synth {
   }
 
   defeat(): void {
-    this.playSfx(SFX.defeat, 0.6);
-    this.voiceLine('sosad');
+    this.playSfx(SFX.defeat, 0.55);
+    this.voice('defeat', true);
     [392, 311, 247, 196].forEach((n, i) => {
       window.setTimeout(() => this.tone(n, 0.28, 'sawtooth', 0.07), i * 180);
     });
