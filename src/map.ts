@@ -64,15 +64,19 @@ export class GameMap {
   readonly pathIndex: Int16Array;
   readonly blocked: Uint8Array;
   readonly samples: PathSample[];
+  readonly routes: PathSample[][];
+  readonly lengths: number[];
   readonly length: number;
   readonly pathCells: readonly [number, number][];
   readonly whiteHouse: readonly [number, number][];
+  readonly tunnels: readonly { x: number; y: number; w: number; h: number }[];
 
   constructor(id: MapId = 'lawn') {
     this.def = MAPS[id];
     const rails = MAP_RAILS[id];
     this.pathCells = (rails?.cells ?? this.def.path).map(([c, r]) => [c, r] as [number, number]);
     this.whiteHouse = this.def.house;
+    this.tunnels = rails?.tunnels ?? [];
     this.pathIndex = new Int16Array(COLS * ROWS);
     this.pathIndex.fill(-1);
     this.pathCells.forEach(([c, r], i) => {
@@ -88,16 +92,37 @@ export class GameMap {
       if (this.blocked[i] === 2) throw new Error(`Landmark overlap: ${id} ${lm.kind} ${lm.c},${lm.r}`);
       this.blocked[i] = 2;
     }
-    // Prefer continuous painted-road rail so invaders track the art (no grid stair-steps).
+    const build = (pts: { x: number; y: number }[]): PathSample[] => densify(pts, 4);
     if (rails?.rail?.length) {
-      const pts = rails.rail.map(([x, y]) => ({ x, y }));
-      this.samples = densify(pts, 4);
+      this.routes = [build(rails.rail.map(([x, y]) => ({ x, y })))];
+      for (const extra of rails.altRails ?? []) {
+        if (extra.length) this.routes.push(build(extra.map(([x, y]) => ({ x, y }))));
+      }
     } else {
       const centers = this.pathCells.map(([c, r]) => cellCenter(c, r));
-      this.samples = densify(chamfer(centers, 38), 4);
+      this.routes = [build(chamfer(centers, 38))];
     }
-    this.length = this.samples[this.samples.length - 1]!.t;
+    this.samples = this.routes[0]!;
+    this.lengths = this.routes.map((r) => r[r.length - 1]!.t);
+    this.length = this.lengths[0]!;
     if (!this.verifyPath()) throw new Error(`Path disconnected: ${id}`);
+  }
+
+  pickRoute(): number {
+    const n = this.routes.length;
+    if (n <= 1) return 0;
+    return Math.floor(Math.random() * n);
+  }
+
+  routeLength(route = 0): number {
+    return this.lengths[Math.max(0, Math.min(route, this.lengths.length - 1))]!;
+  }
+
+  inTunnel(x: number, y: number): boolean {
+    for (const t of this.tunnels) {
+      if (x >= t.x && x <= t.x + t.w && y >= t.y && y <= t.y + t.h) return true;
+    }
+    return false;
   }
 
   private verifyPath(): boolean {
@@ -157,17 +182,19 @@ export class GameMap {
     return cellCenter(c, r);
   }
 
-  sample(distAlong: number): PathSample {
-    const d = Math.max(0, Math.min(this.length, distAlong));
+  sample(distAlong: number, route = 0): PathSample {
+    const samples = this.routes[Math.max(0, Math.min(route, this.routes.length - 1))]!;
+    const length = samples[samples.length - 1]!.t;
+    const d = Math.max(0, Math.min(length, distAlong));
     let lo = 0;
-    let hi = this.samples.length - 1;
+    let hi = samples.length - 1;
     while (lo < hi) {
       const mid = (lo + hi) >> 1;
-      if (this.samples[mid]!.t < d) lo = mid + 1;
+      if (samples[mid]!.t < d) lo = mid + 1;
       else hi = mid;
     }
-    const b = this.samples[lo]!;
-    const a = this.samples[Math.max(0, lo - 1)]!;
+    const b = samples[lo]!;
+    const a = samples[Math.max(0, lo - 1)]!;
     const span = b.t - a.t || 1;
     const u = (d - a.t) / span;
     return {

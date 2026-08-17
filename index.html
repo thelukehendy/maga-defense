@@ -10,6 +10,7 @@
     <title>MAGA! Defense — The Tremendous Tower Game</title>
   </head>
   <body>
+    <audio id="ios-silent" src="./audio/silent.mp3" preload="auto" loop playsinline></audio>
     <div id="app" class="shell">
       <header class="hud-top">
         <div class="brand">
@@ -22,11 +23,11 @@
             <span class="label">Donations</span>
             <strong id="stat-donations">$280</strong>
           </div>
-          <div class="stat">
+          <div class="stat approval-stat">
             <span class="label">Approval</span>
-            <div class="approval">
+            <div class="approval" role="meter" aria-label="Approval">
               <div id="approval-fill" class="fill"></div>
-              <span id="approval-text">100%</span>
+              <span id="approval-text">Approval 100%</span>
             </div>
           </div>
           <div class="stat">
@@ -158,7 +159,7 @@
                 <span class="plaque-veil" aria-hidden="true"></span>
                 <span class="plaque-seal">03</span>
                 <span class="plaque-name">Frontier Ridge</span>
-                <span class="plaque-sub">Steel, dust, finished wall</span>
+                <span class="plaque-sub">Switchbacks, tunnel, split ridge</span>
               </button>
               <button type="button" class="plaque" data-map="avenue">
                 <img class="plaque-art" src="./maps/avenue.jpg" alt="" />
@@ -181,7 +182,7 @@
         <div class="panel slim">
           <p class="kicker">OPTIONS</p>
           <h2>SETTINGS</h2>
-          <p class="pitch">Sound uses a tiny on-device synth. No accounts. No cloud. Tremendous privacy.</p>
+          <p class="pitch">Music and effects play after you tap. On iPhone, sound works even with the Silent switch. Orchestral beds: Kevin MacLeod (incompetech.com), CC BY 3.0. No accounts. No cloud.</p>
           <div class="opt-row">
             <button id="btn-opt-mute" type="button" class="btn-blue">SOUND ON</button>
           </div>

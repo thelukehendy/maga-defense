@@ -42,10 +42,10 @@ function opt<T extends HTMLElement>(root: HTMLElement, sel: string): T | null {
 
 function formatStats(kind: TowerId, tier: number): string {
   const s = towerStats(kind, tier);
-  const parts = [`TIER ${s.label}`, `RNG ${s.range.toFixed(2)}`];
-  if (s.damage) parts.push(`DMG ${s.damage}`, `ROF ${s.fireRate}`);
+  const parts = [`TIER ${s.label}`, `RNG ${s.range.toFixed(1)}`];
+  if (s.damage) parts.push(`DMG ${s.damage}`);
   if (s.aoe) parts.push(`AOE ${s.aoe}`);
-  if (s.wallHp) parts.push(`WALL ${s.wallHp}HP / ${s.wallLife}s`);
+  if (s.wallHp) parts.push(`WALL ${s.wallHp}HP`);
   if (s.buff > 1) parts.push(`AURA ${s.buff.toFixed(2)}×`);
   return parts.join(' · ');
 }
@@ -158,7 +158,8 @@ export function paintHud(
   const maxA = Math.max(1, sim.diff?.startApproval ?? 100);
   hud.approvalFill.style.width = `${Math.min(100, (100 * sim.approval) / maxA)}%`;
   hud.approvalFill.classList.toggle('low', sim.approval <= maxA * 0.3);
-  hud.approvalText.textContent = `${sim.approval}%`;
+  hud.approvalText.textContent = `Approval ${sim.approval}%`;
+  hud.approvalFill.parentElement?.setAttribute('aria-valuenow', String(sim.approval));
   hud.wave.textContent = `${Math.min(sim.wave, MAX_WAVES)}/${MAX_WAVES}`;
   hud.fps.textContent = `${Math.round(fps)} FPS`;
   const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 420px)').matches;

@@ -19,6 +19,14 @@
   box-sizing: border-box;
 }
 
+#ios-silent {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 button {
   -webkit-appearance: none;
   appearance: none;
@@ -57,6 +65,10 @@ body {
   user-select: none;
   -webkit-user-select: none;
   background: #071428;
+  --play-x: 0px;
+  --play-y: 0px;
+  --play-w: 100%;
+  --play-h: 100%;
 }
 
 .hud-top,
@@ -164,9 +176,26 @@ body {
   color: #9dffb0;
 }
 
+.approval-stat {
+  min-width: 132px;
+  flex: 1 1 160px;
+  max-width: 280px;
+}
+
+.approval-stat .label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 2px;
+}
+
 .approval {
   position: relative;
-  height: 22px;
+  height: 24px;
+  min-width: 108px;
+  width: 100%;
   background: #1a1204;
   border: 1px solid var(--gold);
   border-radius: 4px;
@@ -191,9 +220,14 @@ body {
   display: grid;
   place-items: center;
   font-family: Impact, sans-serif;
-  font-size: 13px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
   color: #fff;
   text-shadow: 0 1px 2px #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 6px;
 }
 
 .tools {
@@ -375,6 +409,16 @@ body {
   color: var(--gold);
 }
 
+#inspect-title,
+#inspect-stats {
+  margin: 4px 0 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 #inspect-title {
   margin: 2px 0 0;
   font-family: Impact, sans-serif;
@@ -386,7 +430,6 @@ body {
 
 #inspect-body,
 #inspect-stats {
-  margin: 4px 0 0;
   font-family: Georgia, serif;
   font-size: 11px;
   letter-spacing: 0;
@@ -741,7 +784,7 @@ body {
   position: relative;
   z-index: 2;
   box-sizing: border-box;
-  width: min(400px, calc(100% - 28px));
+  width: min(400px, calc(var(--play-w, 100%) - 28px));
   max-width: 100%;
   min-height: 0;
   max-height: calc(100% - 24px);
@@ -757,7 +800,7 @@ body {
     max(12px, var(--safe-t))
     14px
     max(16px, var(--safe-b))
-    max(14px, var(--safe-l));
+    max(14px, calc(var(--play-x, 0px) + 14px));
   padding: 22px 22px 20px;
   color: var(--paper);
   background:
@@ -1475,8 +1518,24 @@ canvas.portrait {
     gap: 4px;
     min-width: 0;
   }
-  .stat .label {
+  .stat:not(.approval-stat) .label {
     display: none;
+  }
+  .approval-stat .label {
+    display: block;
+    font-size: 9px;
+    margin-bottom: 1px;
+  }
+  .approval-stat {
+    min-width: 118px;
+    flex: 1 1 130px;
+  }
+  .approval {
+    height: 22px;
+    min-width: 104px;
+  }
+  #approval-text {
+    font-size: 11px;
   }
   .stat {
     min-width: 0;
@@ -1512,28 +1571,33 @@ canvas.portrait {
   }
   .inspect {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 2px;
     padding: 4px 8px;
     min-height: 32px;
-    flex: 0 0 auto;
+    min-width: 0;
+    flex: 1 1 auto;
     width: 100%;
   }
   #inspect-title,
   #inspect-stats {
     margin: 0;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #inspect-title {
+    font-size: 13px;
   }
   #inspect-stats {
-    flex: 1;
-    min-width: 0;
-    text-align: right;
-    font-size: 11px;
-    white-space: normal;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    flex: 0 0 auto;
+    text-align: left;
+    font-size: 10px;
+    display: block;
   }
   .hud-bottom {
     display: grid;
@@ -1631,8 +1695,8 @@ canvas.portrait {
   .overlay.overlay-hero .hero-ui,
   .overlay.overlay-hero .hero-copy,
   .overlay.overlay-hero .hero-menu {
-    width: 100%;
-    max-width: none;
+    width: var(--play-w, 100%);
+    max-width: var(--play-w, 100%);
     max-height: 100%;
     overflow-x: hidden;
     overflow-y: auto;
@@ -1641,7 +1705,7 @@ canvas.portrait {
     align-items: center;
     justify-content: flex-end;
     text-align: center;
-    margin: 0;
+    margin: 0 0 0 var(--play-x, 0px);
     border: 3px solid var(--gold);
     border-bottom: none;
     border-radius: 18px 18px 0 0;
@@ -1784,16 +1848,6 @@ canvas.portrait {
     padding: 0;
     place-items: unset;
   }
-  .overlay.overlay-hero .hero-art,
-  .overlay.overlay-hero .hero-img,
-  .overlay.overlay-hero .hero-bg,
-  .overlay.overlay-hero > img {
-    inset: 0;
-    top: 0;
-    height: 100%;
-    object-fit: cover;
-    object-position: 50% 30%;
-  }
   .overlay.overlay-hero .hero-scrim {
     background:
       linear-gradient(
@@ -1807,7 +1861,7 @@ canvas.portrait {
   .overlay.overlay-hero .hero-ui,
   .overlay.overlay-hero .hero-copy,
   .overlay.overlay-hero .hero-menu {
-    width: min(340px, 46%);
+    width: min(340px, calc(var(--play-w, 46%) - 16px));
     max-height: calc(100% - 16px);
     overflow-x: hidden;
     overflow-y: auto;
@@ -1819,7 +1873,7 @@ canvas.portrait {
       8px
       10px
       max(10px, var(--safe-b))
-      max(10px, var(--safe-l));
+      max(10px, calc(var(--play-x, 0px) + 10px));
     background: transparent;
     border: none;
     border-radius: 0;
@@ -2224,11 +2278,19 @@ canvas.portrait {
   #stat-donations,
   #stat-wave,
   #approval-text {
-    font-size: 13px;
+    font-size: 12px;
+  }
+  .approval-stat {
+    min-width: 118px;
+    flex: 1 1 130px;
   }
   .approval {
-    width: 42px;
-    height: 10px;
+    width: 100%;
+    min-width: 108px;
+    height: 22px;
+  }
+  #approval-text {
+    font-size: 10px;
   }
   .tools {
     gap: 3px;
@@ -2271,12 +2333,13 @@ canvas.portrait {
   }
   .hud-top,
   .hud-bottom {
-    left: 50%;
+    left: var(--play-x, 50%);
     right: auto;
-    width: min(100%, calc(100dvh * 640 / 1152));
-    max-width: min(560px, 100%);
-    transform: translateX(-50%);
+    width: var(--play-w, min(100%, calc(100dvh * 640 / 1152)));
+    max-width: none;
+    transform: none;
     border-inline: 3px solid var(--gold);
+    overflow: hidden;
   }
   .hud-top {
     flex-wrap: nowrap;
@@ -2287,9 +2350,26 @@ canvas.portrait {
   .brand,
   .brand-kicker,
   .brand-sub,
-  .stat.tiny,
-  .stat .label {
+  .stat.tiny {
     display: none;
+  }
+  .stat:not(.approval-stat) .label {
+    display: none;
+  }
+  .approval-stat .label {
+    display: block;
+    font-size: 9px;
+  }
+  .approval-stat {
+    min-width: 128px;
+    flex: 1 1 140px;
+  }
+  .approval {
+    height: 22px;
+    min-width: 110px;
+  }
+  #approval-text {
+    font-size: 11px;
   }
   .mission-name {
     display: none;
@@ -2423,6 +2503,18 @@ canvas.portrait {
       linear-gradient(90deg, rgba(7, 20, 40, 0.72) 0%, transparent 18%, transparent 82%, rgba(7, 20, 40, 0.72) 100%),
       linear-gradient(180deg, rgba(10, 28, 58, 0.35) 0%, transparent 14%, transparent 88%, rgba(10, 28, 58, 0.4) 100%),
       radial-gradient(ellipse 42% 70% at 0% 55%, rgba(6, 16, 36, 0.55) 0%, transparent 70%);
+  }
+  .overlay.overlay-hero .hero-ui,
+  .overlay.overlay-hero .hero-copy,
+  .overlay.overlay-hero .hero-menu {
+    margin-left: max(14px, calc(var(--play-x, 0px) + 14px));
+    width: min(400px, calc(var(--play-w, 100%) - 28px));
+  }
+  .overlay:not(.overlay-hero) {
+    left: var(--play-x, 0px);
+    width: var(--play-w, 100%);
+    right: auto;
+    box-sizing: border-box;
   }
 }
 

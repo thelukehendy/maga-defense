@@ -429,11 +429,20 @@ export class Renderer {
   }
 
   private strokePath(ctx: CanvasRenderingContext2D): void {
-    const s = this.map.samples;
-    ctx.beginPath();
-    ctx.moveTo(s[0]!.x, s[0]!.y);
-    for (let i = 1; i < s.length; i++) ctx.lineTo(s[i]!.x, s[i]!.y);
-    ctx.stroke();
+    const routes = this.map.routes?.length ? this.map.routes : [this.map.samples];
+    const colors = ['rgba(0, 255, 90, 0.95)', 'rgba(80, 200, 255, 0.95)'];
+    routes.forEach((s, ri) => {
+      ctx.strokeStyle = colors[ri % colors.length]!;
+      ctx.beginPath();
+      ctx.moveTo(s[0]!.x, s[0]!.y);
+      for (let i = 1; i < s.length; i++) ctx.lineTo(s[i]!.x, s[i]!.y);
+      ctx.stroke();
+    });
+    for (const t of this.map.tunnels) {
+      ctx.strokeStyle = 'rgba(255, 180, 40, 0.9)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(t.x, t.y, t.w, t.h);
+    }
   }
 
   draw(
@@ -490,6 +499,7 @@ export class Renderer {
     }
     for (const e of sim.enemies) {
       if (e.hp <= 0) continue;
+      if (!e.flying && this.map.inTunnel(e.x, e.y)) continue;
       layers.push({ y: e.y, draw: () => this.drawEnemy(ctx, e, time) });
     }
     layers.sort((a, b) => a.y - b.y);

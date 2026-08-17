@@ -43,6 +43,7 @@ export type Enemy = {
   y: number;
   angle: number;
   z: number;
+  route: number;
 };
 
 export type Tower = {
@@ -337,7 +338,8 @@ export class Sim {
   private spawnEnemy(kind: EnemyId): void {
     const def = ENEMIES[kind];
     const hp = Math.round(scaledHp(kind, this.wave) * this.diff.hpMul);
-    const s = this.map.sample(0);
+    const route = this.map.pickRoute();
+    const s = this.map.sample(0, route);
     this.enemies.push({
       id: this.nextId++,
       kind,
@@ -355,6 +357,7 @@ export class Sim {
       y: s.y,
       angle: s.angle,
       z: def.flying ? 22 : 0,
+      route,
     });
   }
 
@@ -370,6 +373,7 @@ export class Sim {
     }
     this.fx.say(e.x + 6, e.y - 36, `+$${e.reward}`, '#9dffb0', 0.9);
     this.audio.death();
+    if (Math.random() < 0.22) this.audio.voiceLine();
   }
 
   private damage(e: Enemy, amt: number, label?: string, color = '#fff3b0'): void {
@@ -383,6 +387,7 @@ export class Sim {
     let tagged = false;
     for (const e of this.enemies) {
       if (e.hp <= 0) continue;
+      if (!e.flying && this.map.inTunnel(e.x, e.y)) continue;
       if (dist(e.x, e.y, x, y) <= radius + e.radius) {
         // One splash callout max — labeling every hit floods the screen.
         const label = !tagged ? pick(BIG) : undefined;
@@ -398,6 +403,7 @@ export class Sim {
     for (const e of this.enemies) {
       if (e.hp <= 0) continue;
       if (!flyingOk && e.flying) continue;
+      if (!e.flying && this.map.inTunnel(e.x, e.y)) continue;
       if (dist(t.x, t.y, e.x, e.y) > range + e.radius) continue;
       if (e.dist > bestDist) {
         bestDist = e.dist;
@@ -424,7 +430,7 @@ export class Sim {
   private fireTreb(t: Tower, e: Enemy): void {
     t.angle = Math.atan2(e.y - t.y, e.x - t.x);
     const lead = e.speed * 0.55;
-    const pred = this.map.sample(Math.min(this.map.length, e.dist + lead));
+    const pred = this.map.sample(Math.min(this.map.routeLength(e.route), e.dist + lead), e.route);
     const st = towerStats('trebuchet', t.tier);
     this.boulders.push({
       kind: 'boulder',
@@ -566,11 +572,12 @@ export class Sim {
         }
       }
       e.dist += speed * tdt;
-      if (e.dist >= this.map.length) {
+      if (e.dist >= this.map.routeLength(e.route)) {
         this.approval = Math.max(0, this.approval - e.leak);
         this.leaking = 0.55;
         this.cam.sting();
         this.audio.leak();
+        this.audio.voiceLine('uhoh');
         this.fx.say(e.x, e.y - 30, `-${e.leak}% APPROVAL`, '#ff6b6b', 1.2);
         e.hp = 0;
         if (this.approval <= 0) {
@@ -580,7 +587,7 @@ export class Sim {
         }
         continue;
       }
-      const s = this.map.sample(e.dist);
+      const s = this.map.sample(e.dist, e.route);
       e.x = s.x;
       e.y = s.y;
       e.angle = s.angle;

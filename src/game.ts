@@ -7,7 +7,7 @@ import { GameMap } from './map.ts';
 import { paintPortraits } from './portraits.ts';
 import { Renderer } from './render.ts';
 import { Sim } from './sim.ts';
-import { CELL, type TowerId } from './types.ts';
+import { CELL, type TowerId, WORLD_H, WORLD_W } from './types.ts';
 
 export class Game {
   private readonly root: HTMLElement;
@@ -64,9 +64,11 @@ export class Game {
     };
     const start = performance.now();
     title.addEventListener('pointerdown', skip);
+    title.addEventListener('pointerdown', () => this.audio.unlock(), { once: true });
   }
 
   private bind(root: HTMLElement, canvas: HTMLCanvasElement): void {
+    root.addEventListener('pointerdown', () => this.audio.unlock(), { capture: true });
     let fitRaf = 0;
     let lastBakeKey = '';
     const syncShell = (): void => {
@@ -92,6 +94,10 @@ export class Game {
         insetR = Math.max(0, sr.right - tr.right);
       }
       this.view.resize(topH, botH, insetL, insetR);
+      root.style.setProperty('--play-x', `${Math.round(this.view.offsetX)}px`);
+      root.style.setProperty('--play-y', `${Math.round(this.view.offsetY)}px`);
+      root.style.setProperty('--play-w', `${Math.max(1, Math.round(WORLD_W * this.view.scale))}px`);
+      root.style.setProperty('--play-h', `${Math.max(1, Math.round(WORLD_H * this.view.scale))}px`);
       const key = `${this.view.dpr.toFixed(3)}:${this.view.scale.toFixed(4)}:${topH}:${botH}:${insetL}`;
       if (key !== lastBakeKey) {
         lastBakeKey = key;
@@ -334,6 +340,7 @@ export class Game {
     this.fx.clear();
     this.cam.clear();
     this.renderer.setMap(this.sim.map, this.view.dpr, this.view.scale);
+    this.audio.setMap(this.selectedMap);
   }
 
   private setPhase(p: HudPhase): void {
@@ -341,11 +348,15 @@ export class Game {
     paintHud(this.hud, this.sim, this.loop.fps, this.audio.muted, p === 'pause', p);
     this.refit?.();
     if (p === 'play') {
+      this.audio.unlock();
+      this.audio.playMusic();
       // Arsenal was hidden on title — paint tower icons once the dock has size.
       requestAnimationFrame(() => {
         paintPortraits(this.root);
         this.refit?.();
       });
+    } else if (p === 'title' || p === 'select') {
+      this.audio.stopMusic();
     }
   }
 

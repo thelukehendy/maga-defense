@@ -241,11 +241,11 @@ export const MAPS: Record<MapId, MapDef> = {
   },
   border: {
     id: 'border',
-    art: './maps/play-border.jpg?v=7',
+    art: './maps/play-border.jpg?v=9',
     name: 'Frontier Ridge',
     subtitle: 'Steel, dust, and a very finished wall',
     briefing:
-      'High desert. One ridge. One unfinished rumor of a wall that is, in this simulator, extremely finished. Drones ignore the steel. Everything else stacks up against it like paperwork.',
+      'High desert switchbacks, a split in the ridge, and a tunnel the swarm loves. Ground units under the rock cannot be hit. Drones still fly the long way. Hold the gate.',
     victory: 'The ridge holds. The wall is still there. Everybody said it could not be done.',
     defeat: 'They walked around. They always walk around. Ratings crater in the dust.',
     theme: {
@@ -274,14 +274,14 @@ export const MAPS: Record<MapId, MapDef> = {
     ],
     landmarks: [],
     flavor: [
-      'The wall has a gift shop now.',
+      'The tunnel is not a suggestion.',
       'Watchtower reports: still tremendous.',
-      'Dust in the air. Gold in the budget.',
+      'They split. You cover both.',
     ],
   },
   avenue: {
     id: 'avenue',
-    art: './maps/play-avenue.jpg?v=5',
+    art: './maps/play-avenue.jpg?v=6',
     name: 'Fifth Avenue',
     subtitle: 'Traffic, tickers, and a gold tower',
     briefing:
