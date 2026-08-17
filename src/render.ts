@@ -118,54 +118,12 @@ export class Renderer {
     const art = this.art;
 
     if (art && art.complete && art.naturalWidth > 0) {
-      // Layer 1 — painted battlefield (exact world pixels).
+      // Painted battlefield only — no path/build overlays. Invader rail matches art.
       ctx.drawImage(art, 0, 0, WORLD_W, WORLD_H);
-      // Layer 1b — hairline guide locked to GameMap samples (road is baked into art).
-      this.paintAlignedPath(ctx, theme);
-      this.paintBuildHints(ctx, theme);
-      // Painted portals already mark the spawn — skip the gold IN badge.
       return;
     }
 
     this.bakeProcedural(ctx, theme);
-  }
-
-  /**
-   * Ultra-light centerline so enemies read as locked to the baked brick road.
-   */
-  private paintAlignedPath(ctx: CanvasRenderingContext2D, theme: Theme): void {
-    ctx.save();
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    ctx.globalAlpha = 0.1;
-    ctx.strokeStyle = mixHex(theme.pathEdge, '#1a0808', 0.25);
-    ctx.lineWidth = CELL * 0.82;
-    this.strokePath(ctx);
-    ctx.globalAlpha = 0.18;
-    ctx.strokeStyle = 'rgba(255, 248, 230, 0.45)';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([4, 11]);
-    this.strokePath(ctx);
-    ctx.setLineDash([]);
-    ctx.restore();
-  }
-
-  /** Nearly invisible pads — art grass stays dominant. */
-  private paintBuildHints(ctx: CanvasRenderingContext2D, theme: Theme): void {
-    ctx.save();
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
-        if (this.map.isPath(c, r) || this.map.blocked[this.map.idx(c, r)]) continue;
-        const x = c * CELL;
-        const y = r * CELL;
-        ctx.globalAlpha = 0.03;
-        ctx.fillStyle = mixHex(theme.grassHi, '#ffffff', 0.35);
-        ctx.beginPath();
-        ctx.roundRect(x + 10, y + 10, CELL - 20, CELL - 20, 10);
-        ctx.fill();
-      }
-    }
-    ctx.restore();
   }
 
   private bakeProcedural(ctx: CanvasRenderingContext2D, theme: Theme): void {

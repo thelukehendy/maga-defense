@@ -161,7 +161,7 @@ function centerSPath(): [number, number][] {
 export const MAPS: Record<MapId, MapDef> = {
   lawn: {
     id: 'lawn',
-    art: './maps/play-lawn.jpg?v=3',
+    art: './maps/play-lawn.jpg?v=5',
     name: 'South Lawn',
     subtitle: 'Protect the People’s House',
     briefing:
@@ -201,7 +201,7 @@ export const MAPS: Record<MapId, MapDef> = {
   },
   palazzo: {
     id: 'palazzo',
-    art: './maps/play-palazzo.jpg?v=3',
+    art: './maps/play-palazzo.jpg?v=5',
     name: 'Mar-a-Lago Drive',
     subtitle: 'Gold, palms, and a very exclusive gate',
     briefing:
@@ -241,7 +241,7 @@ export const MAPS: Record<MapId, MapDef> = {
   },
   border: {
     id: 'border',
-    art: './maps/play-border.jpg?v=3',
+    art: './maps/play-border.jpg?v=5',
     name: 'Frontier Ridge',
     subtitle: 'Steel, dust, and a very finished wall',
     briefing:
@@ -281,7 +281,7 @@ export const MAPS: Record<MapId, MapDef> = {
   },
   avenue: {
     id: 'avenue',
-    art: './maps/play-avenue.jpg?v=3',
+    art: './maps/play-avenue.jpg?v=5',
     name: 'Fifth Avenue',
     subtitle: 'Traffic, tickers, and a gold tower',
     briefing:

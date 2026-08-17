@@ -1,5 +1,6 @@
 import { CELL, COLS, ROWS } from './types.ts';
 import { MAPS, type MapDef, type MapId } from './campaign.ts';
+import { MAP_RAILS } from './rails.ts';
 
 export type PathSample = { x: number; y: number; angle: number; t: number };
 
@@ -69,7 +70,8 @@ export class GameMap {
 
   constructor(id: MapId = 'lawn') {
     this.def = MAPS[id];
-    this.pathCells = this.def.path;
+    const rails = MAP_RAILS[id];
+    this.pathCells = (rails?.cells ?? this.def.path).map(([c, r]) => [c, r] as [number, number]);
     this.whiteHouse = this.def.house;
     this.pathIndex = new Int16Array(COLS * ROWS);
     this.pathIndex.fill(-1);
@@ -86,8 +88,14 @@ export class GameMap {
       if (this.blocked[i] === 2) throw new Error(`Landmark overlap: ${id} ${lm.kind} ${lm.c},${lm.r}`);
       this.blocked[i] = 2;
     }
-    const centers = this.pathCells.map(([c, r]) => cellCenter(c, r));
-    this.samples = densify(chamfer(centers, 38), 4);
+    // Prefer continuous painted-road rail so invaders track the art (no grid stair-steps).
+    if (rails?.rail?.length) {
+      const pts = rails.rail.map(([x, y]) => ({ x, y }));
+      this.samples = densify(pts, 4);
+    } else {
+      const centers = this.pathCells.map(([c, r]) => cellCenter(c, r));
+      this.samples = densify(chamfer(centers, 38), 4);
+    }
     this.length = this.samples[this.samples.length - 1]!.t;
     if (!this.verifyPath()) throw new Error(`Path disconnected: ${id}`);
   }
