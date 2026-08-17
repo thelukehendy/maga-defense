@@ -25,6 +25,11 @@ const SFX = {
 };
 
 const B = './audio/bytes';
+/** Bust GitHub Pages / browser cache after re-encodes. Mono MP3s play left-only in Chromium. */
+const AUDIO_VER = '3';
+function asset(src: string): string {
+  return `${src}?v=${AUDIO_VER}`;
+}
 
 type Clip = { src: string; dur: number; vol?: number };
 
@@ -225,7 +230,7 @@ export class Synth {
       this.silent = domSilent;
     }
     if (!this.silent) {
-      this.silent = tagAudio(new Audio('./audio/silent.mp3'));
+      this.silent = tagAudio(new Audio(asset('./audio/silent.mp3')));
       this.silent.loop = true;
       this.silent.volume = 0.01;
     }
@@ -275,7 +280,7 @@ export class Synth {
 
   private playBed(volume: number): void {
     if (!this.unlocked) return;
-    const src = MUSIC[this.mapId] ?? MUSIC.lawn;
+    const src = asset(MUSIC[this.mapId] ?? MUSIC.lawn);
     if (!this.bgm || this.bgm.getAttribute('data-src') !== src) {
       this.bgm?.pause();
       this.bgm = tagAudio(new Audio(src));
@@ -382,7 +387,7 @@ export class Synth {
 
   private playVoice(clip: Clip, force: boolean): void {
     if (force) this.stopVoice();
-    const a = tagAudio(new Audio(clip.src));
+    const a = tagAudio(new Audio(asset(clip.src)));
     this.voiceBase = clip.vol ?? 0.5;
     a.volume = this.voiceLevel();
     this.voiceEl = a;
@@ -432,7 +437,7 @@ export class Synth {
 
   private playSfx(src: string, volume = 0.5): void {
     if (!this.sfxOn()) return;
-    const a = tagAudio(new Audio(src));
+    const a = tagAudio(new Audio(asset(src)));
     a.volume = Math.max(0, Math.min(1, volume * this.sfxGain()));
     void a.play().catch(() => {
       /* file missing — synth fallback already fired by caller when needed */
