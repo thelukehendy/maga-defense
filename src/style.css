@@ -1859,7 +1859,7 @@ canvas.portrait {
   }
 }
 
-/* Landscape tablets/desktops: maps | diffs so plaques keep 4/3 and CTA stays in flow. */
+/* Wide desktop/landscape: stacked Deploy card — maps on top, difficulty below, not a stretched split. */
 @media (min-width: 720px) and (orientation: landscape) {
   #overlay-select {
     align-content: safe center;
@@ -1880,29 +1880,24 @@ canvas.portrait {
     box-shadow: none;
   }
   #overlay-select .panel.mission {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-    grid-template-areas:
-      'kick kick'
-      'title title'
-      'maps diffs'
-      'pitch pitch'
-      'cta cta';
-    gap: 10px 14px;
-    align-content: start;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: min(560px, 92vw);
+    max-width: 560px;
+    margin: 0 auto;
     text-align: left;
     min-height: 0;
-    max-height: 100%;
-    padding-bottom: 16px;
+    max-height: min(92vh, 100%);
+    padding: 16px 18px 18px;
+    overflow: auto;
   }
   #overlay-select .kicker {
-    grid-area: kick;
     margin: 0;
   }
   #overlay-select .panel.mission > h2 {
-    grid-area: title;
     margin: 0;
-    font-size: clamp(22px, 4.2vh, 36px);
+    font-size: clamp(26px, 4.5vh, 40px);
   }
   #overlay-select .panel.mission > .sub {
     display: none;
@@ -1911,57 +1906,57 @@ canvas.portrait {
   #overlay-select .diffs {
     min-width: 0;
     min-height: 0;
-    flex: none;
+    flex: 0 0 auto;
     gap: 6px;
-    height: 100%;
   }
+  /* Battlefield first on wide screens (HTML has diffs first for mobile priority). */
   #overlay-select .maps {
-    grid-area: maps;
+    order: 1;
   }
   #overlay-select .diffs {
-    grid-area: diffs;
-  }
-  #overlay-select .diff-grid {
-    flex: 1 1 auto;
-    grid-auto-rows: 1fr;
-    min-height: 0;
-  }
-  #overlay-select .diff-btn {
-    height: 100%;
-    min-height: 56px;
-    padding: 8px 10px;
-    justify-content: center;
+    order: 2;
   }
   #overlay-select .pitch {
-    grid-area: pitch;
+    order: 3;
     display: block;
     margin: 0;
     font-size: 12px;
   }
+  #overlay-select .hero-row.deploy-cta,
   #overlay-select .hero-row {
-    grid-area: cta;
+    order: 4;
   }
   #overlay-select .section-label {
     margin: 0;
     font-size: 10px;
   }
-  #overlay-select .map-grid,
+  #overlay-select .map-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    min-height: 0;
+    height: auto;
+    grid-auto-rows: auto;
+    align-content: start;
+  }
   #overlay-select .diff-grid {
     grid-template-columns: 1fr 1fr;
     gap: 8px;
     min-height: 0;
-    height: 100%;
-    grid-auto-rows: 1fr;
-    align-content: stretch;
-  }
-  #overlay-select .map-grid {
-    height: 100%;
+    height: auto;
+    grid-auto-rows: auto;
+    align-content: start;
   }
   #overlay-select .plaque {
     min-height: 0;
-    height: 100%;
-    aspect-ratio: auto;
+    height: auto;
+    aspect-ratio: 16 / 10;
     padding: 8px 10px 10px;
+  }
+  #overlay-select .diff-btn {
+    height: auto;
+    min-height: 52px;
+    padding: 8px 10px;
+    justify-content: center;
   }
   #overlay-select .plaque-sub,
   #overlay-select .plaque-brief,
@@ -2065,25 +2060,19 @@ canvas.portrait {
     padding-bottom: 12px;
   }
   #overlay-select .panel.mission {
-    display: grid;
-    grid-template-columns: 1.15fr 1fr;
-    grid-template-areas:
-      'kick kick'
-      'title title'
-      'maps diffs'
-      'pitch pitch'
-      'cta cta';
-    gap: 6px 10px;
-    align-content: start;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: min(520px, 94vw);
+    max-width: 520px;
+    margin: 0 auto;
     text-align: left;
     padding-bottom: 12px;
   }
   #overlay-select .kicker {
-    grid-area: kick;
     margin: 0;
   }
   #overlay-select .panel.mission > h2 {
-    grid-area: title;
     margin: 0;
     font-size: 22px;
   }
@@ -2091,20 +2080,20 @@ canvas.portrait {
     display: none;
   }
   #overlay-select .maps {
-    grid-area: maps;
+    order: 1;
     min-width: 0;
   }
   #overlay-select .diffs {
-    grid-area: diffs;
+    order: 2;
     min-width: 0;
   }
   #overlay-select .pitch {
-    grid-area: pitch;
+    order: 3;
     margin: 0;
     font-size: 11px;
   }
   #overlay-select .hero-row {
-    grid-area: cta;
+    order: 4;
   }
   #overlay-select .section-label {
     margin: 0 0 4px;

@@ -447,6 +447,15 @@ export class Renderer {
     // Painted maps already have sky/scenery — skip procedural ambient wash.
     if (!this.art || !this.art.complete || this.art.naturalWidth <= 0) {
       this.drawAmbient(ctx, time);
+    } else if (typeof location !== 'undefined' && /(?:^|[?&])debugPath=1(?:&|$)/.test(location.search)) {
+      // Dev-only: thin rail so we can lock invaders to painted asphalt.
+      ctx.save();
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(0, 255, 90, 0.95)';
+      ctx.lineWidth = 3;
+      this.strokePath(ctx);
+      ctx.restore();
     }
     // Painted art already includes scenery — only draw landmarks as fallback.
     if (!this.art || !this.art.complete) {
