@@ -78,7 +78,14 @@ export class GameMap {
     });
     this.blocked = new Uint8Array(COLS * ROWS);
     for (const [c, r] of this.whiteHouse) this.blocked[r * COLS + c] = 1;
-    for (const lm of this.def.landmarks) this.blocked[lm.r * COLS + lm.c] = 2;
+    for (const lm of this.def.landmarks) {
+      if (!this.inBounds(lm.c, lm.r)) throw new Error(`Landmark out of bounds: ${id} ${lm.kind} ${lm.c},${lm.r}`);
+      const i = this.idx(lm.c, lm.r);
+      if (this.pathIndex[i] >= 0) throw new Error(`Landmark on path: ${id} ${lm.kind} ${lm.c},${lm.r}`);
+      if (this.blocked[i] === 1) throw new Error(`Landmark on house: ${id} ${lm.kind} ${lm.c},${lm.r}`);
+      if (this.blocked[i] === 2) throw new Error(`Landmark overlap: ${id} ${lm.kind} ${lm.c},${lm.r}`);
+      this.blocked[i] = 2;
+    }
     const centers = this.pathCells.map(([c, r]) => cellCenter(c, r));
     this.samples = densify(chamfer(centers, 38), 4);
     this.length = this.samples[this.samples.length - 1]!.t;

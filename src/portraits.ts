@@ -21,8 +21,8 @@ export function paintPortraits(root: HTMLElement): void {
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, cssW, cssH);
     ctx.save();
-    ctx.translate(cssW / 2, cssH * 0.62);
-    const s = Math.min(cssW, cssH) / 78;
+    ctx.translate(cssW / 2, cssH * 0.66);
+    const s = Math.min(cssW, cssH) / 64;
     ctx.scale(s, s);
     const [kind, id] = spec.split(':');
     if (kind === 'tower') drawTowerArt(ctx, id as TowerId, 1, -0.35, 1.1, 0.05);

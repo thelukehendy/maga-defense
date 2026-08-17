@@ -576,6 +576,16 @@ body {
   align-content: safe center;
 }
 
+#overlay-select {
+  place-items: stretch center;
+  align-content: stretch;
+  padding:
+    max(8px, var(--safe-t))
+    max(10px, var(--safe-r))
+    max(10px, calc(8px + var(--safe-b)))
+    max(10px, var(--safe-l));
+}
+
 #overlay-select,
 #overlay-options,
 #overlay-info,
@@ -585,6 +595,23 @@ body {
   background:
     radial-gradient(circle at 50% 20%, rgba(230, 195, 92, 0.22), transparent 46%),
     rgba(5, 11, 24, 0.88);
+}
+
+#overlay-select .panel.mission {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100% - 4px);
+  max-height: none;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+#overlay-select .maps {
+  flex: 1 1 auto;
+}
+
+#overlay-select .map-grid {
+  height: 100%;
 }
 
 .overlay.overlay-hero {
@@ -608,10 +635,36 @@ body {
   height: 100%;
   max-width: none;
   object-fit: cover;
-  object-position: 58% 40%;
+  object-position: 50% 28%;
   pointer-events: none;
   user-select: none;
   z-index: 0;
+}
+
+/* First 4s: art alone. Then menu fades in. */
+.overlay.overlay-hero.splash-hold .hero-scrim,
+.overlay.overlay-hero.splash-hold .hero-ui {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(18px);
+}
+
+.overlay.overlay-hero .hero-scrim,
+.overlay.overlay-hero .hero-ui {
+  transition:
+    opacity 0.85s ease,
+    transform 0.85s ease;
+}
+
+.overlay.overlay-hero.splash-ready .hero-scrim,
+.overlay.overlay-hero.splash-ready .hero-ui {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+
+.overlay.overlay-hero.splash-ready .hero-scrim {
+  pointer-events: none;
 }
 
 .overlay.overlay-hero .hero-scrim {
@@ -779,7 +832,7 @@ body {
 }
 
 .panel.mission {
-  width: min(920px, 100%);
+  width: min(720px, 100%);
 }
 
 .panel.slim {
@@ -927,94 +980,135 @@ body {
   color: #ffd0d8;
 }
 
+.section-hint {
+  letter-spacing: 0.06em;
+  text-transform: none;
+  color: #9eb0d4;
+  font-size: 11px;
+}
+
 .diff-btn.selected {
   box-shadow: 0 0 0 2px #fff, 0 0 18px rgba(230, 195, 92, 0.55);
-  filter: brightness(1.08);
 }
 
 .map-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .plaque {
   position: relative;
-  min-height: 168px;
-  padding: 14px 12px 12px;
-  border-radius: 12px;
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  align-content: end;
+  min-height: 0;
+  aspect-ratio: 4 / 3;
+  padding: 12px 12px 14px;
+  border-radius: 14px;
   text-align: left;
-  color: var(--ink);
-  background:
-    linear-gradient(180deg, #f7f1de, #d8c89a 55%, #b89a4a);
-  border: 2px solid #fff3b0;
+  color: #fffdf2;
+  overflow: hidden;
+  background: #0b1d4a;
+  border: 3px solid var(--gold);
   box-shadow:
     0 10px 0 #6a4e10,
-    0 16px 22px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 #fffaf0;
-  transform: perspective(640px) rotateX(6deg);
-  transform-origin: center bottom;
+    0 16px 28px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px #8a6a1a;
+  transform: none;
 }
 
-.plaque[data-map='lawn'] {
-  background: linear-gradient(180deg, #f3edd8, #c5d4a4 48%, #4a6a32);
+.plaque-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 40%;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.plaque[data-map='palazzo'] {
-  background: linear-gradient(180deg, #fff6d0, #e8c86a 45%, #2a6a5c);
+.plaque-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(7, 20, 40, 0.08) 18%, rgba(7, 20, 40, 0.78) 72%, rgba(7, 20, 40, 0.94) 100%),
+    linear-gradient(90deg, rgba(7, 20, 40, 0.28), transparent 42%);
 }
 
-.plaque[data-map='border'] {
-  background: linear-gradient(180deg, #f0e0c0, #c9a06a 48%, #6a4420);
+.plaque-seal,
+.plaque-name,
+.plaque-sub {
+  position: relative;
+  z-index: 2;
 }
 
+.plaque[data-map='lawn'],
+.plaque[data-map='palazzo'],
+.plaque[data-map='border'],
 .plaque[data-map='avenue'] {
-  background: linear-gradient(180deg, #dce4f4, #8aa0c8 42%, #1a2040);
-  color: #f4f1e8;
+  background: #0b1d4a;
+  color: #fffdf2;
 }
 
 .plaque-seal {
   position: absolute;
-  top: 8px;
-  right: 10px;
+  top: 10px;
+  left: 10px;
+  right: auto;
+  z-index: 2;
+  padding: 4px 8px;
+  border-radius: 6px;
   font-size: 11px;
   letter-spacing: 0.14em;
-  color: #6a4e10;
+  color: var(--ink);
+  background: linear-gradient(180deg, #fff3b0, #e6c35c);
+  border: 1px solid #8a6a1a;
+  box-shadow: 0 2px 0 #6a4e10;
 }
 
 .plaque[data-map='avenue'] .plaque-seal {
-  color: var(--gold-2);
+  color: var(--ink);
 }
 
 .plaque-name {
   display: block;
+  font-family: Impact, sans-serif;
   font-size: 18px;
-  padding-right: 28px;
+  letter-spacing: 0.04em;
+  padding-right: 0;
+  text-shadow: 0 2px 0 #1a1204;
 }
 
 .plaque-sub {
   display: block;
-  margin-top: 4px;
+  margin-top: 2px;
   font-family: Georgia, serif;
   font-size: 11px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   font-style: italic;
-  opacity: 0.85;
+  opacity: 1;
+  color: #ffe9a8;
+  text-shadow: 0 1px 0 #1a1204;
 }
 
 .plaque-brief {
-  display: block;
-  margin-top: 10px;
-  font-family: Georgia, serif;
-  font-size: 12px;
-  letter-spacing: 0;
-  line-height: 1.35;
+  display: none;
 }
 
 .plaque.selected {
   box-shadow:
     0 0 0 3px #fff3b0,
-    0 0 28px rgba(230, 195, 92, 0.85),
-    0 12px 0 #6a4e10;
-  filter: brightness(1.06);
+    0 10px 0 #6a4e10,
+    0 16px 28px rgba(0, 0, 0, 0.45);
+}
+
+.deploy-cta {
+  width: 100%;
+  max-width: 520px;
+  margin: 14px auto 0;
 }
 
 .dossier-grid {
@@ -1454,7 +1548,7 @@ canvas.portrait {
     top: 0;
     height: 100%;
     object-fit: cover;
-    object-position: 62% 38%;
+    object-position: 50% 22%;
   }
   .overlay.overlay-hero .hero-scrim {
     background:
@@ -1625,7 +1719,7 @@ canvas.portrait {
     top: 0;
     height: 100%;
     object-fit: cover;
-    object-position: 60% 40%;
+    object-position: 50% 30%;
   }
   .overlay.overlay-hero .hero-scrim {
     background:

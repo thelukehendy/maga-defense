@@ -89,7 +89,7 @@
         </div>
       </footer>
 
-      <div id="overlay-title" class="overlay overlay-hero">
+      <div id="overlay-title" class="overlay overlay-hero splash-hold">
         <img class="hero-art" src="./title-hero.jpg" alt="" />
         <div class="hero-scrim" aria-hidden="true"></div>
         <div class="hero-ui">
@@ -110,9 +110,9 @@
         <div class="panel hq mission">
           <p class="kicker">CHOOSE YOUR BATTLEFIELD</p>
           <h2>DEPLOY</h2>
-          <p class="sub">Map · Press temperature · Tremendous outcomes</p>
+          <p class="sub">Map · Difficulty · Tremendous outcomes</p>
           <section class="diffs" aria-label="Difficulty">
-            <p class="section-label">Press Temperature</p>
+            <p class="section-label">Press Temperature <span class="section-hint">(difficulty)</span></p>
             <div class="diff-grid">
               <button type="button" class="diff-btn diff-easy" data-diff="easy">
                 <span class="diff-tag">CABLE NEWS</span>
@@ -140,33 +140,37 @@
             <p class="section-label">Battlefield</p>
             <div class="map-grid">
               <button type="button" class="plaque selected" data-map="lawn">
+                <img class="plaque-art" src="./maps/lawn.jpg" alt="" />
+                <span class="plaque-veil" aria-hidden="true"></span>
                 <span class="plaque-seal">01</span>
                 <span class="plaque-name">South Lawn</span>
                 <span class="plaque-sub">Protect the People’s House</span>
-                <span class="plaque-brief">Hold the fountain, the roses, and the House.</span>
               </button>
               <button type="button" class="plaque" data-map="palazzo">
+                <img class="plaque-art" src="./maps/palazzo.jpg" alt="" />
+                <span class="plaque-veil" aria-hidden="true"></span>
                 <span class="plaque-seal">02</span>
                 <span class="plaque-name">Mar-a-Lago Drive</span>
                 <span class="plaque-sub">Gold, palms, exclusive gate</span>
-                <span class="plaque-brief">Keep sneakers off the marble.</span>
               </button>
               <button type="button" class="plaque" data-map="border">
+                <img class="plaque-art" src="./maps/border.jpg" alt="" />
+                <span class="plaque-veil" aria-hidden="true"></span>
                 <span class="plaque-seal">03</span>
                 <span class="plaque-name">Frontier Ridge</span>
                 <span class="plaque-sub">Steel, dust, finished wall</span>
-                <span class="plaque-brief">Drones ignore steel; everything else stacks up.</span>
               </button>
               <button type="button" class="plaque" data-map="avenue">
+                <img class="plaque-art" src="./maps/avenue.jpg" alt="" />
+                <span class="plaque-veil" aria-hidden="true"></span>
                 <span class="plaque-seal">04</span>
                 <span class="plaque-name">Fifth Avenue</span>
                 <span class="plaque-sub">Traffic, tickers, gold tower</span>
-                <span class="plaque-brief">Trap them in traffic. Hold the lobby.</span>
               </button>
             </div>
           </section>
           <p class="pitch">Tap a tower card, then tap grass to build. On phones: first tap previews range, second tap confirms. Drones fly over walls.</p>
-          <div class="hero-row" style="width: 100%; max-width: 520px; margin: 12px auto 0">
+          <div class="hero-row deploy-cta">
             <button id="btn-select-back" type="button" class="btn-blue">BACK</button>
             <button id="btn-deploy" type="button" class="btn-start">PLAY MISSION</button>
           </div>

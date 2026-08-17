@@ -41,7 +41,26 @@ export class Game {
     this.bind(root, canvas);
     paintPortraits(root);
     paintHud(this.hud, this.sim, 60, this.audio.muted, false, this.phase);
+    this.armTitleSplash(root);
     this.loop.start();
+  }
+
+  private armTitleSplash(root: HTMLElement): void {
+    const title = root.querySelector('#overlay-title');
+    if (!title) return;
+    const reveal = (): void => {
+      title.classList.remove('splash-hold');
+      title.classList.add('splash-ready');
+    };
+    window.setTimeout(reveal, 4000);
+    // Tap to skip splash after first second.
+    const skip = (): void => {
+      if (performance.now() - start < 900) return;
+      reveal();
+      title.removeEventListener('pointerdown', skip);
+    };
+    const start = performance.now();
+    title.addEventListener('pointerdown', skip);
   }
 
   private bind(root: HTMLElement, canvas: HTMLCanvasElement): void {
