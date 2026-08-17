@@ -33,8 +33,6 @@ export type HudHandles = {
   inspectStats: HTMLElement | null;
   diffBtns: HTMLButtonElement[];
   mapCards: HTMLButtonElement[];
-  optMusicBtn: HTMLButtonElement | null;
-  optSfxBtn: HTMLButtonElement | null;
   endStars: HTMLElement | null;
   endStats: HTMLElement | null;
   endRank: HTMLElement | null;
@@ -159,8 +157,6 @@ export function bindHud(root: HTMLElement): HudHandles {
     inspectStats: opt(root, '#inspect-stats'),
     diffBtns: [...root.querySelectorAll<HTMLButtonElement>('[data-diff]')],
     mapCards: [...root.querySelectorAll<HTMLButtonElement>('[data-map]')],
-    optMusicBtn: opt<HTMLButtonElement>(root, '#btn-opt-music'),
-    optSfxBtn: opt<HTMLButtonElement>(root, '#btn-opt-sfx'),
     endStars: opt(root, '#end-stars'),
     endStats: opt(root, '#end-stats'),
     endRank: opt(root, '#end-rank'),
@@ -172,6 +168,34 @@ export function bindHud(root: HTMLElement): HudHandles {
 export function hideMenus(hud: HudHandles): void {
   hud.overlayOptions?.classList.add('hidden');
   hud.overlayInfo?.classList.add('hidden');
+}
+
+function channelOn(audio: Synth, ch: string): boolean {
+  if (ch === 'music') return !audio.musicMuted;
+  if (ch === 'voice') return !audio.voiceMuted;
+  return !audio.sfxMuted;
+}
+
+function channelVol(audio: Synth, ch: string): number {
+  if (ch === 'music') return audio.musicVol;
+  if (ch === 'voice') return audio.voiceVol;
+  return audio.sfxVol;
+}
+
+export function paintMixer(hud: HudHandles, audio: Synth): void {
+  const root = hud.overlayOptions;
+  if (!root) return;
+  for (const btn of root.querySelectorAll<HTMLButtonElement>('[data-mix]')) {
+    const on = channelOn(audio, btn.dataset.mix ?? '');
+    btn.textContent = on ? 'ON' : 'OFF';
+    btn.classList.toggle('off', !on);
+  }
+  for (const sl of root.querySelectorAll<HTMLInputElement>('[data-vol]')) {
+    const pct = Math.round(channelVol(audio, sl.dataset.vol ?? '') * 100);
+    if (sl.value !== String(pct)) sl.value = String(pct);
+    const lab = root.querySelector(`[data-vol-label="${sl.dataset.vol}"]`);
+    if (lab) lab.textContent = `${pct}%`;
+  }
 }
 
 export function paintHud(
@@ -199,9 +223,8 @@ export function paintHud(
   hud.fps.parentElement?.classList.toggle('hidden', !/(?:^|[?&])debug=1(?:&|$)/.test(location.search));
   const narrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 420px)').matches;
   hud.speedBtn.textContent = `${sim.speed}×`;
-  hud.muteBtn.textContent = audio.sfxMuted ? (narrow ? 'FX OFF' : 'EFFECTS OFF') : narrow ? 'FX' : 'EFFECTS ON';
-  if (hud.optMusicBtn) hud.optMusicBtn.textContent = audio.musicMuted ? 'MUSIC OFF' : 'MUSIC ON';
-  if (hud.optSfxBtn) hud.optSfxBtn.textContent = audio.sfxMuted ? 'EFFECTS OFF' : 'EFFECTS ON';
+  hud.muteBtn.textContent = 'SOUND';
+  paintMixer(hud, audio);
   hud.pauseBtn.textContent = paused ? (narrow ? 'GO' : 'RESUME') : 'PAUSE';
   if (sim.waveReady()) {
     hud.sendBtn.disabled = false;
@@ -279,7 +302,8 @@ export function paintHud(
 
   hud.overlayTitle.classList.toggle('hidden', phase !== 'title');
   hud.overlaySelect?.classList.toggle('hidden', phase !== 'select');
-  hud.overlayPause.classList.toggle('hidden', phase !== 'pause');
+  const optsOpen = Boolean(hud.overlayOptions && !hud.overlayOptions.classList.contains('hidden'));
+  hud.overlayPause.classList.toggle('hidden', phase !== 'pause' || optsOpen);
   hud.overlayEnd.classList.toggle('hidden', phase !== 'end');
   if (phase === 'play' || phase === 'end' || phase === 'select') hideMenus(hud);
   if (phase === 'end') paintEnd(hud, sim);

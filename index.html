@@ -41,7 +41,7 @@
         </div>
         <div class="tools">
           <button id="btn-speed" type="button" class="tool">1×</button>
-          <button id="btn-mute" type="button" class="tool">EFFECTS ON</button>
+          <button id="btn-mute" type="button" class="tool">SOUND</button>
           <button id="btn-pause" type="button" class="tool">PAUSE</button>
         </div>
       </header>
@@ -188,13 +188,41 @@
       </div>
 
       <div id="overlay-options" class="overlay hidden">
-        <div class="panel slim">
+        <div class="panel slim sound-panel">
           <p class="kicker">OPTIONS</p>
-          <h2>SETTINGS</h2>
-          <p class="pitch">Music and effects play after you tap. On iPhone, sound works even with the Silent switch. Orchestral beds: Kevin MacLeod (incompetech.com), CC BY 3.0. No accounts. No cloud. Keys: 1–4 towers, Space wave, U upgrade, E special, S sell, Q speed (up to 4×), Esc pause.</p>
-          <div class="opt-row">
-            <button id="btn-opt-music" type="button" class="btn-blue">MUSIC ON</button>
-            <button id="btn-opt-sfx" type="button" class="btn-blue">EFFECTS ON</button>
+          <h2>SOUND</h2>
+          <p class="pitch">Three channels. Music is the bed. Effects are guns and booms. Speech is the President. Defaults sit at 70%.</p>
+          <div class="mixer" id="sound-mixer">
+            <div class="mix-row">
+              <div class="mix-head">
+                <span class="mix-name">Music</span>
+                <button type="button" class="btn-blue mix-toggle" data-mix="music">ON</button>
+              </div>
+              <div class="mix-slide">
+                <input id="vol-music" type="range" min="0" max="100" step="1" value="70" data-vol="music" aria-label="Music volume" />
+                <span class="mix-pct" data-vol-label="music">70%</span>
+              </div>
+            </div>
+            <div class="mix-row">
+              <div class="mix-head">
+                <span class="mix-name">Effects</span>
+                <button type="button" class="btn-blue mix-toggle" data-mix="sfx">ON</button>
+              </div>
+              <div class="mix-slide">
+                <input id="vol-sfx" type="range" min="0" max="100" step="1" value="70" data-vol="sfx" aria-label="Sound effects volume" />
+                <span class="mix-pct" data-vol-label="sfx">70%</span>
+              </div>
+            </div>
+            <div class="mix-row">
+              <div class="mix-head">
+                <span class="mix-name">Speech</span>
+                <button type="button" class="btn-blue mix-toggle" data-mix="voice">ON</button>
+              </div>
+              <div class="mix-slide">
+                <input id="vol-voice" type="range" min="0" max="100" step="1" value="70" data-vol="voice" aria-label="Speech volume" />
+                <span class="mix-pct" data-vol-label="voice">70%</span>
+              </div>
+            </div>
           </div>
           <button id="btn-opt-close" type="button" class="cta">CLOSE</button>
         </div>
@@ -265,6 +293,7 @@
           <p id="pause-quote" class="pitch">The deep state waits for no one, but we can make an exception.</p>
           <button id="btn-resume" type="button" class="cta">RESUME THE RALLY</button>
           <div class="opt-row">
+            <button id="btn-pause-sound" type="button" class="btn-blue">SOUND</button>
             <button id="btn-pause-hq" type="button" class="btn-blue">MAIN MENU</button>
           </div>
         </div>

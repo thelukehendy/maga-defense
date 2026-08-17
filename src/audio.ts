@@ -117,9 +117,12 @@ const POOLS: Record<VoiceCue, Clip[]> = {
   defeat: [C.ringtone, C.theyDont, C.ahNo],
 };
 
-const MUSIC_VOL = { play: 0.42, menu: 0.28, duck: 0.11 };
+const MUSIC_VOL = { play: 0.42, menu: 0.28 };
 const MASTER_VOL = 0.18;
 const VOICE_GAP = 0.45;
+const DEFAULT_VOL = 0.7;
+const SFX_TRIM = 0.5;
+const MUSIC_DUCK = 0.88;
 
 function tagAudio(el: HTMLAudioElement): HTMLAudioElement {
   el.preload = 'auto';
@@ -148,6 +151,26 @@ function writeFlag(key: string, v: boolean): void {
   }
 }
 
+function readVol(key: string): number {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return DEFAULT_VOL;
+    const n = Number(raw);
+    if (Number.isFinite(n)) return Math.max(0, Math.min(1, n));
+  } catch {
+    /* private mode */
+  }
+  return DEFAULT_VOL;
+}
+
+function writeVol(key: string, v: number): void {
+  try {
+    localStorage.setItem(key, String(Math.max(0, Math.min(1, v))));
+  } catch {
+    /* private mode */
+  }
+}
+
 export class Synth {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
@@ -158,21 +181,26 @@ export class Synth {
   private mapId = 'lawn';
   private unlocked = false;
   private ducking = false;
+  private bedKind: 'play' | 'menu' = 'play';
   private bedVol = MUSIC_VOL.play;
   private voiceBusyUntil = 0;
+  private voiceBase = 0.5;
   private recent: string[] = [];
   musicMuted = false;
   sfxMuted = false;
+  voiceMuted = false;
+  musicVol = DEFAULT_VOL;
+  sfxVol = DEFAULT_VOL;
+  voiceVol = DEFAULT_VOL;
 
   constructor() {
     const legacy = readFlag('maga-mute', false);
     this.musicMuted = readFlag('maga-music', legacy);
     this.sfxMuted = readFlag('maga-sfx', legacy);
-  }
-
-  /** True when both beds are off — HUD treats this as total mute. */
-  get muted(): boolean {
-    return this.musicMuted && this.sfxMuted;
+    this.voiceMuted = readFlag('maga-voice', this.sfxMuted);
+    this.musicVol = readVol('maga-music-vol');
+    this.sfxVol = readVol('maga-sfx-vol');
+    this.voiceVol = readVol('maga-voice-vol');
   }
 
   get ready(): boolean {
@@ -202,7 +230,7 @@ export class Synth {
       const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new Ctx();
       this.master = this.ctx.createGain();
-      this.master.gain.value = this.sfxMuted ? 0 : MASTER_VOL;
+      this.master.gain.value = this.synthGain();
       this.master.connect(this.ctx.destination);
       this.noise = this.ctx.createBuffer(1, this.ctx.sampleRate * 1.2, this.ctx.sampleRate);
       const data = this.noise.getChannelData(0);
@@ -218,13 +246,25 @@ export class Synth {
   }
 
   playMusic(): void {
-    this.playBed(this.musicMuted ? 0 : MUSIC_VOL.play);
+    this.bedKind = 'play';
+    this.applyBed();
   }
 
   playMenu(): void {
     if (!this.unlocked) return;
     this.mapId = 'lawn';
-    this.playBed(this.musicMuted ? 0 : MUSIC_VOL.menu);
+    this.bedKind = 'menu';
+    this.applyBed();
+  }
+
+  private musicTarget(kind: 'play' | 'menu'): number {
+    if (this.musicMuted) return 0;
+    const peak = kind === 'play' ? MUSIC_VOL.play : MUSIC_VOL.menu;
+    return peak * (this.musicVol / DEFAULT_VOL);
+  }
+
+  private applyBed(): void {
+    this.playBed(this.musicTarget(this.bedKind));
   }
 
   private playBed(volume: number): void {
@@ -237,7 +277,8 @@ export class Synth {
       this.bgm.setAttribute('data-src', src);
     }
     this.bedVol = volume;
-    this.bgm.volume = this.ducking && volume > 0 ? MUSIC_VOL.duck : volume;
+    const heard = this.ducking && volume > 0 ? volume * MUSIC_DUCK : volume;
+    this.bgm.volume = Math.max(0, Math.min(1, heard));
     if (this.musicMuted || volume <= 0) {
       this.bgm.pause();
       return;
@@ -264,14 +305,38 @@ export class Synth {
     this.musicMuted = v;
     writeFlag('maga-music', v);
     if (v) this.bgm?.pause();
-    else if (this.unlocked) this.playMusic();
+    else if (this.unlocked) this.applyBed();
   }
 
   setSfxMuted(v: boolean): void {
     this.sfxMuted = v;
     writeFlag('maga-sfx', v);
+    this.applySynthGain();
+  }
+
+  setVoiceMuted(v: boolean): void {
+    this.voiceMuted = v;
+    writeFlag('maga-voice', v);
     if (v) this.stopVoice();
-    if (this.master) this.master.gain.setTargetAtTime(v ? 0 : MASTER_VOL, this.now(), 0.02);
+    else this.applyVoiceVol();
+  }
+
+  setMusicVol(v: number): void {
+    this.musicVol = Math.max(0, Math.min(1, v));
+    writeVol('maga-music-vol', this.musicVol);
+    if (this.unlocked && !this.musicMuted) this.applyBed();
+  }
+
+  setSfxVol(v: number): void {
+    this.sfxVol = Math.max(0, Math.min(1, v));
+    writeVol('maga-sfx-vol', this.sfxVol);
+    this.applySynthGain();
+  }
+
+  setVoiceVol(v: number): void {
+    this.voiceVol = Math.max(0, Math.min(1, v));
+    writeVol('maga-voice-vol', this.voiceVol);
+    this.applyVoiceVol();
   }
 
   toggleMusic(): boolean {
@@ -284,8 +349,13 @@ export class Synth {
     return this.sfxMuted;
   }
 
+  toggleVoice(): boolean {
+    this.setVoiceMuted(!this.voiceMuted);
+    return this.voiceMuted;
+  }
+
   voice(cue: VoiceCue, force = false): void {
-    if (!this.unlocked || this.sfxMuted) return;
+    if (!this.unlocked || this.voiceMuted) return;
     const now = performance.now();
     const busy = this.voiceEl && !this.voiceEl.paused && !this.voiceEl.ended;
     if (!force && (busy || now < this.voiceBusyUntil)) return;
@@ -307,7 +377,8 @@ export class Synth {
   private playVoice(clip: Clip, force: boolean): void {
     if (force) this.stopVoice();
     const a = tagAudio(new Audio(clip.src));
-    a.volume = Math.max(0, Math.min(1, clip.vol ?? 0.5));
+    this.voiceBase = clip.vol ?? 0.5;
+    a.volume = this.voiceLevel();
     this.voiceEl = a;
     this.voiceBusyUntil = performance.now() + (clip.dur + VOICE_GAP) * 1000;
     this.duck(true);
@@ -324,7 +395,29 @@ export class Synth {
   private duck(on: boolean): void {
     this.ducking = on;
     if (!this.bgm || this.musicMuted || this.bedVol <= 0) return;
-    this.bgm.volume = on ? MUSIC_VOL.duck : this.bedVol;
+    this.bgm.volume = Math.max(0, Math.min(1, on ? this.bedVol * MUSIC_DUCK : this.bedVol));
+  }
+
+  private sfxGain(): number {
+    if (this.sfxMuted) return 0;
+    return SFX_TRIM * (this.sfxVol / DEFAULT_VOL);
+  }
+
+  private synthGain(): number {
+    return MASTER_VOL * this.sfxGain();
+  }
+
+  private applySynthGain(): void {
+    if (this.master) this.master.gain.setTargetAtTime(this.synthGain(), this.now(), 0.02);
+  }
+
+  private voiceLevel(): number {
+    if (this.voiceMuted) return 0;
+    return Math.max(0, Math.min(1, this.voiceBase * (this.voiceVol / DEFAULT_VOL)));
+  }
+
+  private applyVoiceVol(): void {
+    if (this.voiceEl) this.voiceEl.volume = this.voiceLevel();
   }
 
   private sfxOn(): boolean {
@@ -334,7 +427,7 @@ export class Synth {
   private playSfx(src: string, volume = 0.5): void {
     if (!this.sfxOn()) return;
     const a = tagAudio(new Audio(src));
-    a.volume = Math.max(0, Math.min(1, volume));
+    a.volume = Math.max(0, Math.min(1, volume * this.sfxGain()));
     void a.play().catch(() => {
       /* file missing — synth fallback already fired by caller when needed */
     });

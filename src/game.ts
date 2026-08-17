@@ -2,7 +2,7 @@ import { type DifficultyId, MAPS, MAP_ORDER, PAUSE_QUOTES, type MapId } from './
 import { Synth } from './audio.ts';
 import { FrameLoop, TraumaCamera, View } from './engine.ts';
 import { FX } from './fx.ts';
-import { bindHud, hideMenus, paintHud, type HudHandles, type HudPhase } from './hud.ts';
+import { bindHud, hideMenus, paintHud, paintMixer, type HudHandles, type HudPhase } from './hud.ts';
 import { GameMap } from './map.ts';
 import { paintPortraits } from './portraits.ts';
 import { Renderer } from './render.ts';
@@ -227,8 +227,8 @@ export class Game {
     });
     this.hud.muteBtn.addEventListener('click', () => {
       this.audio.unlock();
-      this.audio.toggleSfx();
-      paintHud(this.hud, this.sim, this.loop.fps, this.audio, this.phase === 'pause', this.phase);
+      this.audio.click();
+      this.openSoundMenu();
     });
     this.hud.pauseBtn.addEventListener('click', () => {
       if (this.phase === 'play') this.setPhase('pause');
@@ -271,17 +271,36 @@ export class Game {
       paintHud(this.hud, this.sim, this.loop.fps, this.audio, this.phase === 'pause', this.phase);
     });
     root.querySelector('#btn-opt-close')?.addEventListener('click', () => {
-      this.hud.overlayOptions?.classList.add('hidden');
+      this.closeSoundMenu();
     });
-    root.querySelector('#btn-opt-music')?.addEventListener('click', () => {
-      this.audio.unlock();
-      this.audio.toggleMusic();
-      paintHud(this.hud, this.sim, this.loop.fps, this.audio, this.phase === 'pause', this.phase);
+    this.hud.overlayOptions?.querySelectorAll<HTMLButtonElement>('[data-mix]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        this.audio.unlock();
+        const ch = btn.dataset.mix;
+        if (ch === 'music') this.audio.toggleMusic();
+        else if (ch === 'voice') this.audio.toggleVoice();
+        else this.audio.toggleSfx();
+        this.audio.click();
+        paintMixer(this.hud, this.audio);
+      });
     });
-    root.querySelector('#btn-opt-sfx')?.addEventListener('click', () => {
+    this.hud.overlayOptions?.querySelectorAll<HTMLInputElement>('[data-vol]').forEach((sl) => {
+      const apply = (): void => {
+        this.audio.unlock();
+        const v = Number(sl.value) / 100;
+        const ch = sl.dataset.vol;
+        if (ch === 'music') this.audio.setMusicVol(v);
+        else if (ch === 'voice') this.audio.setVoiceVol(v);
+        else this.audio.setSfxVol(v);
+        paintMixer(this.hud, this.audio);
+      };
+      sl.addEventListener('input', apply);
+      sl.addEventListener('change', apply);
+    });
+    root.querySelector('#btn-pause-sound')?.addEventListener('click', () => {
       this.audio.unlock();
-      this.audio.toggleSfx();
-      paintHud(this.hud, this.sim, this.loop.fps, this.audio, this.phase === 'pause', this.phase);
+      this.audio.click();
+      this.openSoundMenu();
     });
     root.querySelector('#btn-info')?.addEventListener('click', () => {
       this.audio.click();
@@ -316,7 +335,11 @@ export class Game {
       if (e.key === 'Escape') {
         const infoOpen = !this.hud.overlayInfo?.classList.contains('hidden');
         const optOpen = !this.hud.overlayOptions?.classList.contains('hidden');
-        if (infoOpen || optOpen) {
+        if (optOpen) {
+          this.closeSoundMenu();
+          return;
+        }
+        if (infoOpen) {
           hideMenus(this.hud);
           return;
         }
@@ -360,6 +383,19 @@ export class Game {
         this.sim.speed = this.sim.speed === 1 ? 2 : this.sim.speed === 2 ? 3 : this.sim.speed === 3 ? 4 : 1;
       }
     });
+  }
+
+  private openSoundMenu(): void {
+    this.audio.unlock();
+    this.hud.overlayInfo?.classList.add('hidden');
+    if (this.phase === 'play') this.setPhase('pause');
+    this.hud.overlayOptions?.classList.remove('hidden');
+    paintHud(this.hud, this.sim, this.loop.fps, this.audio, this.phase === 'pause', this.phase);
+  }
+
+  private closeSoundMenu(): void {
+    this.hud.overlayOptions?.classList.add('hidden');
+    paintHud(this.hud, this.sim, this.loop.fps, this.audio, this.phase === 'pause', this.phase);
   }
 
   private applyCampaign(_resetPlay = true): void {
