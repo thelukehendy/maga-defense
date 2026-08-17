@@ -1,0 +1,14 @@
+---
+description: After each playable iteration, commit and push main so GitHub Pages deploys.
+alwaysApply: true
+---
+
+# Ship every iteration to GitHub Pages
+
+When a playable change is finished, do not wait to be asked:
+
+1. Commit the game files (source, `public/` assets, HTML/CSS). Skip `_audit_out/`, desktop dumps, and leftover Gemini images unless the user asked to include them.
+2. Push `main` to `origin`. Pages deploys from `.github/workflows/pages.yml` on push to `main`.
+3. Return the live URL: https://thelukehendy.github.io/maga-defense/
+
+Do not force-push. Do not skip hooks. If there is nothing to commit, say so and still confirm Pages is on the latest `main`.

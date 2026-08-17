@@ -29,29 +29,29 @@ const B = './audio/bytes';
 type Clip = { src: string; dur: number; vol?: number };
 
 const C = {
-  ahNo: { src: `${B}/ah-no.mp3`, dur: 1.36, vol: 0.52 },
-  america: { src: `${B}/america.mp3`, dur: 1.12, vol: 0.5 },
-  americaAgain: { src: `${B}/america-great-again.mp3`, dur: 3.71, vol: 0.46 },
-  americaFirst: { src: `${B}/america-first.mp3`, dur: 7.34, vol: 0.42 },
-  byeBye: { src: `${B}/bye-bye.mp3`, dur: 1.52, vol: 0.54 },
-  china: { src: `${B}/china.mp3`, dur: 1.44, vol: 0.52 },
-  competition: { src: `${B}/competition.mp3`, dur: 1.44, vol: 0.52 },
-  donald: { src: `${B}/donald-trump.mp3`, dur: 1.06, vol: 0.5 },
-  eightBillion: { src: `${B}/eight-billion.mp3`, dur: 5.28, vol: 0.42 },
-  fantastic: { src: `${B}/fantastic.mp3`, dur: 0.86, vol: 0.56 },
-  friends: { src: `${B}/friends.mp3`, dur: 2.59, vol: 0.48 },
-  goodTime: { src: `${B}/have-a-good-time.mp3`, dur: 0.89, vol: 0.54 },
-  greatest: { src: `${B}/greatest-president.mp3`, dur: 3.19, vol: 0.46 },
-  lookAtThis: { src: `${B}/look-at-this-guy.mp3`, dur: 1.1, vol: 0.54 },
-  nasty: { src: `${B}/nasty.mp3`, dur: 1.57, vol: 0.52 },
-  no: { src: `${B}/no.mp3`, dur: 0.73, vol: 0.56 },
-  nobody: { src: `${B}/nobody-like-me.mp3`, dur: 2.53, vol: 0.48 },
-  promised: { src: `${B}/promised.mp3`, dur: 1.7, vol: 0.52 },
-  ringtone: { src: `${B}/ringtone.mp3`, dur: 6.84, vol: 0.4 },
-  thankYou: { src: `${B}/thank-you.mp3`, dur: 2.51, vol: 0.48 },
-  theyDont: { src: `${B}/they-dont-like-me.mp3`, dur: 2.04, vol: 0.5 },
-  toughGuy: { src: `${B}/tough-guy.mp3`, dur: 1.15, vol: 0.54 },
-  wrong: { src: `${B}/wrong.mp3`, dur: 0.65, vol: 0.56 },
+  ahNo: { src: `${B}/ah-no.mp3`, dur: 1.32, vol: 0.5 },
+  america: { src: `${B}/america.mp3`, dur: 1.08, vol: 0.5 },
+  americaAgain: { src: `${B}/america-great-again.mp3`, dur: 3.68, vol: 0.5 },
+  americaFirst: { src: `${B}/america-first.mp3`, dur: 7.3, vol: 0.5 },
+  byeBye: { src: `${B}/bye-bye.mp3`, dur: 1.49, vol: 0.5 },
+  china: { src: `${B}/china.mp3`, dur: 1.4, vol: 0.5 },
+  competition: { src: `${B}/competition.mp3`, dur: 1.4, vol: 0.5 },
+  donald: { src: `${B}/donald-trump.mp3`, dur: 1.01, vol: 0.5 },
+  eightBillion: { src: `${B}/eight-billion.mp3`, dur: 5.25, vol: 0.5 },
+  fantastic: { src: `${B}/fantastic.mp3`, dur: 0.82, vol: 0.5 },
+  friends: { src: `${B}/friends.mp3`, dur: 2.55, vol: 0.5 },
+  goodTime: { src: `${B}/have-a-good-time.mp3`, dur: 0.88, vol: 0.5 },
+  greatest: { src: `${B}/greatest-president.mp3`, dur: 3.14, vol: 0.5 },
+  lookAtThis: { src: `${B}/look-at-this-guy.mp3`, dur: 1.09, vol: 0.5 },
+  nasty: { src: `${B}/nasty.mp3`, dur: 1.53, vol: 0.5 },
+  no: { src: `${B}/no.mp3`, dur: 0.69, vol: 0.5 },
+  nobody: { src: `${B}/nobody-like-me.mp3`, dur: 2.52, vol: 0.5 },
+  promised: { src: `${B}/promised.mp3`, dur: 1.67, vol: 0.5 },
+  ringtone: { src: `${B}/ringtone.mp3`, dur: 6.81, vol: 0.5 },
+  thankYou: { src: `${B}/thank-you.mp3`, dur: 2.46, vol: 0.5 },
+  theyDont: { src: `${B}/they-dont-like-me.mp3`, dur: 2.0, vol: 0.5 },
+  toughGuy: { src: `${B}/tough-guy.mp3`, dur: 1.1, vol: 0.5 },
+  wrong: { src: `${B}/wrong.mp3`, dur: 0.6, vol: 0.5 },
 } as const satisfies Record<string, Clip>;
 
 export type VoiceCue =
@@ -121,6 +121,7 @@ const MUSIC_VOL = { play: 0.42, menu: 0.28 };
 const MASTER_VOL = 0.18;
 const VOICE_GAP = 0.45;
 const DEFAULT_VOL = 0.7;
+const DEFAULT_SFX_VOL = 0.45;
 const SFX_TRIM = 0.5;
 const MUSIC_DUCK = 0.88;
 
@@ -151,16 +152,16 @@ function writeFlag(key: string, v: boolean): void {
   }
 }
 
-function readVol(key: string): number {
+function readVol(key: string, fallback = DEFAULT_VOL): number {
   try {
     const raw = localStorage.getItem(key);
-    if (raw === null) return DEFAULT_VOL;
+    if (raw === null) return fallback;
     const n = Number(raw);
     if (Number.isFinite(n)) return Math.max(0, Math.min(1, n));
   } catch {
     /* private mode */
   }
-  return DEFAULT_VOL;
+  return fallback;
 }
 
 function writeVol(key: string, v: number): void {
@@ -190,7 +191,7 @@ export class Synth {
   sfxMuted = false;
   voiceMuted = false;
   musicVol = DEFAULT_VOL;
-  sfxVol = DEFAULT_VOL;
+  sfxVol = DEFAULT_SFX_VOL;
   voiceVol = DEFAULT_VOL;
 
   constructor() {
@@ -199,8 +200,13 @@ export class Synth {
     this.sfxMuted = readFlag('maga-sfx', legacy);
     this.voiceMuted = readFlag('maga-voice', this.sfxMuted);
     this.musicVol = readVol('maga-music-vol');
-    this.sfxVol = readVol('maga-sfx-vol');
+    this.sfxVol = readVol('maga-sfx-vol', DEFAULT_SFX_VOL);
     this.voiceVol = readVol('maga-voice-vol');
+    if (!readFlag('maga-sfx-vol-v2', false)) {
+      if (this.sfxVol === DEFAULT_VOL) this.sfxVol = DEFAULT_SFX_VOL;
+      writeFlag('maga-sfx-vol-v2', true);
+      writeVol('maga-sfx-vol', this.sfxVol);
+    }
   }
 
   get ready(): boolean {
