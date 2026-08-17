@@ -10,6 +10,7 @@ import { Sim } from './sim.ts';
 import { CELL, type TowerId } from './types.ts';
 
 export class Game {
+  private readonly root: HTMLElement;
   private readonly view: View;
   private readonly loop: FrameLoop;
   private readonly cam = new TraumaCamera();
@@ -30,6 +31,7 @@ export class Game {
   constructor(root: HTMLElement, canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
     if (!ctx) throw new Error('Canvas 2D unavailable');
+    this.root = root;
     this.view = new View(canvas, ctx);
     this.sim = new Sim(this.map, this.fx, this.cam, this.audio);
     this.renderer = new Renderer(this.map);
@@ -180,7 +182,15 @@ export class Game {
 
     this.hud.sendBtn.addEventListener('click', () => {
       this.audio.unlock();
-      this.sim.startNextWave();
+      if (this.sim.waveReady()) {
+        this.sim.startNextWave();
+        // After starting a wave, the same control becomes Auto Start.
+        paintHud(this.hud, this.sim, this.loop.fps, this.audio.muted, this.phase === 'pause', this.phase);
+        return;
+      }
+      this.sim.autoWaves = !this.sim.autoWaves;
+      this.audio.click();
+      paintHud(this.hud, this.sim, this.loop.fps, this.audio.muted, this.phase === 'pause', this.phase);
     });
     this.hud.sellBtn.addEventListener('click', () => this.sim.trySell());
     this.hud.upgradeBtn?.addEventListener('click', () => {
@@ -308,7 +318,11 @@ export class Game {
       }
       if (e.key === ' ') {
         e.preventDefault();
-        this.sim.startNextWave();
+        if (this.sim.waveReady()) this.sim.startNextWave();
+        else {
+          this.sim.autoWaves = !this.sim.autoWaves;
+          this.audio.click();
+        }
       }
       if (e.key === 's' || e.key === 'S') this.sim.trySell();
       if (e.key === 'u' || e.key === 'U') this.sim.tryUpgrade();
@@ -326,6 +340,13 @@ export class Game {
     this.phase = p;
     paintHud(this.hud, this.sim, this.loop.fps, this.audio.muted, p === 'pause', p);
     this.refit?.();
+    if (p === 'play') {
+      // Arsenal was hidden on title — paint tower icons once the dock has size.
+      requestAnimationFrame(() => {
+        paintPortraits(this.root);
+        this.refit?.();
+      });
+    }
   }
 
   private step(dt: number): void {

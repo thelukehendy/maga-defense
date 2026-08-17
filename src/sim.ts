@@ -139,6 +139,8 @@ export class Sim {
   approval = DIFFICULTIES.normal.startApproval;
   wave = 0;
   speed = 1;
+  /** When true, cleared waves auto-advance after a short beat. */
+  autoWaves = false;
   enemies: Enemy[] = [];
   towers: Tower[] = [];
   walls: Wall[] = [];
@@ -184,6 +186,7 @@ export class Sim {
     this.approval = this.diff.startApproval;
     this.wave = 0;
     this.speed = 1;
+    this.autoWaves = false;
     this.enemies.length = 0;
     this.towers.length = 0;
     this.walls.length = 0;
@@ -531,7 +534,7 @@ export class Sim {
         this.fx.say(WORLD_W / 2, WORLD_H / 2 - 40, 'BONUS DONATIONS', '#e6c35c', 1.3);
       }
       this.between += tdt;
-      if (this.between >= 6.5 && this.wave >= 1) this.startNextWave();
+      if (this.autoWaves && this.between >= 2.4 && this.wave >= 1) this.startNextWave();
     }
 
     this.spawnWait -= tdt;

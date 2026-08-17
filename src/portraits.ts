@@ -5,9 +5,10 @@ export function paintPortraits(root: HTMLElement): void {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   for (const canvas of root.querySelectorAll<HTMLCanvasElement>('[data-portrait]')) {
     const spec = canvas.dataset.portrait ?? '';
-    const cssW = canvas.clientWidth;
-    const cssH = canvas.clientHeight;
-    // Skip hidden/zero-size canvases so we don't bake wrong inline sizes.
+    // Prefer laid-out size; fall back to attributes so arsenal icons paint
+    // even when the play dock was display:none during the first paint pass.
+    const cssW = canvas.clientWidth || Number(canvas.getAttribute('width')) || 36;
+    const cssH = canvas.clientHeight || Number(canvas.getAttribute('height')) || 36;
     if (!cssW || !cssH) continue;
     canvas.width = Math.floor(cssW * dpr);
     canvas.height = Math.floor(cssH * dpr);

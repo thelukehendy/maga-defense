@@ -166,19 +166,30 @@ export function paintHud(
   hud.muteBtn.textContent = muted ? (narrow ? 'MUTE' : 'SOUND OFF') : narrow ? 'SOUND' : 'SOUND ON';
   if (hud.optMuteBtn) hud.optMuteBtn.textContent = muted ? 'SOUND OFF' : 'SOUND ON';
   hud.pauseBtn.textContent = paused ? (narrow ? 'GO' : 'RESUME') : 'PAUSE';
-  hud.sendBtn.disabled = !sim.waveReady();
-  hud.sendBtn.classList.toggle('pulse', sim.waveReady());
-  hud.sendBtn.textContent = sim.wave === 0
-    ? narrow
-      ? 'WAVE 1'
-      : 'START WAVE 1'
-    : sim.waveReady()
+  // Wave button: START/NEXT when ready; otherwise AUTO START (toggle) in the same slot.
+  if (sim.waveReady()) {
+    hud.sendBtn.disabled = false;
+    hud.sendBtn.classList.toggle('pulse', true);
+    hud.sendBtn.classList.toggle('auto-on', false);
+    hud.sendBtn.textContent = sim.wave === 0
       ? narrow
-        ? 'NEXT'
-        : 'SEND NEXT WAVE'
+        ? 'WAVE 1'
+        : 'START WAVE 1'
       : narrow
-        ? '…'
-        : 'WAVE INCOMING';
+        ? 'NEXT'
+        : 'SEND NEXT WAVE';
+  } else {
+    hud.sendBtn.disabled = false;
+    hud.sendBtn.classList.toggle('pulse', !sim.autoWaves);
+    hud.sendBtn.classList.toggle('auto-on', sim.autoWaves);
+    hud.sendBtn.textContent = sim.autoWaves
+      ? narrow
+        ? 'AUTO ON'
+        : 'AUTO START ON'
+      : narrow
+        ? 'AUTO'
+        : 'AUTO START';
+  }
   hud.sellBtn.disabled = !sim.selected;
   hud.sellBtn.textContent = sim.selected
     ? `SELL $${Math.round(sim.selected.costPaid * SELL_RATIO)}`

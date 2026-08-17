@@ -241,7 +241,7 @@ export const MAPS: Record<MapId, MapDef> = {
   },
   border: {
     id: 'border',
-    art: './maps/play-border.jpg?v=5',
+    art: './maps/play-border.jpg?v=6',
     name: 'Frontier Ridge',
     subtitle: 'Steel, dust, and a very finished wall',
     briefing:
