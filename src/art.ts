@@ -1220,6 +1220,77 @@ function bureauArt(ctx: CanvasRenderingContext2D, angle: number, bob: number, _t
   clayRect(ctx, 21, -2, 4, 12, 1.2, C.redHi, C.red, C.redLo, 1.5);
 }
 
+function lobbyArt(ctx: CanvasRenderingContext2D, angle: number, bob: number, time: number): void {
+  ctx.rotate(angle * 0.14);
+  ctx.translate(0, Math.sin(bob) * 0.55);
+  const walk = Math.sin(bob) * 0.35;
+
+  ctx.save();
+  ctx.translate(-6, 16);
+  ctx.rotate(-0.18 + walk);
+  clayOval(ctx, 0, 0, 5.2, 3.2, 0.1, C.goldHi, C.gold, C.goldLo, 2);
+  ctx.restore();
+  ctx.save();
+  ctx.translate(6.5, 16);
+  ctx.rotate(0.18 - walk);
+  clayOval(ctx, 0, 0, 5.2, 3.2, -0.1, C.goldHi, C.gold, C.goldLo, 2);
+  ctx.restore();
+
+  clayRect(ctx, -11, -2, 22, 20, 5, C.blueHi, C.blue, C.blueLo, INK_W);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(-10, -1, 20, 18);
+  ctx.clip();
+  ctx.strokeStyle = 'rgba(244,241,232,0.22)';
+  ctx.lineWidth = 1.2;
+  for (let i = 0; i < 6; i++) {
+    ctx.beginPath();
+    ctx.moveTo(-9 + i * 3.4, -1);
+    ctx.lineTo(-9 + i * 3.4, 18);
+    ctx.stroke();
+  }
+  ctx.restore();
+  clayRect(ctx, -3.2, -2, 6.4, 16, 1.4, C.goldHi, C.gold, C.goldLo, 2);
+  clayRect(ctx, -2.2, -1, 4.4, 14, 1, C.redHi, C.red, C.redLo, 1.4);
+
+  ctx.save();
+  ctx.translate(-12, 6);
+  ctx.rotate(-0.45 + walk * 0.2);
+  clayOval(ctx, 0, 0, 3.4, 5.5, 0, C.blueHi, C.blue, C.blueLo, 2);
+  clayBall(ctx, 0, 5.2, 2.8, C.skin, C.skin, C.skinLo, 2);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(13, 4);
+  ctx.rotate(0.55);
+  clayRect(ctx, 0, -6, 16, 12, 2.2, C.goldHi, C.gold, C.goldLo, INK_W);
+  clayRect(ctx, 1.2, -4.6, 13.6, 3.2, 1, C.goldLo, C.gold, C.goldHi, 1.2);
+  labelText(ctx, 8, 1.4, '$', 10);
+  clayRect(ctx, -2, -2, 4, 6, 1.2, C.goldHi, C.gold, C.goldLo, 1.6);
+  ctx.restore();
+
+  clayOval(ctx, 0, -11, 8.2, 8.4, 0, C.skin, C.skin, C.skinLo, INK_W);
+  clayOval(ctx, 0, -16.5, 7.4, 3.6, 0, '#3a2a18', '#24180e', '#120c08', 2);
+  clayRect(ctx, -8.2, -13.6, 16.4, 3.4, 1.2, INK, '#1a1208', INK, 1.6);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.fillRect(-7.2, -13.2, 6, 1.2);
+  ctx.fillRect(1.4, -13.2, 6, 1.2);
+  ctx.fillStyle = INK;
+  ctx.beginPath();
+  ctx.arc(-3.4, -10.4, 1.35, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(3.4, -10.4, 1.35, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-2.4, -6.6);
+  ctx.quadraticCurveTo(0, -5.2, 2.4, -6.6);
+  ctx.strokeStyle = C.skinLo;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  glowDisk(ctx, 13, 4, 10, '230,195,92', 0.18 + Math.sin(time * 6) * 0.08);
+}
+
 export function drawEnemyArt(
   ctx: CanvasRenderingContext2D,
   kind: EnemyId,
@@ -1232,6 +1303,7 @@ export function drawEnemyArt(
   ctx.lineCap = 'round';
   if (kind === 'alien') alienArt(ctx, angle, bob, time);
   else if (kind === 'drone') droneArt(ctx, angle, bob, time);
+  else if (kind === 'lobbyist') lobbyArt(ctx, angle, bob, time);
   else bureauArt(ctx, angle, bob, time);
   ctx.restore();
 }

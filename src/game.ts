@@ -1,4 +1,4 @@
-import { type DifficultyId, MAPS, MAP_ORDER, type MapId } from './campaign.ts';
+import { type DifficultyId, MAPS, MAP_ORDER, PAUSE_QUOTES, type MapId } from './campaign.ts';
 import { Synth } from './audio.ts';
 import { FrameLoop, TraumaCamera, View } from './engine.ts';
 import { FX } from './fx.ts';
@@ -55,10 +55,10 @@ export class Game {
       title.classList.remove('splash-hold');
       title.classList.add('splash-ready');
     };
-    window.setTimeout(reveal, 4000);
-    // Tap to skip splash after first second.
+    window.setTimeout(reveal, 1800);
+    // Tap to skip splash after first beat.
     const skip = (): void => {
-      if (performance.now() - start < 900) return;
+      if (performance.now() - start < 350) return;
       reveal();
       title.removeEventListener('pointerdown', skip);
     };
@@ -147,6 +147,10 @@ export class Game {
       canvas.style.cursor = valid ? 'pointer' : 'not-allowed';
       if (!click) return;
       this.audio.unlock();
+      if (this.sim.map.isHouse(c, r)) {
+        this.sim.tapKeep();
+        return;
+      }
       if (this.sim.selectAt(c, r)) return;
       if (this.coarse && this.sim.placing) {
         if (!this.sim.map.canPlace(c, r, this.sim.occupied) || !this.sim.canAfford(this.sim.placing)) {
@@ -219,7 +223,7 @@ export class Game {
     }
     this.hud.speedBtn.addEventListener('click', () => {
       this.audio.click();
-      this.sim.speed = this.sim.speed === 1 ? 2 : this.sim.speed === 2 ? 3 : 1;
+      this.sim.speed = this.sim.speed === 1 ? 2 : this.sim.speed === 2 ? 3 : this.sim.speed === 3 ? 4 : 1;
     });
     this.hud.muteBtn.addEventListener('click', () => {
       this.audio.unlock();
@@ -228,6 +232,16 @@ export class Game {
     this.hud.pauseBtn.addEventListener('click', () => {
       if (this.phase === 'play') this.setPhase('pause');
       else if (this.phase === 'pause') this.setPhase('play');
+    });
+    this.hud.nextMapBtn?.addEventListener('click', () => {
+      this.audio.unlock();
+      const idx = MAP_ORDER.indexOf(this.selectedMap);
+      if (idx < 0 || idx >= MAP_ORDER.length - 1) return;
+      this.selectedMap = MAP_ORDER[idx + 1]!;
+      this.audio.wave();
+      hideMenus(this.hud);
+      this.applyCampaign(true);
+      this.setPhase('play');
     });
 
     root.querySelector('#btn-start')?.addEventListener('click', () => {
@@ -332,6 +346,10 @@ export class Game {
       }
       if (e.key === 's' || e.key === 'S') this.sim.trySell();
       if (e.key === 'u' || e.key === 'U') this.sim.tryUpgrade();
+      if (e.key === 'e' || e.key === 'E') this.sim.trySpecial();
+      if (e.key === 'q' || e.key === 'Q' || e.key === 'f' || e.key === 'F') {
+        this.sim.speed = this.sim.speed === 1 ? 2 : this.sim.speed === 2 ? 3 : this.sim.speed === 3 ? 4 : 1;
+      }
     });
   }
 
@@ -350,13 +368,14 @@ export class Game {
     if (p === 'play') {
       this.audio.unlock();
       this.audio.playMusic();
-      // Arsenal was hidden on title — paint tower icons once the dock has size.
       requestAnimationFrame(() => {
         paintPortraits(this.root);
         this.refit?.();
       });
     } else if (p === 'title' || p === 'select') {
-      this.audio.stopMusic();
+      this.audio.playMenu();
+    } else if (p === 'pause' && this.hud.pauseQuote) {
+      this.hud.pauseQuote.textContent = PAUSE_QUOTES[(Math.random() * PAUSE_QUOTES.length) | 0]!;
     }
   }
 

@@ -34,7 +34,7 @@
             <span class="label">Wave</span>
             <strong id="stat-wave">0/12</strong>
           </div>
-          <div class="stat tiny">
+          <div class="stat tiny debug-stat">
             <span class="label">Engine</span>
             <strong id="stat-fps">60 FPS</strong>
           </div>
@@ -57,24 +57,28 @@
             <span class="name">Truth Tower</span>
             <span class="meta">Rapid FACT laser</span>
             <span class="cost">$80</span>
+            <kbd>1</kbd>
           </button>
           <button type="button" class="card" data-tower="trebuchet">
             <canvas class="icon-canvas" data-portrait="tower:trebuchet" width="36" height="36"></canvas>
             <span class="name">Tariff Cannon</span>
             <span class="meta">HUGE TAX shots</span>
             <span class="cost">$190</span>
+            <kbd>2</kbd>
           </button>
           <button type="button" class="card" data-tower="brick">
             <canvas class="icon-canvas" data-portrait="tower:brick" width="36" height="36"></canvas>
             <span class="name">Brick-Layer</span>
             <span class="meta">MAGA walls</span>
             <span class="cost">$115</span>
+            <kbd>3</kbd>
           </button>
           <button type="button" class="card" data-tower="desk">
             <canvas class="icon-canvas" data-portrait="tower:desk" width="36" height="36"></canvas>
             <span class="name">EO Desk</span>
             <span class="meta">Fire-rate aura</span>
             <span class="cost">$165</span>
+            <kbd>4</kbd>
           </button>
         </div>
         <aside id="inspect" class="inspect" aria-live="polite">
@@ -97,6 +101,7 @@
           <h2 class="hero-title"><span>MAGA!</span> DEFENSE</h2>
           <div class="hero-rule" aria-hidden="true"></div>
           <p class="hero-sub">The Tremendous Tower Game</p>
+          <p class="hero-hint">Tap a card. Plant it on the grass. Don’t let the swamp in.</p>
           <div class="hero-actions">
             <button id="btn-start" type="button" class="btn-start">START GAME</button>
             <div class="hero-row">
@@ -146,6 +151,7 @@
                 <span class="plaque-seal">01</span>
                 <span class="plaque-name">South Lawn</span>
                 <span class="plaque-sub">Protect the People’s House</span>
+                <span class="plaque-stars" data-stars-for="lawn">☆☆☆</span>
               </button>
               <button type="button" class="plaque" data-map="palazzo">
                 <img class="plaque-art" src="./maps/palazzo.jpg" alt="" />
@@ -153,6 +159,7 @@
                 <span class="plaque-seal">02</span>
                 <span class="plaque-name">Mar-a-Lago Drive</span>
                 <span class="plaque-sub">Gold, palms, exclusive gate</span>
+                <span class="plaque-stars" data-stars-for="palazzo">☆☆☆</span>
               </button>
               <button type="button" class="plaque" data-map="border">
                 <img class="plaque-art" src="./maps/border.jpg" alt="" />
@@ -160,6 +167,7 @@
                 <span class="plaque-seal">03</span>
                 <span class="plaque-name">Frontier Ridge</span>
                 <span class="plaque-sub">Switchbacks, tunnel, split ridge</span>
+                <span class="plaque-stars" data-stars-for="border">☆☆☆</span>
               </button>
               <button type="button" class="plaque" data-map="avenue">
                 <img class="plaque-art" src="./maps/avenue.jpg" alt="" />
@@ -167,6 +175,7 @@
                 <span class="plaque-seal">04</span>
                 <span class="plaque-name">Fifth Avenue</span>
                 <span class="plaque-sub">Traffic, tickers, gold tower</span>
+                <span class="plaque-stars" data-stars-for="avenue">☆☆☆</span>
               </button>
             </div>
           </section>
@@ -182,7 +191,7 @@
         <div class="panel slim">
           <p class="kicker">OPTIONS</p>
           <h2>SETTINGS</h2>
-          <p class="pitch">Music and effects play after you tap. On iPhone, sound works even with the Silent switch. Orchestral beds: Kevin MacLeod (incompetech.com), CC BY 3.0. No accounts. No cloud.</p>
+          <p class="pitch">Music and effects play after you tap. On iPhone, sound works even with the Silent switch. Orchestral beds: Kevin MacLeod (incompetech.com), CC BY 3.0. No accounts. No cloud. Keys: 1–4 towers, Space wave, U upgrade, E special, S sell, Q speed (up to 4×), Esc pause.</p>
           <div class="opt-row">
             <button id="btn-opt-mute" type="button" class="btn-blue">SOUND ON</button>
           </div>
@@ -200,31 +209,31 @@
               <canvas class="portrait" data-portrait="tower:truth" width="160" height="88"></canvas>
               <h3>Truth Tower</h3>
               <p class="motto">FACTS DON’T CARE ABOUT YOUR PATHING</p>
-              <p class="how">Stone fact-checker with a dish. Highest fire rate, low damage. Melts swarms and drones. Place on corners.</p>
+              <p class="how">Stone fact-checker with a dish. Highest fire rate, low damage. Melts swarms and drones. Place on corners. Tier III chains FACTS twice. Max it and tap SPECIAL (E) for FACT NOVA.</p>
             </article>
             <article class="dossier tower">
               <canvas class="portrait" data-portrait="tower:trebuchet" width="160" height="88"></canvas>
               <h3>Tariff Cannon</h3>
               <p class="motto">IF IT’S HEAVY, TAX IT</p>
-              <p class="how">Blue siege cannon. Slow, huge area TAX shots. Lead the target. Best vs bureaucrats.</p>
+              <p class="how">Blue siege cannon. Slow, huge area TAX shots. Lead the target. Best vs bureaucrats and the Special Counsel. Tier III leaves a gold tariff puddle. SPECIAL: ORBITAL TARIFF.</p>
             </article>
             <article class="dossier tower">
               <canvas class="portrait" data-portrait="tower:brick" width="160" height="88"></canvas>
               <h3>Brick-Layer</h3>
               <p class="motto">AND MEXICO IS SENDING THE MORTAR</p>
-              <p class="how">Fires a MAGA wall onto the path. Ground units stack up. Drones fly over. Walls decay and can be smashed.</p>
+              <p class="how">Fires a MAGA wall onto the path. Ground units stack up. Drones fly over. Walls decay and can be smashed. Tier III drops two sections. SPECIAL: FINISH THE WALL.</p>
             </article>
             <article class="dossier tower">
               <canvas class="portrait" data-portrait="tower:desk" width="160" height="88"></canvas>
               <h3>EO Desk</h3>
               <p class="motto">SIGNED. SEALED. RAPID.</p>
-              <p class="how">Does not shoot. Buffs fire rate of towers in its aura. Stack desks over a killbox.</p>
+              <p class="how">Does not shoot. Buffs fire rate of towers in its aura. Stack desks over a killbox. Tier III also slows the swamp. SPECIAL: GOVERNMENT SHUTDOWN freezes everyone.</p>
             </article>
             <article class="dossier foe">
               <canvas class="portrait" data-portrait="enemy:alien" width="160" height="88"></canvas>
               <h3>Commie Alien</h3>
               <p class="motto">WEAK. NUMEROUS. CROWNED.</p>
-              <p class="how">Walking globe swarm. Low HP. Walls stop them. Truth Towers melt them. Don’t let a clump leak.</p>
+              <p class="how">Walking globe swarm. Low HP. Walls stop them. Truth Towers melt them. Some split into two smaller errors. Don’t let a clump leak.</p>
             </article>
             <article class="dossier foe">
               <canvas class="portrait" data-portrait="enemy:drone" width="160" height="88"></canvas>
@@ -236,7 +245,13 @@
               <canvas class="portrait" data-portrait="enemy:bureaucrat" width="160" height="88"></canvas>
               <h3>Deep State Bureaucrat</h3>
               <p class="motto">GS-15 AND UNFIREABLE</p>
-              <p class="how">Hooded clerk with red tape. Slow tank. Chews walls. Needs TAX splash plus a desk buff.</p>
+              <p class="how">Hooded clerk with red tape. Slow tank. Chews walls. Needs TAX splash plus a desk buff. Waves 6 and 12 send a Special Counsel — a very large clerk. Tax him.</p>
+            </article>
+            <article class="dossier foe">
+              <canvas class="portrait" data-portrait="enemy:lobbyist" width="160" height="88"></canvas>
+              <h3>K-Street Lobbyist</h3>
+              <p class="motto">THE SWAMP HAS A LOUNGE</p>
+              <p class="how">Pinstripe support. Heals nearby ground units. Burst the briefcase with TAX before he parks next to a clerk.</p>
             </article>
           </div>
           <button id="btn-info-close" type="button" class="cta">CLOSE</button>
@@ -246,7 +261,7 @@
       <div id="overlay-pause" class="overlay hidden">
         <div class="panel slim">
           <h2>PAUSED</h2>
-          <p class="pitch">The deep state waits for no one, but we can make an exception.</p>
+          <p id="pause-quote" class="pitch">The deep state waits for no one, but we can make an exception.</p>
           <button id="btn-resume" type="button" class="cta">RESUME THE RALLY</button>
           <div class="opt-row">
             <button id="btn-pause-hq" type="button" class="btn-blue">MAIN MENU</button>
@@ -256,10 +271,14 @@
 
       <div id="overlay-end" class="overlay hidden">
         <div class="panel">
+          <p id="end-stars" class="star-row" aria-hidden="true">☆☆☆</p>
+          <p id="end-rank" class="end-rank">WINNING</p>
           <h2 id="end-title">YOU'RE FIRED</h2>
           <p id="end-body" class="pitch"></p>
+          <dl id="end-stats" class="end-stats"></dl>
           <button id="btn-again" type="button" class="cta huge">PLAY AGAIN — BIGGER THIS TIME</button>
           <div class="opt-row">
+            <button id="btn-next-map" type="button" class="btn-blue hidden">NEXT BATTLEFIELD</button>
             <button id="btn-end-hq" type="button" class="btn-blue">MAIN MENU</button>
           </div>
         </div>

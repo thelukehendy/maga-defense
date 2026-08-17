@@ -2,7 +2,7 @@ import { easeOutBack, seeded } from './engine.ts';
 import { star } from './fx.ts';
 import type { FX } from './fx.ts';
 import { drawEnemyArt, drawKeep, drawKeepLeak, drawLandmarkArt, drawTowerArt } from './art.ts';
-import { houseOrigin, towerStats, type Theme } from './campaign.ts';
+import { houseOrigin, MAX_TIER, TICKER, towerStats, type Theme } from './campaign.ts';
 import type { GameMap } from './map.ts';
 import type { Enemy, Sim, Tower, Wall } from './sim.ts';
 import { CELL, COLS, ROWS, TOWERS, WORLD_H, WORLD_W } from './types.ts';
@@ -484,12 +484,43 @@ export class Renderer {
       if (t.kind === 'desk') this.drawRange(ctx, t, time, 0.45);
     }
     for (const w of sim.walls) this.drawWall(ctx, w);
+    for (const p of sim.puddles) this.drawPuddle(ctx, p, time);
     if (flash > 0) {
       ctx.fillStyle = `rgba(255, 230, 140, ${flash * 0.35})`;
       ctx.fillRect(0, 0, WORLD_W, WORLD_H);
     }
     if (sim.leaking > 0) {
       ctx.fillStyle = `rgba(200, 16, 46, ${sim.leaking * 0.22})`;
+      ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    }
+    if (sim.approval <= (sim.diff?.startApproval ?? 100) * 0.3) {
+      const g = ctx.createRadialGradient(WORLD_W / 2, WORLD_H / 2, WORLD_W * 0.2, WORLD_W / 2, WORLD_H / 2, WORLD_W * 0.72);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, 'rgba(90, 8, 18, 0.28)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    }
+    if (sim.tweetStorm > 0 || sim.finalRally > 0 || sim.primeTime > 0) {
+      ctx.fillStyle = `rgba(230, 195, 92, ${0.05 + Math.sin(time * 9) * 0.03})`;
+      ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    }
+    if (sim.freeze > 0) {
+      ctx.fillStyle = `rgba(80, 200, 255, ${0.1 + sim.freeze * 0.04})`;
+      ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    }
+    if (sim.coffee > 0) {
+      ctx.fillStyle = 'rgba(90, 50, 20, 0.12)';
+      ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    }
+    if (sim.feverLife > 0 || sim.streak >= 20) {
+      ctx.fillStyle = `rgba(200, 16, 46, ${0.06 + Math.sin(time * 14) * 0.04})`;
+      ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    }
+    if (sim.danger > 0.2) {
+      const g = ctx.createRadialGradient(WORLD_W / 2, WORLD_H * 0.82, 40, WORLD_W / 2, WORLD_H, WORLD_W * 0.7);
+      g.addColorStop(0, `rgba(200, 16, 46, ${sim.danger * 0.28})`);
+      g.addColorStop(1, 'rgba(200, 16, 46, 0)');
+      ctx.fillStyle = g;
       ctx.fillRect(0, 0, WORLD_W, WORLD_H);
     }
     type Layer = { y: number; draw: () => void };
@@ -507,25 +538,210 @@ export class Renderer {
     for (const b of sim.beams) this.drawBeam(ctx, b);
     for (const b of sim.boulders) this.drawBoulder(ctx, b);
     for (const b of sim.bricks) this.drawBrickShot(ctx, b);
+    for (const s of sim.shockwaves) this.drawShock(ctx, s);
     fx.draw(ctx);
 
-    if (sim.announcing > 0) {
-      const a = Math.min(1, sim.announcing / 0.25, 2.1 - 0.15 > sim.announcing ? 1 : sim.announcing / 0.25);
-      ctx.save();
-      ctx.globalAlpha = Math.min(1, sim.announcing, 1);
-      ctx.fillStyle = 'rgba(8, 16, 36, 0.55)';
-      ctx.fillRect(0, WORLD_H * 0.38, WORLD_W, 70);
-      ctx.strokeStyle = '#e6c35c';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(40, WORLD_H * 0.38, WORLD_W - 80, 70);
+    this.drawSpawn(ctx, sim, time);
+    this.drawHudChrome(ctx, sim, time);
+    this.drawTicker(ctx, time);
+
+    if (sim.announcing > 0) this.drawBanner(ctx, sim);
+    if (sim.eventLife > 0.05) this.drawEvent(ctx, sim);
+  }
+
+  private bannerAlpha(life: number, hold = 2.2): number {
+    const fadeIn = 0.22;
+    const fadeOut = 0.4;
+    if (life > hold - fadeIn) return Math.max(0, Math.min(1, (hold - life) / fadeIn));
+    if (life < fadeOut) return Math.max(0, life / fadeOut);
+    return 1;
+  }
+
+  private drawBanner(ctx: CanvasRenderingContext2D, sim: Sim): void {
+    const a = this.bannerAlpha(sim.announcing, 2.4);
+    const y = WORLD_H * 0.36;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(8, 16, 36, 0.72)';
+    ctx.beginPath();
+    ctx.roundRect(28, y, WORLD_W - 56, 78, 10);
+    ctx.fill();
+    ctx.strokeStyle = '#e6c35c';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    const stripe = ctx.createLinearGradient(28, y, WORLD_W - 28, y);
+    stripe.addColorStop(0, '#c8102e');
+    stripe.addColorStop(0.5, '#e6c35c');
+    stripe.addColorStop(1, '#1a4fa8');
+    ctx.fillStyle = stripe;
+    ctx.fillRect(32, y + 6, WORLD_W - 64, 5);
+    ctx.fillRect(32, y + 67, WORLD_W - 64, 5);
+    ctx.fillStyle = '#fff6c2';
+    ctx.font = '800 20px Impact, Haettenschweiler, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.strokeStyle = '#1a1204';
+    ctx.lineWidth = 5;
+    ctx.strokeText(sim.banner, WORLD_W / 2, y + 40);
+    ctx.fillText(sim.banner, WORLD_W / 2, y + 40);
+    ctx.restore();
+  }
+
+  private drawEvent(ctx: CanvasRenderingContext2D, sim: Sim): void {
+    const a = Math.min(1, sim.eventLife, sim.eventLife > 1 ? 1 : sim.eventLife);
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, a) * 0.95;
+    const y = 18;
+    ctx.fillStyle = 'rgba(90, 8, 18, 0.82)';
+    ctx.beginPath();
+    ctx.roundRect(40, y, WORLD_W - 80, 58, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#ff6b6b';
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
+    ctx.fillStyle = '#ffd0d8';
+    ctx.font = '800 10px Impact, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('BREAKING', WORLD_W / 2, y + 12);
+    ctx.fillStyle = '#fff3b0';
+    ctx.font = '800 16px Impact, sans-serif';
+    ctx.fillText(sim.eventTitle, WORLD_W / 2, y + 30);
+    ctx.fillStyle = '#f4f1e8';
+    ctx.font = '700 11px Georgia, serif';
+    ctx.fillText(sim.eventBlurb, WORLD_W / 2, y + 46);
+    ctx.restore();
+  }
+
+  private drawSpawn(ctx: CanvasRenderingContext2D, sim: Sim, time: number): void {
+    const s = sim.map.sample(0);
+    const pulse = 0.55 + Math.sin(time * 4.2) * 0.25;
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    ctx.strokeStyle = `rgba(230, 195, 92, ${0.35 + pulse * 0.45})`;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, 16 + pulse * 6, 0, Math.PI * 2);
+    ctx.stroke();
+    if (sim.waveQueue.length) {
       ctx.fillStyle = '#e6c35c';
-      ctx.font = '800 18px Impact, Haettenschweiler, sans-serif';
+      ctx.font = '800 9px Impact, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('IN', 0, 3);
+    }
+    ctx.restore();
+  }
+
+  private drawShock(ctx: CanvasRenderingContext2D, s: { x: number; y: number; life: number; max: number }): void {
+    const t = 1 - Math.max(0, s.life / s.max);
+    ctx.save();
+    ctx.globalAlpha = (1 - t) * 0.75;
+    ctx.strokeStyle = '#fff3b0';
+    ctx.lineWidth = 5 - t * 3;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 18 + t * 110, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = '#c8102e';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 10 + t * 78, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  private drawTicker(ctx: CanvasRenderingContext2D, time: number): void {
+    const line = TICKER[Math.floor(time / 9) % TICKER.length] ?? TICKER[0]!;
+    const text = `${line}  ${line}`;
+    const x = WORLD_W - ((time * 52) % (WORLD_W + 280));
+    ctx.save();
+    ctx.fillStyle = 'rgba(8, 16, 36, 0.72)';
+    ctx.fillRect(0, WORLD_H - 22, WORLD_W, 22);
+    ctx.fillStyle = '#c8102e';
+    ctx.fillRect(0, WORLD_H - 22, WORLD_W, 3);
+    ctx.fillStyle = '#fff3b0';
+    ctx.font = '800 11px Impact, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, x, WORLD_H - 9);
+    ctx.restore();
+  }
+
+  private drawHudChrome(ctx: CanvasRenderingContext2D, sim: Sim, time: number): void {
+    const boss = sim.enemies.find((e) => e.boss && e.hp > 0);
+    if (boss) {
+      ctx.save();
+      const y = sim.eventLife > 0 ? 82 : 16;
+      ctx.fillStyle = 'rgba(8, 16, 36, 0.82)';
+      ctx.beginPath();
+      ctx.roundRect(48, y, WORLD_W - 96, 28, 6);
+      ctx.fill();
+      ctx.fillStyle = '#c8102e';
+      ctx.fillRect(56, y + 16, WORLD_W - 112, 7);
+      ctx.fillStyle = '#e6c35c';
+      ctx.fillRect(56, y + 16, (WORLD_W - 112) * (boss.hp / boss.maxHp), 7);
+      ctx.fillStyle = '#fff3b0';
+      ctx.font = '800 11px Impact, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(sim.banner, WORLD_W / 2, WORLD_H * 0.38 + 35);
+      ctx.fillText(sim.wave >= 12 ? 'THE BIGGEST CLERK' : 'SPECIAL COUNSEL', WORLD_W / 2, y + 9);
       ctx.restore();
-      void a;
     }
+    if (sim.streak >= 5) {
+      const pop = sim.comboPop > 0 ? 1 + sim.comboPop * 0.22 : 1;
+      const fever = sim.feverLife > 0 || sim.streak >= 20;
+      ctx.save();
+      ctx.translate(WORLD_W / 2, sim.eventLife > 0 || boss ? 118 : 86);
+      ctx.scale(pop, pop);
+      ctx.globalAlpha = 0.94;
+      ctx.fillStyle = fever ? 'rgba(90, 8, 18, 0.88)' : 'rgba(12, 28, 68, 0.78)';
+      ctx.beginPath();
+      ctx.roundRect(-92, -18, 184, 36, 8);
+      ctx.fill();
+      ctx.strokeStyle = fever ? '#ff6b6b' : '#e6c35c';
+      ctx.lineWidth = fever ? 3 : 2;
+      ctx.stroke();
+      ctx.fillStyle = '#fff3b0';
+      ctx.font = '800 16px Impact, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(fever ? `FEVER ${sim.streak}` : `STREAK ${sim.streak}`, 0, 1);
+      ctx.restore();
+    }
+    if (sim.wave === 0 && sim.towers.length === 0) {
+      const tw = 0.7 + Math.sin(time * 3) * 0.15;
+      ctx.save();
+      ctx.globalAlpha = tw;
+      ctx.fillStyle = 'rgba(8, 16, 36, 0.55)';
+      ctx.beginPath();
+      ctx.roundRect(70, WORLD_H * 0.52, WORLD_W - 140, 36, 8);
+      ctx.fill();
+      ctx.fillStyle = '#fff3b0';
+      ctx.font = '800 13px Impact, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('TAP A CARD, THEN TAP GRASS', WORLD_W / 2, WORLD_H * 0.52 + 18);
+      ctx.restore();
+    }
+  }
+
+  private drawPuddle(ctx: CanvasRenderingContext2D, p: { x: number; y: number; r: number; life: number; max: number }, time: number): void {
+    const a = Math.max(0, p.life / p.max) * 0.55;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(230, 195, 92, 0.35)';
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, p.r, p.r * 0.55, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#fff3b0';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 5]);
+    ctx.lineDashOffset = -time * 30;
+    ctx.stroke();
+    ctx.fillStyle = '#5c470c';
+    ctx.font = '800 10px Impact, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('TAX', p.x, p.y + 3);
+    ctx.restore();
   }
 
   private drawRange(ctx: CanvasRenderingContext2D, t: Tower, time: number, alpha: number): void {
@@ -548,9 +764,14 @@ export class Renderer {
     const ok = sim.map.canPlace(h.c, h.r, sim.occupied) && sim.canAfford(sim.placing!);
     const p = sim.map.center(h.c, h.r);
     ctx.save();
-    ctx.globalAlpha = 0.45;
-    ctx.fillStyle = ok ? 'rgba(80, 200, 120, 0.35)' : 'rgba(200, 40, 40, 0.4)';
-    ctx.fillRect(h.c * CELL + 2, h.r * CELL + 2, CELL - 4, CELL - 4);
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = ok ? 'rgba(80, 200, 120, 0.38)' : 'rgba(200, 40, 40, 0.42)';
+    ctx.beginPath();
+    ctx.roundRect(h.c * CELL + 3, h.r * CELL + 3, CELL - 6, CELL - 6, 8);
+    ctx.fill();
+    ctx.strokeStyle = ok ? '#9dffb0' : '#ff6b6b';
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
     const fake: Tower = {
       id: -1,
       kind: sim.placing!,
@@ -563,6 +784,7 @@ export class Renderer {
       costPaid: 0,
       age: 1,
       tier: 0,
+      specialCd: 0,
     };
     this.drawRange(ctx, fake, 0, 0.7);
     this.drawTower(ctx, fake, sim, 0);
@@ -650,6 +872,20 @@ export class Renderer {
     ctx.translate(t.x, t.y);
     const pop = t.age < 0.3 ? easeOutBack(Math.min(1, t.age / 0.3)) : 1;
     ctx.scale(pop, pop);
+    if (sim.selected?.id === t.id) {
+      ctx.strokeStyle = 'rgba(255, 243, 176, 0.85)';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.roundRect(-28, -28, 56, 56, 8);
+      ctx.stroke();
+    }
+    if (t.tier >= MAX_TIER && t.specialCd <= 0 && t.id >= 0) {
+      ctx.strokeStyle = `rgba(60, 240, 255, ${0.45 + Math.sin(time * 10) * 0.3})`;
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 32 + Math.sin(time * 8) * 2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     if (t.kind !== 'desk') {
       let buffed = false;
       for (const d of sim.towers) {
@@ -674,6 +910,42 @@ export class Renderer {
   private drawEnemy(ctx: CanvasRenderingContext2D, e: Enemy, time: number): void {
     ctx.save();
     ctx.translate(e.x, e.y - e.z + Math.sin(e.bob) * (e.flying ? 3 : 1));
+    if (e.boss) {
+      ctx.strokeStyle = `rgba(200, 16, 46, ${0.6 + Math.sin(time * 7) * 0.28})`;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.ellipse(0, 4, e.radius + 10, e.radius + 8, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = `rgba(230, 195, 92, ${0.5 + Math.sin(time * 5) * 0.2})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(0, 4, e.radius + 16, e.radius + 12, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.scale(1.58, 1.58);
+    } else if (e.elite) {
+      ctx.strokeStyle = `rgba(230, 195, 92, ${0.55 + Math.sin(time * 6) * 0.25})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(0, 2, e.radius + 8, e.radius + 6, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.scale(1.12, 1.12);
+    }
+    if (e.splitter) {
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = `rgba(255, 179, 138, ${0.45 + Math.sin(time * 8) * 0.2})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, e.radius + 7, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    if (e.kind === 'lobbyist') {
+      ctx.strokeStyle = `rgba(80, 220, 120, ${0.25 + Math.sin(time * 5) * 0.12})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 30, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     if (e.flying) {
       ctx.fillStyle = 'rgba(0,0,0,0.28)';
       ctx.beginPath();
@@ -687,11 +959,18 @@ export class Renderer {
       ctx.ellipse(0, 0, e.radius + 4, e.radius + 6, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-    const barW = 22;
+    const barW = e.boss ? 36 : 22;
     ctx.fillStyle = '#1a1204';
-    ctx.fillRect(-barW / 2, -e.radius - 12, barW, 4);
+    ctx.fillRect(-barW / 2, -e.radius - 12, barW, e.boss ? 5 : 4);
     ctx.fillStyle = e.hp / e.maxHp > 0.4 ? '#3cff8a' : '#c8102e';
-    ctx.fillRect(-barW / 2, -e.radius - 12, barW * (e.hp / e.maxHp), 4);
+    if (e.elite || e.boss) ctx.fillStyle = '#e6c35c';
+    ctx.fillRect(-barW / 2, -e.radius - 12, barW * (e.hp / e.maxHp), e.boss ? 5 : 4);
+    if (e.boss) {
+      ctx.fillStyle = '#fff3b0';
+      ctx.font = '800 8px Impact, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('COUNSEL', 0, -e.radius - 18);
+    }
     ctx.restore();
   }
 

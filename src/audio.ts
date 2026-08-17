@@ -99,16 +99,26 @@ export class Synth {
   }
 
   playMusic(): void {
+    this.playBed(this.muted ? 0 : 0.42);
+  }
+
+  playMenu(): void {
+    if (!this.unlocked) return;
+    this.mapId = 'lawn';
+    this.playBed(this.muted ? 0 : 0.28);
+  }
+
+  private playBed(volume: number): void {
     if (!this.unlocked) return;
     const src = MUSIC[this.mapId] ?? MUSIC.lawn;
     if (!this.bgm || this.bgm.getAttribute('data-src') !== src) {
       this.bgm?.pause();
       this.bgm = tagAudio(new Audio(src));
       this.bgm.loop = true;
-      this.bgm.volume = this.muted ? 0 : 0.42;
       this.bgm.setAttribute('data-src', src);
     }
-    if (this.muted) {
+    this.bgm.volume = volume;
+    if (this.muted || volume <= 0) {
       this.bgm.pause();
       return;
     }
@@ -286,5 +296,24 @@ export class Synth {
   click(): void {
     this.playSfx(SFX.click, 0.3);
     this.tone(720, 0.04, 'square', 0.03);
+  }
+
+  special(): void {
+    this.playSfx(SFX.wave, 0.62);
+    this.playSfx(SFX.boom, 0.5);
+    [523, 659, 784, 1046].forEach((n, i) => {
+      window.setTimeout(() => this.tone(n, 0.18, 'triangle', 0.08), i * 70);
+    });
+  }
+
+  combo(): void {
+    this.playSfx(SFX.wave, 0.42);
+    this.tone(880, 0.12, 'square', 0.07, 1320);
+    this.tone(1320, 0.1, 'triangle', 0.05);
+  }
+
+  siren(): void {
+    this.tone(880, 0.28, 'sawtooth', 0.045, 420);
+    this.tone(420, 0.28, 'sawtooth', 0.035, 880);
   }
 }

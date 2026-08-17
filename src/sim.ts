@@ -4,11 +4,14 @@ import {
   DIFFICULTIES,
   type Difficulty,
   type DifficultyId,
+  eventForWave,
   houseOrigin,
   MAX_TIER,
   type MapId,
+  SPECIAL_NAME,
   towerStats,
   UPGRADE_COST,
+  waveTitle,
 } from './campaign.ts';
 import type { TraumaCamera } from './engine.ts';
 import { dist } from './engine.ts';
@@ -44,6 +47,9 @@ export type Enemy = {
   angle: number;
   z: number;
   route: number;
+  elite: boolean;
+  boss: boolean;
+  splitter: boolean;
 };
 
 export type Tower = {
@@ -58,6 +64,7 @@ export type Tower = {
   costPaid: number;
   age: number;
   tier: number;
+  specialCd: number;
 };
 
 export type Wall = {
@@ -111,11 +118,32 @@ export type Beam = {
   life: number;
 };
 
+export type Puddle = {
+  x: number;
+  y: number;
+  r: number;
+  life: number;
+  max: number;
+  dps: number;
+};
+
 export type SpawnItem = { kind: EnemyId; delay: number };
 
-const HITS = ['SAD!', 'WRONG!', 'FAKE!', 'WEAK!'];
-const BIG = ['HUGE DAMAGE!', 'TREMENDOUS!', 'TARIFF\'D!', 'BILLION!'];
-const KILLS = ['FIRED!', 'DEPORT!', 'GONE!', 'SO SAD!'];
+const HITS = ['SAD!', 'WRONG!', 'FAKE!', 'WEAK!', 'NO!', 'NAH!', 'COVFEFE!', 'BOOM!', 'SIT DOWN!'];
+const BIG = ['HUGE DAMAGE!', 'TREMENDOUS!', "TARIFF'D!", 'BILLION!', 'YUGE!', 'BELIEVE ME!', 'KNOCKOUT!', 'OBLITERATED!'];
+const KILLS: Record<EnemyId, string[]> = {
+  alien: ['FIRED!', 'GONE!', 'NEXT!', 'BYE!', 'OUT!', 'DEPORT!'],
+  drone: ['FAKE!', 'CUT!', 'OFF AIR!', 'SO SAD!', 'WRONG!', 'UNTRUE!'],
+  bureaucrat: ['FIRED!', 'DEPORT!', 'RED TAPE!', 'OUT!', 'DRAIN IT!', 'NEXT!'],
+  lobbyist: ['NO ACCESS!', 'K STREET!', 'SWAMPED!', 'CLOSED!', 'NO DEAL!', 'LOBBY CLOSED!'],
+};
+const STREAKS: [number, string][] = [
+  [5, 'WINNING!'],
+  [10, 'TREMENDOUS STREAK'],
+  [18, 'UNPRECEDENTED'],
+  [28, "EVERYONE'S TALKING"],
+  [40, 'YUGE. HISTORIC. PERFECT.'],
+];
 
 function pick(arr: string[]): string {
   return arr[(Math.random() * arr.length) | 0]!;
@@ -165,6 +193,34 @@ export class Sim {
   leaking = 0;
   map: GameMap;
   diff: Difficulty = DIFFICULTIES.normal;
+  streak = 0;
+  maxStreak = 0;
+  streakT = 0;
+  kills = 0;
+  leakCount = 0;
+  leakedThisWave = 0;
+  perfectWaves = 0;
+  earned = 0;
+  playTime = 0;
+  eventLife = 0;
+  eventTitle = '';
+  eventBlurb = '';
+  tweetStorm = 0;
+  donationDrive = 0;
+  blackout = 0;
+  witchHunt = 0;
+  finalRally = 0;
+  puddles: Puddle[] = [];
+  keepTaps: number[] = [];
+  comboPop = 0;
+  freeze = 0;
+  primeTime = 0;
+  coffee = 0;
+  hitstop = 0;
+  danger = 0;
+  feverLife = 0;
+  shockwaves: { x: number; y: number; life: number; max: number }[] = [];
+  sirenT = 0;
   readonly fx: FX;
   readonly cam: TraumaCamera;
   readonly audio: Synth;
@@ -208,20 +264,102 @@ export class Sim {
     this.lost = false;
     this.time = 0;
     this.leaking = 0;
+    this.streak = 0;
+    this.maxStreak = 0;
+    this.streakT = 0;
+    this.kills = 0;
+    this.leakCount = 0;
+    this.leakedThisWave = 0;
+    this.perfectWaves = 0;
+    this.earned = 0;
+    this.playTime = 0;
+    this.eventLife = 0;
+    this.eventTitle = '';
+    this.eventBlurb = '';
+    this.tweetStorm = 0;
+    this.donationDrive = 0;
+    this.blackout = 0;
+    this.witchHunt = 0;
+    this.finalRally = 0;
+    this.puddles.length = 0;
+    this.keepTaps.length = 0;
+    this.comboPop = 0;
+    this.freeze = 0;
+    this.primeTime = 0;
+    this.coffee = 0;
+    this.hitstop = 0;
+    this.danger = 0;
+    this.feverLife = 0;
+    this.shockwaves.length = 0;
+    this.sirenT = 0;
   }
 
   startNextWave(): void {
     if (this.lost || this.won) return;
     if (this.wave >= MAX_WAVES) return;
     if (this.waveQueue.length || this.enemies.length) return;
+    if (this.wave > 0 && this.between > 0 && this.between < 1.85) {
+      const rush = 20 + this.wave * 6;
+      this.credit(rush);
+      this.fx.say(WORLD_W / 2, WORLD_H * 0.3, `EARLY RALLY +$${rush}`, '#9dffb0', 1.35);
+      this.cam.hit(0.2);
+    }
     this.wave += 1;
     this.waveQueue = buildQueue(this.map.def.id, this.wave, this.diff.waveMul);
-    this.spawnWait = 0.35;
+    this.spawnWait = 0.28;
     this.between = 0;
-    this.announcing = 2.2;
+    this.leakedThisWave = 0;
+    this.announcing = 2.6;
     const flavor = this.map.def.flavor[(this.wave - 1) % this.map.def.flavor.length]!;
-    this.banner = `WAVE ${this.wave} — ${flavor}`;
+    this.banner = `WAVE ${this.wave} — ${waveTitle(this.wave)}`;
+    this.fx.say(WORLD_W / 2, WORLD_H * 0.42 + 28, flavor, '#fff3b0', 1.12);
     this.audio.wave();
+    this.beginEvent(this.wave);
+    if (this.wave === 6 || this.wave === 12) this.spawnBoss();
+  }
+
+  private beginEvent(wave: number): void {
+    const ev = eventForWave(wave);
+    if (!ev) return;
+    this.eventTitle = ev.title;
+    this.eventBlurb = ev.blurb;
+    this.eventLife = ev.id === 'finale' ? 4.4 : ev.life;
+    if (ev.id === 'tweet') this.tweetStorm = ev.life;
+    if (ev.id === 'drive') this.donationDrive = ev.life;
+    if (ev.id === 'blackout') this.blackout = ev.life;
+    if (ev.id === 'witch') this.witchHunt = ev.life;
+    if (ev.id === 'finale') this.finalRally = ev.life;
+    if (ev.id === 'coffee') this.coffee = ev.life;
+    if (ev.id === 'prime') this.primeTime = ev.life;
+    if (ev.id === 'caravan') {
+      for (let i = 0; i < 10; i++) this.waveQueue.push({ kind: 'alien', delay: 0.18 });
+    }
+    if (ev.id === 'surge') {
+      this.credit(80);
+      this.fx.say(WORLD_W / 2, WORLD_H * 0.5, '+$80 RATINGS', '#e6c35c', 1.4);
+      const keep = houseOrigin(this.map.def);
+      this.fx.patriotic(keep.x + keep.w * 0.5, keep.y + keep.h * 0.4, 1.4);
+    }
+    this.cam.hit(0.22);
+  }
+
+  tapKeep(): boolean {
+    const now = this.time;
+    this.keepTaps = this.keepTaps.filter((t) => now - t < 3.2);
+    this.keepTaps.push(now);
+    if (this.keepTaps.length < 7) return false;
+    this.keepTaps.length = 0;
+    this.credit(40);
+    this.fx.patriotic(WORLD_W / 2, WORLD_H * 0.72, 1.1);
+    this.fx.say(WORLD_W / 2, WORLD_H * 0.62, 'COVFEFE BONUS', '#fff3b0', 1.35);
+    this.audio.voiceLine();
+    return true;
+  }
+
+  private credit(amount: number): void {
+    const n = Math.max(0, Math.round(amount));
+    this.donations += n;
+    this.earned += n;
   }
 
   canAfford(id: TowerId): boolean {
@@ -255,6 +393,7 @@ export class Sim {
       costPaid: def.cost,
       age: 0,
       tier: 0,
+      specialCd: 0,
     };
     this.towers.push(t);
     this.occupied.add(this.map.idx(c, r));
@@ -288,6 +427,7 @@ export class Sim {
   tryUpgrade(): boolean {
     const t = this.selected;
     if (!t) return false;
+    if (t.tier >= MAX_TIER) return this.trySpecial();
     const cost = this.upgradeCost(t);
     if (cost === null) {
       this.audio.deny();
@@ -305,6 +445,54 @@ export class Sim {
     this.audio.place();
     this.fx.spawn(t.x, t.y, 22, ['#e6c35c', '#fff3b0', '#3cf0ff'], 110, 'star', 4);
     this.fx.say(t.x, t.y - 22, `TIER ${towerStats(t.kind, t.tier).label}`, '#fff3b0', 1.2);
+    if (t.tier >= MAX_TIER) {
+      this.fx.say(t.x, t.y - 44, 'SPECIAL READY', '#3cf0ff', 1.15);
+      this.cam.hit(0.22);
+    }
+    return true;
+  }
+
+  specialReady(t: Tower): boolean {
+    return t.tier >= MAX_TIER && t.specialCd <= 0;
+  }
+
+  trySpecial(): boolean {
+    const t = this.selected;
+    if (!t || t.tier < MAX_TIER) return false;
+    if (t.specialCd > 0) {
+      this.audio.deny();
+      this.fx.say(t.x, t.y, 'RECHARGING', '#ffb38a', 0.95);
+      return false;
+    }
+    t.specialCd = 16;
+    t.age = 0;
+    this.hitstop = Math.max(this.hitstop, 0.14);
+    this.cam.bang();
+    this.audio.special();
+    const name = SPECIAL_NAME[t.kind] ?? 'SPECIAL';
+    this.fx.say(t.x, t.y - 28, name, '#fff3b0', 1.55);
+    this.shock(t.x, t.y);
+    if (t.kind === 'truth') {
+      for (const e of this.enemies) {
+        if (e.hp <= 0) continue;
+        if (!e.flying && this.map.inTunnel(e.x, e.y)) continue;
+        if (dist(t.x, t.y, e.x, e.y) <= 3.8 * CELL + e.radius) {
+          this.beams.push({ x0: t.x, y0: t.y - 18, x1: e.x, y1: e.y - e.z, life: 0.16 });
+          this.damage(e, 62, 'NOVA!', '#3cf0ff');
+        }
+      }
+      this.fx.patriotic(t.x, t.y, 2);
+    } else if (t.kind === 'trebuchet') {
+      const marks = [...this.enemies].filter((e) => e.hp > 0).sort((a, b) => b.dist - a.dist).slice(0, 4);
+      for (const e of marks) this.fireTreb(t, e);
+    } else if (t.kind === 'brick') {
+      const ground = this.enemies.filter((e) => e.hp > 0 && !e.flying).sort((a, b) => b.dist - a.dist);
+      if (ground[0]) this.fireBrick(t, ground[0], 4);
+    } else {
+      this.freeze = 2.6;
+      this.fx.say(WORLD_W / 2, WORLD_H * 0.48, 'SHUTDOWN', '#fff3b0', 1.6);
+      this.fx.patriotic(WORLD_W / 2, WORLD_H * 0.5, 1.5);
+    }
     return true;
   }
 
@@ -320,6 +508,14 @@ export class Sim {
     return false;
   }
 
+  private haste(): number {
+    let h = 1;
+    if (this.tweetStorm > 0) h *= 1.4;
+    if (this.finalRally > 0) h *= 1.22;
+    if (this.feverLife > 0 || this.streak >= 20) h *= 1.42;
+    return h;
+  }
+
   private buffMult(t: Tower): number {
     let m = 1;
     for (const d of this.towers) {
@@ -328,29 +524,67 @@ export class Sim {
       const range = st.range * CELL;
       if (dist(t.x, t.y, d.x, d.y) <= range) m = Math.max(m, st.buff);
     }
-    return m;
+    return m * this.haste();
   }
 
   private wallAt(c: number, r: number): Wall | undefined {
     return this.walls.find((w) => w.c === c && w.r === r);
   }
 
-  private spawnEnemy(kind: EnemyId): void {
-    const def = ENEMIES[kind];
-    const hp = Math.round(scaledHp(kind, this.wave) * this.diff.hpMul);
+  private shock(x: number, y: number): void {
+    this.shockwaves.push({ x, y, life: 0.45, max: 0.45 });
+  }
+
+  private spawnBoss(): void {
     const route = this.map.pickRoute();
     const s = this.map.sample(0, route);
+    const hp = Math.round(scaledHp('bureaucrat', this.wave) * this.diff.hpMul * (this.wave >= 12 ? 7.2 : 5.4));
+    this.enemies.push({
+      id: this.nextId++,
+      kind: 'bureaucrat',
+      hp,
+      maxHp: hp,
+      dist: 0,
+      speed: ENEMIES.bureaucrat.speed * this.diff.spdMul * 0.72,
+      flying: false,
+      reward: Math.round(120 * this.diff.rewardMul * (this.wave >= 12 ? 1.6 : 1)),
+      leak: Math.max(12, Math.round(28 * this.diff.leakMul)),
+      radius: 26,
+      flash: 0,
+      bob: 0,
+      x: s.x,
+      y: s.y,
+      angle: s.angle,
+      z: 0,
+      route,
+      elite: true,
+      boss: true,
+      splitter: false,
+    });
+    this.fx.say(WORLD_W / 2, WORLD_H * 0.5, this.wave >= 12 ? 'THE BIGGEST CLERK' : 'SPECIAL COUNSEL', '#ff6b6b', 1.6);
+    this.cam.bang();
+  }
+
+  private spawnEnemy(kind: EnemyId, opts?: { splitter?: boolean; elite?: boolean; dist?: number; route?: number }): void {
+    const def = ENEMIES[kind];
+    const elite = opts?.elite ?? (this.wave >= 7 && kind !== 'lobbyist' && Math.random() < 0.16 + this.wave * 0.01);
+    const splitter = opts?.splitter ?? (kind === 'alien' && this.wave >= 4 && Math.random() < 0.2);
+    const hpMul = (elite ? 1.7 : 1) * (splitter ? 0.72 : 1);
+    const hp = Math.round(scaledHp(kind, this.wave) * this.diff.hpMul * hpMul);
+    const route = opts?.route ?? this.map.pickRoute();
+    const along = opts?.dist ?? 0;
+    const s = this.map.sample(along, route);
     this.enemies.push({
       id: this.nextId++,
       kind,
       hp,
       maxHp: hp,
-      dist: 0,
-      speed: def.speed * this.diff.spdMul,
+      dist: along,
+      speed: def.speed * this.diff.spdMul * (elite ? 1.08 : 1) * (splitter ? 1.12 : 1),
       flying: def.flying,
-      reward: Math.round((def.reward + Math.floor(this.wave * 1.2)) * this.diff.rewardMul),
-      leak: Math.max(1, Math.round(def.leak * this.diff.leakMul)),
-      radius: def.radius,
+      reward: Math.round((def.reward + Math.floor(this.wave * 1.2)) * this.diff.rewardMul * (elite ? 1.6 : 1)),
+      leak: Math.max(1, Math.round(def.leak * this.diff.leakMul * (elite ? 1.35 : 1))),
+      radius: def.radius * (elite ? 1.16 : splitter ? 0.82 : 1),
       flash: 0,
       bob: Math.random() * Math.PI * 2,
       x: s.x,
@@ -358,29 +592,70 @@ export class Sim {
       angle: s.angle,
       z: def.flying ? 22 : 0,
       route,
+      elite,
+      boss: false,
+      splitter,
     });
+  }
+
+  private bumpStreak(x: number, y: number): void {
+    this.streak += 1;
+    this.streakT = 1.65;
+    if (this.streak > this.maxStreak) this.maxStreak = this.streak;
+    for (const [n, phrase] of STREAKS) {
+      if (this.streak === n) {
+        this.fx.say(x, y - 48, phrase, '#fff3b0', 1.45);
+        this.comboPop = 1.35;
+        this.cam.hit(0.32);
+        this.hitstop = Math.max(this.hitstop, n >= 18 ? 0.14 : 0.07);
+        this.audio.combo();
+        this.shock(x, y);
+        if (n >= 20) this.feverLife = Math.max(this.feverLife, 5.5);
+      }
+    }
   }
 
   private kill(e: Enemy, phrase: string): void {
     e.hp = 0;
-    this.donations += e.reward;
-    // Trash: small spark. Elite-ish (bureaucrat): patriotic burst. Avoid confetti fog.
-    if (e.kind === 'bureaucrat') {
-      this.fx.patriotic(e.x, e.y - e.z, 1.15);
-      this.fx.say(e.x, e.y - 24, phrase, '#fff3b0', 1.15);
+    this.kills += 1;
+    let pay = e.reward;
+    if (this.donationDrive > 0) pay *= 2;
+    if (this.streak >= 5) pay = Math.round(pay * (1 + Math.min(1.8, Math.floor(this.streak / 5) * 0.16)));
+    this.credit(pay);
+    this.bumpStreak(e.x, e.y);
+    if (e.boss) {
+      this.fx.patriotic(e.x, e.y - e.z, 2.4);
+      this.fx.say(e.x, e.y - 30, 'COUNSEL DISMISSED', '#fff3b0', 1.55);
+      this.cam.bang();
+      this.hitstop = Math.max(this.hitstop, 0.22);
+      this.shock(e.x, e.y);
+      this.credit(80);
+    } else if (e.kind === 'bureaucrat' || e.elite) {
+      this.fx.patriotic(e.x, e.y - e.z, e.elite ? 1.45 : 1.2);
+      this.fx.say(e.x, e.y - 24, phrase, '#fff3b0', 1.2);
+      if (e.elite) this.hitstop = Math.max(this.hitstop, 0.07);
+    } else if (e.kind === 'lobbyist') {
+      this.fx.spawn(e.x, e.y - e.z, 16, ['#e6c35c', '#fff3b0', '#1a4fa8'], 110, 'coin', 4.5);
+      this.fx.say(e.x, e.y - 24, phrase, '#e6c35c', 1.15);
     } else {
-      this.fx.spawn(e.x, e.y - e.z, 10, ['#fff3b0', '#c8102e', '#1a4fa8'], 90, 'spark', 2.4);
+      this.fx.spawn(e.x, e.y - e.z, 12, ['#fff3b0', '#c8102e', '#1a4fa8'], 100, 'spark', 2.6);
     }
-    this.fx.say(e.x + 6, e.y - 36, `+$${e.reward}`, '#9dffb0', 0.9);
+    this.fx.say(e.x + 6, e.y - 36, `+$${pay}`, '#9dffb0', 0.95);
     this.audio.death();
-    if (Math.random() < 0.22) this.audio.voiceLine();
+    if (Math.random() < 0.22 || e.elite || e.boss) this.audio.voiceLine();
+    if (e.splitter) {
+      this.fx.say(e.x, e.y - 10, 'MARGIN OF ERROR', '#ffb38a', 1.05);
+      this.spawnEnemy('alien', { splitter: false, elite: false, dist: Math.max(0, e.dist - 18), route: e.route });
+      this.spawnEnemy('alien', { splitter: false, elite: false, dist: e.dist + 8, route: e.route });
+    }
   }
 
   private damage(e: Enemy, amt: number, label?: string, color = '#fff3b0'): void {
-    e.hp -= amt;
+    const mul = this.primeTime > 0 ? 1.32 : 1;
+    e.hp -= amt * mul;
     e.flash = 0.12;
-    if (label) this.fx.say(e.x + (Math.random() * 16 - 8), e.y - 16 - e.z, label, color, amt > 40 ? 1.2 : 0.85);
-    if (e.hp <= 0) this.kill(e, pick(KILLS));
+    if (label) this.fx.say(e.x + (Math.random() * 16 - 8), e.y - 16 - e.z, label, color, amt > 40 ? 1.25 : 0.9);
+    if (e.hp <= 0) this.kill(e, pick(KILLS[e.kind] ?? KILLS.alien));
   }
 
   private aoe(x: number, y: number, radius: number, dmg: number): void {
@@ -417,14 +692,53 @@ export class Sim {
     t.angle = Math.atan2(e.y - t.y, e.x - t.x);
     this.beams.push({ x0: t.x, y0: t.y - 18, x1: e.x, y1: e.y - e.z, life: 0.09 });
     const st = towerStats('truth', t.tier);
+    const crit = Math.random() < 0.12;
+    const dmg = crit ? Math.round(st.damage * 2.6) : st.damage;
     this.damage(
       e,
-      st.damage,
-      Math.random() < 0.18 ? (Math.random() < 0.5 ? pick(HITS) : 'FACT!') : undefined,
-      '#3cf0ff',
+      dmg,
+      crit || Math.random() < 0.22 ? (crit ? 'FACT!' : Math.random() < 0.5 ? pick(HITS) : 'FACT!') : undefined,
+      crit ? '#fff3b0' : '#3cf0ff',
     );
-    this.fx.spawn(e.x, e.y - e.z, 4, ['#3cf0ff', '#ffffff'], 70, 'spark', 2);
+    this.fx.spawn(e.x, e.y - e.z, crit ? 10 : 4, ['#3cf0ff', '#ffffff'], crit ? 130 : 70, 'spark', crit ? 3.4 : 2);
     this.audio.truth();
+    if (t.tier >= 2) {
+      const hit = new Set<number>([e.id]);
+      let from = e;
+      for (let i = 0; i < 2; i++) {
+        const hop = this.chainTarget(t, from, 96, hit);
+        if (!hop) break;
+        hit.add(hop.id);
+        this.beams.push({ x0: from.x, y0: from.y - from.z, x1: hop.x, y1: hop.y - hop.z, life: 0.09 });
+        this.damage(
+          hop,
+          Math.round(st.damage * (i === 0 ? 0.66 : 0.44)),
+          Math.random() < 0.4 ? 'CHAIN FACT!' : undefined,
+          '#7ef0ff',
+        );
+        this.fx.spawn(hop.x, hop.y - hop.z, 6, ['#3cf0ff', '#fff'], 90, 'spark', 2.2);
+        from = hop;
+      }
+    }
+  }
+
+  private chainTarget(t: Tower, skip: Enemy, extra: number, ignore?: Set<number>): Enemy | null {
+    const range = towerStats('truth', t.tier).range * CELL + extra;
+    let best: Enemy | null = null;
+    let bestD = Infinity;
+    for (const e of this.enemies) {
+      if (e.id === skip.id || e.hp <= 0) continue;
+      if (ignore?.has(e.id)) continue;
+      if (!e.flying && this.map.inTunnel(e.x, e.y)) continue;
+      const d = dist(skip.x, skip.y, e.x, e.y);
+      if (d > 92) continue;
+      if (dist(t.x, t.y, e.x, e.y) > range + e.radius) continue;
+      if (d < bestD) {
+        bestD = d;
+        best = e;
+      }
+    }
+    return best;
   }
 
   private fireTreb(t: Tower, e: Enemy): void {
@@ -447,9 +761,23 @@ export class Sim {
       aoe: st.aoe * CELL,
     });
     this.audio.trebShoot();
+    if (t.tier >= 2) {
+      this.puddles.push({
+        x: pred.x,
+        y: pred.y,
+        r: st.aoe * CELL * 0.72,
+        life: 1.15,
+        max: 1.15,
+        dps: 38 + t.tier * 10,
+      });
+    }
   }
 
-  private fireBrick(t: Tower, e: Enemy): boolean {
+  private brickPending(c: number, r: number): boolean {
+    return this.bricks.some((b) => b.tc === c && b.tr === r);
+  }
+
+  private fireBrick(t: Tower, e: Enemy, want = 1): boolean {
     const here = this.map.cellOf(e.x, e.y);
     let i = this.map.pathIndex[this.map.idx(here.c, here.r)];
     if (i < 0) {
@@ -461,11 +789,12 @@ export class Sim {
     const pastMid =
       Math.hypot(e.x - mid.x, e.y - mid.y) < CELL * 0.2 || e.dist >= this.map.distAtCell(here.c, here.r);
     let start = pastMid ? i + 1 : i;
+    let placed = 0;
     for (let k = start; k < this.map.pathCells.length; k++) {
       const cell = this.map.pathCells[k]!;
       const c = cell[0];
       const r = cell[1];
-      if (this.map.isHouse(c, r) || this.wallAt(c, r)) continue;
+      if (this.map.isHouse(c, r) || this.wallAt(c, r) || this.brickPending(c, r)) continue;
       const p = this.map.center(c, r);
       t.angle = Math.atan2(p.y - t.y, p.x - t.x);
       const st = towerStats('brick', t.tier);
@@ -481,14 +810,15 @@ export class Sim {
         tc: c,
         tr: r,
         t: 0,
-        dur: 0.55,
+        dur: 0.55 + placed * 0.08,
         life: st.wallLife,
         hp: st.wallHp,
       });
       this.audio.brick();
-      return true;
+      placed += 1;
+      if (placed >= want) return true;
     }
-    return false;
+    return placed > 0;
   }
 
   private dropWall(c: number, r: number, life: number, hp: number): void {
@@ -515,12 +845,43 @@ export class Sim {
     this.fx.say(p.x, p.y - 20, 'THE WALL!', '#f0b27a', 1.1);
   }
 
+  private deskSlow(e: Enemy): number {
+    let s = 1;
+    for (const d of this.towers) {
+      if (d.kind !== 'desk' || d.tier < 2) continue;
+      const range = towerStats('desk', d.tier).range * CELL;
+      if (dist(e.x, e.y, d.x, d.y) <= range) s = Math.min(s, 0.82);
+    }
+    return s;
+  }
+
   update(dt: number): void {
     if (this.lost || this.won) return;
-    const tdt = dt * this.speed;
+    if (this.hitstop > 0) {
+      this.hitstop = Math.max(0, this.hitstop - dt);
+      dt *= 0.06;
+    } else {
+      dt *= this.speed;
+    }
+    const tdt = dt;
     this.time += tdt;
+    this.playTime += tdt;
     this.announcing = Math.max(0, this.announcing - tdt);
     this.leaking = Math.max(0, this.leaking - tdt);
+    this.eventLife = Math.max(0, this.eventLife - tdt);
+    this.tweetStorm = Math.max(0, this.tweetStorm - tdt);
+    this.donationDrive = Math.max(0, this.donationDrive - tdt);
+    this.blackout = Math.max(0, this.blackout - tdt);
+    this.witchHunt = Math.max(0, this.witchHunt - tdt);
+    this.comboPop = Math.max(0, this.comboPop - tdt);
+    this.freeze = Math.max(0, this.freeze - tdt);
+    this.primeTime = Math.max(0, this.primeTime - tdt);
+    this.coffee = Math.max(0, this.coffee - tdt);
+    this.feverLife = Math.max(0, this.feverLife - tdt);
+    this.streakT -= tdt;
+    if (this.streakT <= 0 && this.streak > 0) this.streak = 0;
+    for (const s of this.shockwaves) s.life -= tdt;
+    this.shockwaves = this.shockwaves.filter((s) => s.life > 0);
 
     if (!this.waveQueue.length && !this.enemies.length) {
       if (this.wave >= MAX_WAVES) {
@@ -532,18 +893,28 @@ export class Sim {
         return;
       }
       if (this.wave > 0 && this.between === 0) {
-        this.announcing = 1.4;
-        this.banner = 'WAVE CLEARED — RATINGS UP';
-        this.fx.patriotic(WORLD_W / 2, WORLD_H / 2, 1.6);
+        this.announcing = 1.6;
+        const base = 25 + this.wave * 8;
+        const approvalBonus = Math.round(this.approval * 0.12);
+        let extra = 0;
+        if (this.leakedThisWave === 0) {
+          extra = 30 + this.wave * 6;
+          this.perfectWaves += 1;
+          this.banner = 'PERFECT WAVE — RATINGS THROUGH THE ROOF';
+          this.fx.say(WORLD_W / 2, WORLD_H / 2 - 18, 'PERFECT RATINGS', '#fff3b0', 1.45);
+        } else {
+          this.banner = 'WAVE CLEARED — RATINGS UP';
+        }
+        this.credit(base + approvalBonus + extra);
+        this.fx.patriotic(WORLD_W / 2, WORLD_H / 2, extra ? 2 : 1.6);
         this.audio.wave();
-        this.donations += 25 + this.wave * 8;
-        this.fx.say(WORLD_W / 2, WORLD_H / 2 - 40, 'BONUS DONATIONS', '#e6c35c', 1.3);
+        this.fx.say(WORLD_W / 2, WORLD_H / 2 - 44, `+$${base + approvalBonus + extra}`, '#e6c35c', 1.3);
       }
       this.between += tdt;
       if (this.autoWaves && this.between >= 2.4 && this.wave >= 1) this.startNextWave();
     }
 
-    this.spawnWait -= tdt;
+    this.spawnWait -= this.coffee > 0 ? tdt * 0.18 : tdt;
     while (this.waveQueue.length && this.spawnWait <= 0) {
       const item = this.waveQueue.shift()!;
       this.spawnEnemy(item.kind);
@@ -557,12 +928,17 @@ export class Sim {
       e.flash = Math.max(0, e.flash - tdt);
       e.bob += tdt * (e.flying ? 8 : 5);
       let speed = e.speed;
+      if (e.kind === 'drone' && this.blackout > 0) speed *= 0.55;
+      if (e.kind === 'bureaucrat' && this.witchHunt > 0) speed *= 1.32;
+      speed *= this.deskSlow(e);
+      if (this.freeze > 0) speed *= 0.05;
+      else if (this.coffee > 0) speed *= 0.38;
       if (!e.flying) {
         const cell = this.map.cellOf(e.x, e.y);
         const wall = this.wallAt(cell.c, cell.r);
         if (wall) {
           speed = 0;
-          wall.hp -= (e.kind === 'bureaucrat' ? 28 : 10) * tdt;
+          wall.hp -= (e.kind === 'bureaucrat' ? 28 : e.kind === 'lobbyist' ? 16 : 10) * tdt;
           if (wall.hp <= 0) wall.life = 0;
         } else {
           for (const o of this.enemies) {
@@ -575,6 +951,10 @@ export class Sim {
       if (e.dist >= this.map.routeLength(e.route)) {
         this.approval = Math.max(0, this.approval - e.leak);
         this.leaking = 0.55;
+        this.leakCount += 1;
+        this.leakedThisWave += 1;
+        this.streak = 0;
+        this.streakT = 0;
         this.cam.sting();
         this.audio.leak();
         this.audio.voiceLine('uhoh');
@@ -593,7 +973,47 @@ export class Sim {
       e.angle = s.angle;
     }
 
+    for (const e of this.enemies) {
+      if (e.hp <= 0 || e.kind !== 'lobbyist') continue;
+      for (const o of this.enemies) {
+        if (o.id === e.id || o.hp <= 0 || o.flying) continue;
+        if (dist(e.x, e.y, o.x, o.y) <= 54) {
+          o.hp = Math.min(o.maxHp, o.hp + 16 * tdt);
+        }
+      }
+    }
+
+    for (const p of this.puddles) {
+      p.life -= tdt;
+      if (p.life <= 0) continue;
+      for (const e of this.enemies) {
+        if (e.hp <= 0) continue;
+        if (!e.flying && this.map.inTunnel(e.x, e.y)) continue;
+        if (dist(e.x, e.y, p.x, p.y) <= p.r + e.radius) {
+          e.hp -= p.dps * tdt;
+          if (e.hp <= 0) this.kill(e, pick(KILLS[e.kind] ?? KILLS.alien));
+        }
+      }
+    }
+    this.puddles = this.puddles.filter((p) => p.life > 0);
+
     this.enemies = this.enemies.filter((e) => e.hp > 0);
+
+    let near = 0;
+    for (const e of this.enemies) {
+      const left = this.map.routeLength(e.route) - e.dist;
+      if (left < 180) near = Math.max(near, 1 - left / 180);
+    }
+    this.danger = near;
+    if (this.danger > 0.42) {
+      this.sirenT -= tdt;
+      if (this.sirenT <= 0) {
+        this.audio.siren();
+        this.sirenT = 1.25;
+      }
+    } else {
+      this.sirenT = 0;
+    }
     for (const w of this.walls) {
       if (w.life > 0 && w.hp > 0) continue;
       this.fx.boom(w.x, w.y);
@@ -608,6 +1028,7 @@ export class Sim {
     for (const t of this.towers) {
       t.age += tdt;
       t.cooldown = Math.max(0, t.cooldown - tdt);
+      t.specialCd = Math.max(0, t.specialCd - tdt);
       if (t.kind === 'desk') continue;
       if (t.cooldown > 0) continue;
       const st = towerStats(t.kind, t.tier);
@@ -625,7 +1046,7 @@ export class Sim {
       } else if (t.kind === 'brick') {
         const e = this.target(t, range, false);
         if (!e) continue;
-        if (this.fireBrick(t, e)) t.cooldown = 1 / (st.fireRate * this.buffMult(t));
+        if (this.fireBrick(t, e, t.tier >= 2 ? 2 : 1)) t.cooldown = 1 / (st.fireRate * this.buffMult(t));
       }
     }
 

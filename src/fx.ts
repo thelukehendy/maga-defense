@@ -27,8 +27,8 @@ export type Floater = {
   scale: number;
 };
 
-const P_CAP = 720;
-const F_CAP = 64;
+const P_CAP = 900;
+const F_CAP = 80;
 
 export class FX {
   readonly particles: Particle[] = [];
@@ -137,14 +137,14 @@ export class FX {
   }
 
   patriotic(x: number, y: number, power = 1): void {
-    this.spawn(x, y, Math.floor(18 * power), ['#c8102e', '#f4f1e8', '#1c3f9a'], 140 * power, 'star', 4);
-    this.spawn(x, y, Math.floor(10 * power), ['#e6c35c', '#fff3b0'], 90 * power, 'coin', 5);
-    this.spawn(x, y, Math.floor(8 * power), ['#9aa7c2'], 50 * power, 'smoke', 8);
+    this.spawn(x, y, Math.floor(28 * power), ['#c8102e', '#f4f1e8', '#1c3f9a'], 170 * power, 'star', 5);
+    this.spawn(x, y, Math.floor(16 * power), ['#e6c35c', '#fff3b0'], 120 * power, 'coin', 6);
+    this.spawn(x, y, Math.floor(12 * power), ['#9aa7c2'], 70 * power, 'smoke', 10);
   }
 
   boom(x: number, y: number): void {
-    this.spawn(x, y, 28, ['#e6c35c', '#ff9f1c', '#fff3b0', '#c8102e'], 180, 'spark', 5);
-    this.spawn(x, y, 10, ['#6b7280', '#d1d5db'], 40, 'smoke', 12);
+    this.spawn(x, y, 40, ['#e6c35c', '#ff9f1c', '#fff3b0', '#c8102e'], 220, 'spark', 6);
+    this.spawn(x, y, 14, ['#6b7280', '#d1d5db'], 55, 'smoke', 14);
   }
 
   say(x: number, y: number, text: string, color: string, scale = 1): void {
@@ -152,9 +152,9 @@ export class FX {
     f.alive = true;
     f.x = x;
     f.y = y - 10;
-    f.vy = -38;
+    f.vy = scale > 1.2 ? -48 : -38;
     f.life = 0;
-    f.max = 0.95;
+    f.max = scale > 1.2 ? 1.45 : 0.95;
     f.text = text;
     f.color = color;
     f.scale = scale;

@@ -18,6 +18,7 @@ export const EnemyId = {
   alien: 'alien',
   drone: 'drone',
   bureaucrat: 'bureaucrat',
+  lobbyist: 'lobbyist',
 } as const;
 export type EnemyId = (typeof EnemyId)[keyof typeof EnemyId];
 
@@ -137,6 +138,16 @@ export const ENEMIES: Record<EnemyId, EnemyDef> = {
     leak: 18,
     flying: false,
     radius: 18,
+  },
+  lobbyist: {
+    id: 'lobbyist',
+    name: 'K-Street Lobbyist',
+    hp: 78,
+    speed: 50,
+    reward: 24,
+    leak: 13,
+    flying: false,
+    radius: 16,
   },
 };
 

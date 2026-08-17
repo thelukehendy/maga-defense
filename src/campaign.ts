@@ -197,6 +197,8 @@ export const MAPS: Record<MapId, MapDef> = {
       'The South Lawn has seen worse picnics.',
       'Keep them off the colonnade.',
       'The fountain is not a suggestion.',
+      'Somebody mow after this.',
+      'The roses did not ask for this.',
     ],
   },
   palazzo: {
@@ -237,6 +239,8 @@ export const MAPS: Record<MapId, MapDef> = {
       'Jackets required. Aliens excepted.',
       'The putting green is not a public park.',
       'Somebody bring the gold cart.',
+      'The pool remains members-only.',
+      'Sneakers are still a federal issue.',
     ],
   },
   border: {
@@ -277,6 +281,8 @@ export const MAPS: Record<MapId, MapDef> = {
       'The tunnel is not a suggestion.',
       'Watchtower reports: still tremendous.',
       'They split. You cover both.',
+      'Dust in the air. Ratings in the toilet. Not on your watch.',
+      'Finish the wall. Then finish the wave.',
     ],
   },
   avenue: {
@@ -317,6 +323,8 @@ export const MAPS: Record<MapId, MapDef> = {
       'The ticker never sleeps. Neither should you.',
       'Do not block the gold doors.',
       'A cab honks. It is always honking.',
+      'The lobby is velvet-roped. Keep it that way.',
+      'Opening bell in twelve waves. Make it green.',
     ],
   },
 };
@@ -343,7 +351,7 @@ export const TOWER_LORE: Record<
     motto: 'FACTS DON’T CARE ABOUT YOUR PATHING',
     story:
       'A neon-and-stone fact-checker with a satellite dish. It recites, very quickly, until the target is too embarrassed to continue existing.',
-    how: 'Highest fire rate. Low damage. Best against swarms and drones. Place on corners where the path doubles back.',
+    how: 'Highest fire rate. Low damage. Best against swarms and drones. Place on corners. Max it: FACTS chain twice, then E for FACT NOVA.',
     upgrades: ['FACT strobe', 'Prime-time klieg', 'UNPRECEDENTED BEAM'],
   },
   trebuchet: {
@@ -351,7 +359,7 @@ export const TOWER_LORE: Record<
     motto: 'IF IT’S HEAVY, TAX IT',
     story:
       'A bright-blue siege cannon that lobs solid-gold “TAX” shots on a lazy, insulting arc. The impact is not a metaphor. Nearby enemies pay collective duties.',
-    how: 'Slow, huge, area damage. Lead the target — the TAX shot is theatrical on purpose.',
+    how: 'Slow, huge, area damage. Lead the target. Max it: a gold puddle that keeps collecting. E for ORBITAL TARIFF.',
     upgrades: ['Import duty', 'Retaliatory levy', 'EMERGENCY TARIFF'],
   },
   brick: {
@@ -359,7 +367,7 @@ export const TOWER_LORE: Record<
     motto: 'AND MEXICO IS SENDING THE MORTAR',
     story:
       'A patriotic masonry howitzer. It does not kill. It inconveniences, historically. Mini-walls slam onto the track and ground units stack up like a press conference.',
-    how: 'Fires a wall onto the path ahead of a ground enemy. Drones fly over. Walls decay and can be smashed.',
+    how: 'Fires a wall onto the path ahead of a ground enemy. Drones fly over. Walls decay and can be smashed. Max it: two sections, then E to FINISH THE WALL.',
     upgrades: ['Prefab section', 'Rebar core', 'FINISHED WALL'],
   },
   desk: {
@@ -367,7 +375,7 @@ export const TOWER_LORE: Record<
     motto: 'SIGNED. SEALED. RAPID.',
     story:
       'The Resolute Desk, slightly more gold than historically accurate. Paperwork orbits it. Nearby towers suddenly remember they can work on weekends.',
-    how: 'Does not shoot. Buffs fire rate of towers in its aura. Stack desks to cover a whole killbox. Upgrade the aura, not the ego.',
+    how: 'Does not shoot. Buffs fire rate of towers in its aura. Stack desks over a killbox. Max it: the swamp also slows down. E for GOVERNMENT SHUTDOWN.',
     upgrades: ['Acting director', 'Cabinet session', 'DAY-ONE ORDER'],
   },
 };
@@ -381,7 +389,7 @@ export const ENEMY_LORE: Record<
     motto: 'WEAK. NUMEROUS. CROWNED.',
     story:
       'A walking globe in a tiny gold crown — a budget invasion from a planet that nationalized its saucers. Individually pathetic. Collectively a staffing problem. Truth Towers pop them like confetti.',
-    how: 'Fast ground swarm. Low HP. Walls stop them. Truth Towers melt them. Do not let a clump leak — death by a thousand approval cuts.',
+    how: 'Fast ground swarm. Low HP. Walls stop them. Truth Towers melt them. Later waves split — two smaller aliens from one. Do not let a clump leak.',
   },
   drone: {
     title: 'Fake News Drone',
@@ -395,9 +403,133 @@ export const ENEMY_LORE: Record<
     motto: 'GS-15 AND UNFIREABLE',
     story:
       'A short, hooded clerk with glasses, a clipboard, and a roll of red tape. Moves like a continuing resolution. Soaks damage that would embarrass a battleship.',
-    how: 'Slow ground tank. Massive HP. Chews walls. Needs Trebuchet splash plus a desk buff. Never leave one alive at the end of a wave.',
+    how: 'Slow ground tank. Massive HP. Chews walls. Needs Trebuchet splash plus a desk buff. Waves 6 and 12 send a Special Counsel. Tax him like you mean it.',
+  },
+  lobbyist: {
+    title: 'K-Street Lobbyist',
+    motto: 'THE SWAMP HAS A LOUNGE',
+    story:
+      'Pinstripes, sunglasses, and a briefcase full of other people’s money. He does not fight. He networks. Nearby swamp creatures suddenly remember their health insurance.',
+    how: 'Support. Heals nearby ground units. Medium HP. Burst the clump with TAX before the briefcase parks next to a bureaucrat.',
   },
 };
+
+export const WAVE_TITLES = [
+  'OPENING STATEMENT',
+  'CROWD’S GETTING BIG',
+  'THEY BROUGHT CAMERAS',
+  'THE SWAMP ARRIVES',
+  'RATINGS HOUR',
+  'SPECIAL COUNSEL',
+  'BOTH SIDES NOW',
+  'THE CARAVAN',
+  'EVERY NETWORK',
+  'THE BASE IS LIT',
+  'HISTORIC, THEY SAY',
+  'THE GREATEST WAVE',
+] as const;
+
+export const PAUSE_QUOTES = [
+  'The deep state waits for no one, but we can make an exception.',
+  'Even tremendous presidents hydrate.',
+  'This is a scheduled commercial break. Stay with us.',
+  'They said you would never pause. They were wrong. As usual.',
+  'The lawn is not going anywhere. Probably.',
+  'We are taking a very brief, very winning break.',
+  'Somebody get the ratings. Pause them if you have to.',
+  'The Special Counsel is stretching. Do not let him.',
+  'Fever is a lifestyle. Resume when you are ready to be historic.',
+] as const;
+
+export const END_QUOTES_WIN = [
+  'Cable news is furious. The fountain sparkles. You look fantastic.',
+  'They said it could not be done. It was done. Very professionally.',
+  'Approval is a lifestyle. You are living it.',
+  'The swarm has been deported from the metaphor.',
+  'Historic. Unprecedented. Slightly gold.',
+  'The ticker is green. The swamp is not. Perfect.',
+  'You maxed the lawn. They will write books. Bad books.',
+] as const;
+
+export const END_QUOTES_LOSS = [
+  'Somebody get this man a lawyer. And a Truth Tower.',
+  'The roses wilt. The ticker is red. So sad.',
+  'You had a very good feeling. The feeling has left the building.',
+  'They walked in. They always walk in if you let them.',
+  'The base is texting. The texts are not complimentary.',
+  'The Counsel took a victory lap. Do not allow that again.',
+  'More wall. More FACTS. Less coffee break.',
+] as const;
+
+export const TICKER = [
+  'BREAKING: lawn still green • swarm still fake • you still winning •',
+  'MARKETS LOVE WALLS • DONATIONS UP • DRONES WRONG AGAIN •',
+  'SOURCES SAY: tremendous • experts: furious • fountain: fine •',
+  'POLL: 99% of you are doing a fantastic job • 1% is the swamp •',
+  'WEATHER: sunny with a chance of tariffs • bring a Truth Tower •',
+  'ALERT: Special Counsel spotted near the roses • TAX accordingly •',
+  'FEVER WATCH: streak 20 is a lifestyle • do not drop it •',
+] as const;
+
+export const SPECIAL_NAME: Record<string, string> = {
+  truth: 'FACT NOVA',
+  trebuchet: 'ORBITAL TARIFF',
+  brick: 'FINISH THE WALL',
+  desk: 'GOVERNMENT SHUTDOWN',
+};
+
+export type FieldEventId =
+  | 'tweet'
+  | 'drive'
+  | 'blackout'
+  | 'witch'
+  | 'surge'
+  | 'finale'
+  | 'coffee'
+  | 'prime'
+  | 'caravan'
+  | 'counsel';
+
+export type FieldEvent = {
+  id: FieldEventId;
+  title: string;
+  blurb: string;
+  life: number;
+};
+
+export function eventForWave(wave: number): FieldEvent | null {
+  if (wave === 2) return { id: 'coffee', title: 'COFFEE BREAK', blurb: 'The swamp forgot how to walk. Briefly.', life: 2.6 };
+  if (wave === 3) return { id: 'tweet', title: 'TWEET STORM', blurb: 'Towers work weekends.', life: 8 };
+  if (wave === 4) return { id: 'prime', title: 'EXECUTIVE TIME', blurb: 'Everything hits harder. Believe me.', life: 8 };
+  if (wave === 5) return { id: 'drive', title: 'DONATION DRIVE', blurb: 'Kills pay double. Briefly.', life: 10 };
+  if (wave === 6) return { id: 'counsel', title: 'SPECIAL COUNSEL', blurb: 'A very large clerk is coming. TAX him.', life: 4.5 };
+  if (wave === 7) return { id: 'blackout', title: 'FAKE NEWS BLACKOUT', blurb: 'Drones forget how to fly fast.', life: 10 };
+  if (wave === 8) return { id: 'caravan', title: 'THE CARAVAN', blurb: 'Extra aliens. They did not RSVP.', life: 3.2 };
+  if (wave === 9) return { id: 'witch', title: 'WITCH HUNT', blurb: 'Bureaucrats found a second wind.', life: 8 };
+  if (wave === 10) return { id: 'prime', title: 'PRIME TIME', blurb: 'Every network. Every shot. Yuge.', life: 9 };
+  if (wave === 11) return { id: 'surge', title: 'RATINGS SURGE', blurb: 'The base is calling. Cash incoming.', life: 3.2 };
+  if (wave === 12) return { id: 'finale', title: 'FINAL RALLY', blurb: 'Everybody is watching. Fire faster.', life: 99 };
+  return null;
+}
+
+export function waveTitle(wave: number): string {
+  return WAVE_TITLES[Math.max(0, Math.min(WAVE_TITLES.length - 1, wave - 1))] ?? `WAVE ${wave}`;
+}
+
+export function wavePreview(map: MapId, wave: number): string {
+  const beats = campaignWaves(map, wave);
+  const counts: Partial<Record<EnemyId, number>> = {};
+  for (const b of beats) counts[b.kind] = (counts[b.kind] ?? 0) + b.n;
+  const names: Record<EnemyId, string> = {
+    alien: 'aliens',
+    drone: 'drones',
+    bureaucrat: 'clerks',
+    lobbyist: 'lobbyists',
+  };
+  return (Object.keys(counts) as EnemyId[])
+    .map((k) => `${counts[k]} ${names[k]}`)
+    .join(' · ');
+}
 
 export const STORY_CRAWL = [
   'They said the lawn could not be held.',
@@ -420,6 +552,7 @@ export function campaignWaves(map: MapId, wave: number): WaveBeat[] {
     ],
     [
       { kind: 'alien', n: 10, gap: 0.4 },
+      { kind: 'lobbyist', n: 1, gap: 1.1 },
       { kind: 'bureaucrat', n: 2, gap: 1.4 },
     ],
     [
@@ -428,7 +561,8 @@ export function campaignWaves(map: MapId, wave: number): WaveBeat[] {
     ],
     [
       { kind: 'bureaucrat', n: 3, gap: 1.15 },
-      { kind: 'alien', n: 14, gap: 0.32 },
+      { kind: 'lobbyist', n: 2, gap: 0.9 },
+      { kind: 'alien', n: 12, gap: 0.32 },
       { kind: 'drone', n: 4, gap: 0.55 },
     ],
     [
@@ -436,7 +570,8 @@ export function campaignWaves(map: MapId, wave: number): WaveBeat[] {
       { kind: 'bureaucrat', n: 3, gap: 1.05 },
     ],
     [
-      { kind: 'alien', n: 20, gap: 0.26 },
+      { kind: 'alien', n: 18, gap: 0.26 },
+      { kind: 'lobbyist', n: 2, gap: 0.7 },
       { kind: 'drone', n: 8, gap: 0.38 },
       { kind: 'bureaucrat', n: 4, gap: 0.85 },
     ],
@@ -445,7 +580,8 @@ export function campaignWaves(map: MapId, wave: number): WaveBeat[] {
       { kind: 'drone', n: 10, gap: 0.34 },
     ],
     [
-      { kind: 'alien', n: 24, gap: 0.22 },
+      { kind: 'alien', n: 22, gap: 0.22 },
+      { kind: 'lobbyist', n: 3, gap: 0.55 },
       { kind: 'drone', n: 12, gap: 0.3 },
       { kind: 'bureaucrat', n: 5, gap: 0.65 },
     ],
@@ -455,9 +591,10 @@ export function campaignWaves(map: MapId, wave: number): WaveBeat[] {
       { kind: 'alien', n: 16, gap: 0.2 },
     ],
     [
-      { kind: 'alien', n: 28, gap: 0.16 },
-      { kind: 'drone', n: 18, gap: 0.2 },
-      { kind: 'bureaucrat', n: 10, gap: 0.48 },
+      { kind: 'alien', n: 24, gap: 0.16 },
+      { kind: 'lobbyist', n: 4, gap: 0.42 },
+      { kind: 'drone', n: 16, gap: 0.2 },
+      { kind: 'bureaucrat', n: 9, gap: 0.48 },
     ],
   ];
   const palazzo: WaveBeat[][] = [
@@ -468,6 +605,7 @@ export function campaignWaves(map: MapId, wave: number): WaveBeat[] {
     ],
     [
       { kind: 'bureaucrat', n: 2, gap: 1.5 },
+      { kind: 'lobbyist', n: 1, gap: 1.2 },
       { kind: 'alien', n: 12, gap: 0.4 },
     ],
     [{ kind: 'drone', n: 10, gap: 0.48 }],
@@ -477,6 +615,7 @@ export function campaignWaves(map: MapId, wave: number): WaveBeat[] {
     ],
     [
       { kind: 'drone', n: 8, gap: 0.4 },
+      { kind: 'lobbyist', n: 2, gap: 0.85 },
       { kind: 'bureaucrat', n: 4, gap: 0.95 },
     ],
     [
@@ -492,7 +631,8 @@ export function campaignWaves(map: MapId, wave: number): WaveBeat[] {
       { kind: 'bureaucrat', n: 5, gap: 0.7 },
     ],
     [
-      { kind: 'alien', n: 22, gap: 0.22 },
+      { kind: 'alien', n: 20, gap: 0.22 },
+      { kind: 'lobbyist', n: 3, gap: 0.5 },
       { kind: 'drone', n: 10, gap: 0.28 },
       { kind: 'bureaucrat', n: 6, gap: 0.62 },
     ],
@@ -501,9 +641,10 @@ export function campaignWaves(map: MapId, wave: number): WaveBeat[] {
       { kind: 'drone', n: 14, gap: 0.26 },
     ],
     [
-      { kind: 'alien', n: 26, gap: 0.18 },
-      { kind: 'drone', n: 16, gap: 0.22 },
-      { kind: 'bureaucrat', n: 9, gap: 0.5 },
+      { kind: 'alien', n: 22, gap: 0.18 },
+      { kind: 'lobbyist', n: 4, gap: 0.4 },
+      { kind: 'drone', n: 14, gap: 0.22 },
+      { kind: 'bureaucrat', n: 8, gap: 0.5 },
     ],
   ];
   const border: WaveBeat[][] = [
@@ -523,6 +664,7 @@ export function campaignWaves(map: MapId, wave: number): WaveBeat[] {
     ],
     [
       { kind: 'bureaucrat', n: 5, gap: 0.9 },
+      { kind: 'lobbyist', n: 2, gap: 0.8 },
       { kind: 'alien', n: 10, gap: 0.36 },
     ],
     [
@@ -538,7 +680,8 @@ export function campaignWaves(map: MapId, wave: number): WaveBeat[] {
       { kind: 'drone', n: 8, gap: 0.36 },
     ],
     [
-      { kind: 'alien', n: 20, gap: 0.22 },
+      { kind: 'alien', n: 18, gap: 0.22 },
+      { kind: 'lobbyist', n: 3, gap: 0.55 },
       { kind: 'bureaucrat', n: 6, gap: 0.65 },
       { kind: 'drone', n: 10, gap: 0.3 },
     ],
@@ -547,9 +690,10 @@ export function campaignWaves(map: MapId, wave: number): WaveBeat[] {
       { kind: 'bureaucrat', n: 7, gap: 0.58 },
     ],
     [
-      { kind: 'alien', n: 30, gap: 0.16 },
-      { kind: 'drone', n: 14, gap: 0.22 },
-      { kind: 'bureaucrat', n: 10, gap: 0.5 },
+      { kind: 'alien', n: 26, gap: 0.16 },
+      { kind: 'lobbyist', n: 4, gap: 0.4 },
+      { kind: 'drone', n: 12, gap: 0.22 },
+      { kind: 'bureaucrat', n: 9, gap: 0.5 },
     ],
   ];
   const avenue: WaveBeat[][] = [
@@ -560,6 +704,7 @@ export function campaignWaves(map: MapId, wave: number): WaveBeat[] {
     ],
     [
       { kind: 'bureaucrat', n: 2, gap: 1.3 },
+      { kind: 'lobbyist', n: 1, gap: 1.0 },
       { kind: 'drone', n: 6, gap: 0.5 },
     ],
     [{ kind: 'alien', n: 16, gap: 0.34 }],
@@ -573,6 +718,7 @@ export function campaignWaves(map: MapId, wave: number): WaveBeat[] {
     ],
     [
       { kind: 'bureaucrat', n: 5, gap: 0.8 },
+      { kind: 'lobbyist', n: 2, gap: 0.7 },
       { kind: 'alien', n: 12, gap: 0.3 },
     ],
     [
@@ -593,9 +739,10 @@ export function campaignWaves(map: MapId, wave: number): WaveBeat[] {
       { kind: 'bureaucrat', n: 8, gap: 0.55 },
     ],
     [
-      { kind: 'alien', n: 26, gap: 0.16 },
-      { kind: 'drone', n: 20, gap: 0.18 },
-      { kind: 'bureaucrat', n: 11, gap: 0.46 },
+      { kind: 'alien', n: 22, gap: 0.16 },
+      { kind: 'lobbyist', n: 4, gap: 0.36 },
+      { kind: 'drone', n: 18, gap: 0.18 },
+      { kind: 'bureaucrat', n: 10, gap: 0.46 },
     ],
   ];
   const pack = { lawn, palazzo, border, avenue }[map];
