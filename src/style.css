@@ -577,8 +577,9 @@ body {
 }
 
 #overlay-select {
-  place-items: stretch center;
-  align-content: stretch;
+  place-items: start center;
+  align-content: start;
+  justify-items: center;
   padding:
     max(8px, var(--safe-t))
     max(10px, var(--safe-r))
@@ -600,18 +601,69 @@ body {
 #overlay-select .panel.mission {
   display: flex;
   flex-direction: column;
-  min-height: calc(100% - 4px);
+  gap: clamp(10px, 1.6vh, 18px);
+  min-height: 0;
   max-height: none;
+  width: min(1040px, 100%);
   margin: 0 auto;
   box-sizing: border-box;
 }
 
-#overlay-select .maps {
-  flex: 1 1 auto;
+#overlay-select .panel.mission > .kicker,
+#overlay-select .panel.mission > h2,
+#overlay-select .panel.mission > .sub {
+  flex: 0 0 auto;
+  margin: 0;
 }
 
-#overlay-select .map-grid {
+#overlay-select .diffs,
+#overlay-select .maps {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.1vh, 10px);
+  flex: 0 1 auto;
+  min-height: 0;
+}
+
+#overlay-select .section-label {
+  margin: 0;
+}
+
+#overlay-select .map-grid,
+#overlay-select .diff-grid {
+  flex: 0 1 auto;
+  min-height: 0;
+  height: auto;
+  align-content: start;
+}
+
+#overlay-select .plaque {
+  min-width: 0;
+  min-height: clamp(96px, 14vh, 148px);
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  flex-shrink: 1;
+}
+
+#overlay-select .plaque-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
   height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: 50% 28%;
+}
+
+#overlay-select .pitch {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+#overlay-select .deploy-cta {
+  flex: 0 0 auto;
+  margin-top: 2px;
 }
 
 .overlay.overlay-hero {
@@ -921,7 +973,7 @@ body {
 .map-grid,
 .dossier-grid {
   display: grid;
-  gap: 10px;
+  gap: clamp(8px, 1.2vh, 12px);
   text-align: left;
 }
 
@@ -1075,11 +1127,15 @@ body {
 
 .plaque-name {
   display: block;
+  margin-top: auto;
   font-family: Impact, sans-serif;
   font-size: 18px;
   letter-spacing: 0.04em;
-  padding-right: 0;
-  text-shadow: 0 2px 0 #1a1204;
+  padding: 6px 10px 2px;
+  color: #fffdf2;
+  text-shadow:
+    0 1px 0 #1a1204,
+    0 2px 8px rgba(0, 0, 0, 0.85);
 }
 
 .plaque-sub {
@@ -1208,11 +1264,10 @@ canvas.portrait {
 }
 
 /*
- * Deploy CTA dead zone: 2-col maps (≤1100) make the panel taller than many
- * desktop heights, while the sticky bar used to start only at ≤900.
- * Keep PLAY MISSION on-screen and leave scroll room under the bar.
+ * PLAY MISSION stays on-screen whenever Deploy can overflow the viewport.
+ * Plaques keep a real min-height so map art is not crushed by the old 64px floor.
  */
-@media (max-width: 1100px), (max-height: 820px) {
+@media (max-width: 1100px), (max-height: 1200px) {
   #overlay-select .hero-row {
     position: fixed;
     left: 0;
@@ -1229,15 +1284,24 @@ canvas.portrait {
     border-top: 3px solid var(--gold);
     box-shadow: inset 0 1px 0 #8a6a1a, 0 -8px 24px rgba(0, 0, 0, 0.35);
   }
-  #overlay-select .panel {
+  #overlay-select .panel.mission {
     padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   }
-  #overlay-select .plaque,
   #overlay-select .diff-btn {
     min-height: 64px;
   }
+}
+
+@media (max-height: 800px) {
   #overlay-select .plaque-brief,
   #overlay-select .diff-blurb {
+    display: none;
+  }
+}
+
+@media (max-height: 640px) {
+  #overlay-select .pitch,
+  #overlay-select .panel.mission > .sub {
     display: none;
   }
 }
@@ -1334,11 +1398,14 @@ canvas.portrait {
     transform: none;
     min-height: 44px;
   }
+  #overlay-select .plaque {
+    min-height: 108px;
+  }
   .plaque-brief,
   .diff-blurb {
     display: none;
   }
-  #overlay-select .panel {
+  #overlay-select .panel.mission {
     padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   }
   #overlay-info .cta {
@@ -1786,6 +1853,117 @@ canvas.portrait {
   }
 }
 
+/* Landscape tablets/desktops: maps | diffs so plaques keep 4/3 and CTA stays in flow. */
+@media (min-width: 720px) and (orientation: landscape) {
+  #overlay-select {
+    align-content: safe center;
+    place-items: center;
+  }
+  #overlay-select .hero-row {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: 2;
+    width: 100%;
+    max-width: none;
+    margin: 4px 0 0;
+    padding: 0;
+    background: transparent;
+    border-top: none;
+    box-shadow: none;
+  }
+  #overlay-select .panel.mission {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-areas:
+      'kick kick'
+      'title title'
+      'maps diffs'
+      'pitch pitch'
+      'cta cta';
+    gap: 10px 14px;
+    align-content: start;
+    text-align: left;
+    min-height: 0;
+    max-height: 100%;
+    padding-bottom: 16px;
+  }
+  #overlay-select .kicker {
+    grid-area: kick;
+    margin: 0;
+  }
+  #overlay-select .panel.mission > h2 {
+    grid-area: title;
+    margin: 0;
+    font-size: clamp(22px, 4.2vh, 36px);
+  }
+  #overlay-select .panel.mission > .sub {
+    display: none;
+  }
+  #overlay-select .maps,
+  #overlay-select .diffs {
+    min-width: 0;
+    min-height: 0;
+    flex: none;
+    gap: 6px;
+    height: 100%;
+  }
+  #overlay-select .maps {
+    grid-area: maps;
+  }
+  #overlay-select .diffs {
+    grid-area: diffs;
+  }
+  #overlay-select .diff-grid {
+    flex: 1 1 auto;
+    grid-auto-rows: 1fr;
+    min-height: 0;
+  }
+  #overlay-select .diff-btn {
+    height: 100%;
+    min-height: 56px;
+    padding: 8px 10px;
+    justify-content: center;
+  }
+  #overlay-select .pitch {
+    grid-area: pitch;
+    display: block;
+    margin: 0;
+    font-size: 12px;
+  }
+  #overlay-select .hero-row {
+    grid-area: cta;
+  }
+  #overlay-select .section-label {
+    margin: 0;
+    font-size: 10px;
+  }
+  #overlay-select .map-grid,
+  #overlay-select .diff-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    min-height: 0;
+    height: 100%;
+    grid-auto-rows: 1fr;
+    align-content: stretch;
+  }
+  #overlay-select .map-grid {
+    height: 100%;
+  }
+  #overlay-select .plaque {
+    min-height: 0;
+    height: 100%;
+    aspect-ratio: auto;
+    padding: 8px 10px 10px;
+  }
+  #overlay-select .plaque-sub,
+  #overlay-select .plaque-brief,
+  #overlay-select .diff-blurb {
+    display: none;
+  }
+}
+
 /* Short LANDSCAPE only — row HUD + side-by-side Deploy (not portrait keyboard). */
 @media (max-height: 540px) and (orientation: landscape) {
   .hud-bottom {
@@ -1892,6 +2070,7 @@ canvas.portrait {
     gap: 6px 10px;
     align-content: start;
     text-align: left;
+    padding-bottom: 12px;
   }
   #overlay-select .kicker {
     grid-area: kick;
@@ -1930,7 +2109,10 @@ canvas.portrait {
     grid-template-columns: 1fr 1fr;
     gap: 4px;
   }
-  #overlay-select .plaque,
+  #overlay-select .plaque {
+    min-height: 64px;
+    padding: 6px 8px;
+  }
   #overlay-select .diff-btn {
     min-height: 44px;
     padding: 6px 8px;
@@ -1948,7 +2130,10 @@ canvas.portrait {
     max-height: none;
     overflow: visible;
   }
-  #overlay-select .plaque,
+  #overlay-select .plaque {
+    min-height: 72px;
+    padding: 8px 10px;
+  }
   #overlay-select .diff-btn {
     min-height: 48px;
     padding: 6px 8px;
@@ -1983,11 +2168,16 @@ canvas.portrait {
     text-align: center;
   }
   #overlay-select .pitch {
-    display: block;
     font-size: 12px;
     line-height: 1.35;
-    margin: 8px 0 0;
+    margin: 0;
     color: #c8d2e8;
+  }
+  #overlay-select .plaque-sub {
+    display: none;
+  }
+  #overlay-select .plaque-name {
+    font-size: 15px;
   }
   .dossier.foe {
     grid-column: auto;
@@ -2002,6 +2192,25 @@ canvas.portrait {
   .overlay.overlay-hero .hero-title {
     font-size: clamp(36px, 12vw, 52px);
     line-height: 0.92;
+  }
+}
+
+@media (max-width: 520px) and (min-height: 740px) and (orientation: portrait) {
+  #overlay-select .panel.mission {
+    gap: 16px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  #overlay-select .diffs,
+  #overlay-select .maps {
+    gap: 10px;
+  }
+  #overlay-select .plaque {
+    min-height: 120px;
+  }
+  #overlay-select .diff-btn {
+    min-height: 72px;
+    padding: 8px 10px;
   }
 }
 
@@ -2165,6 +2374,60 @@ canvas.portrait {
     min-height: 44px;
     font-size: 12px;
     padding: 0 6px;
+  }
+}
+
+@media (min-height: 1201px) {
+  #overlay-select {
+    align-content: safe center;
+  }
+  #overlay-select .hero-row {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    z-index: 2;
+    width: 100%;
+    max-width: min(520px, 100%);
+    margin: 4px auto 0;
+    padding: 0;
+    background: transparent;
+    border-top: none;
+    box-shadow: none;
+  }
+  #overlay-select .panel.mission {
+    padding-bottom: 24px;
+  }
+}
+
+/* Desktop/landscape: portrait hero sits as a full-height pillar — no crop of Trump or bureaucrats. */
+@media (min-aspect-ratio: 1 / 1), (orientation: landscape) {
+  .overlay.overlay-hero {
+    background:
+      radial-gradient(ellipse 55% 80% at 50% 45%, #163a72 0%, #0a1c3a 55%, #071428 100%);
+  }
+  .overlay.overlay-hero .hero-art,
+  .overlay.overlay-hero .hero-img,
+  .overlay.overlay-hero .hero-bg,
+  .overlay.overlay-hero > img {
+    inset: auto;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: auto;
+    height: 100%;
+    max-width: none;
+    max-height: 100%;
+    aspect-ratio: 669 / 1200;
+    object-fit: contain;
+    object-position: center center;
+    transform: translateX(-50%);
+  }
+  .overlay.overlay-hero .hero-scrim {
+    background:
+      linear-gradient(90deg, rgba(7, 20, 40, 0.72) 0%, transparent 18%, transparent 82%, rgba(7, 20, 40, 0.72) 100%),
+      linear-gradient(180deg, rgba(10, 28, 58, 0.35) 0%, transparent 14%, transparent 88%, rgba(10, 28, 58, 0.4) 100%),
+      radial-gradient(ellipse 42% 70% at 0% 55%, rgba(6, 16, 36, 0.55) 0%, transparent 70%);
   }
 }
 

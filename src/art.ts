@@ -437,7 +437,8 @@ function woodDoor(ctx: CanvasRenderingContext2D, x: number, y: number, w: number
   paint(ctx, lin(ctx, x, y, x + w, y, C.blueHi, C.blue, C.blueLo), 1.6);
 }
 
-function leakRim(
+/** Damage pulse on the keep — used alone when painted map art already draws the building. */
+export function drawKeepLeak(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
@@ -457,6 +458,18 @@ function leakRim(
   ctx.strokeStyle = `rgba(255,90,90,${pulse * 0.45 * leak})`;
   ctx.lineWidth = 2.2;
   ctx.stroke();
+}
+
+function leakRim(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  time: number,
+  leak: number,
+): void {
+  drawKeepLeak(ctx, x, y, w, h, time, leak);
 }
 
 function keepCannon(ctx: CanvasRenderingContext2D, x: number, y: number, dir: number): void {

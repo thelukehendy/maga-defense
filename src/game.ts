@@ -1,4 +1,4 @@
-import { type DifficultyId, type MapId } from './campaign.ts';
+import { type DifficultyId, MAPS, MAP_ORDER, type MapId } from './campaign.ts';
 import { Synth } from './audio.ts';
 import { FrameLoop, TraumaCamera, View } from './engine.ts';
 import { FX } from './fx.ts';
@@ -33,6 +33,7 @@ export class Game {
     this.view = new View(canvas, ctx);
     this.sim = new Sim(this.map, this.fx, this.cam, this.audio);
     this.renderer = new Renderer(this.map);
+    this.renderer.preloadArts(MAP_ORDER.map((id) => MAPS[id].art).filter(Boolean) as string[]);
     this.hud = bindHud(root);
     this.loop = new FrameLoop(
       (dt) => this.step(dt),

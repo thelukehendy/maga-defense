@@ -1,7 +1,7 @@
 import { easeOutBack, seeded } from './engine.ts';
 import { star } from './fx.ts';
 import type { FX } from './fx.ts';
-import { drawEnemyArt, drawKeep, drawLandmarkArt, drawTowerArt } from './art.ts';
+import { drawEnemyArt, drawKeep, drawKeepLeak, drawLandmarkArt, drawTowerArt } from './art.ts';
 import { houseOrigin, towerStats, type Theme } from './campaign.ts';
 import type { GameMap } from './map.ts';
 import type { Enemy, Sim, Tower, Wall } from './sim.ts';
@@ -40,6 +40,8 @@ export class Renderer {
   private bg: HTMLCanvasElement;
   private bgx: CanvasRenderingContext2D;
   private map: GameMap;
+  private art: HTMLImageElement | null = null;
+  private readonly artCache = new Map<string, HTMLImageElement>();
 
   constructor(map: GameMap) {
     this.map = map;
@@ -49,6 +51,12 @@ export class Renderer {
     this.bg = off;
     this.bgx = off.getContext('2d')!;
     this.bake();
+    void this.ensureArt(map.def.art);
+  }
+
+  /** Preload all map art so swaps are instant. */
+  preloadArts(urls: string[]): void {
+    for (const url of urls) void this.ensureArt(url);
   }
 
   resize(dpr: number, scale: number): void {
@@ -61,14 +69,106 @@ export class Renderer {
 
   setMap(map: GameMap, dpr: number, scale: number): void {
     this.map = map;
+    // Bake immediately (cached art or procedural), then re-bake when fetch completes.
+    const pending = this.ensureArt(map.def.art);
     this.resize(dpr, scale);
+    void pending.then(() => {
+      if (this.map === map) this.resize(dpr, scale);
+    });
+  }
+
+  private ensureArt(url: string | undefined): Promise<void> {
+    if (!url) {
+      this.art = null;
+      return Promise.resolve();
+    }
+    const cached = this.artCache.get(url);
+    if (cached?.complete && cached.naturalWidth > 0) {
+      this.art = cached;
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      const img = cached ?? new Image();
+      img.decoding = 'async';
+      const done = (): void => {
+        this.artCache.set(url, img);
+        if (this.map.def.art === url) {
+          this.art = img;
+          this.bake();
+        }
+        resolve();
+      };
+      img.onload = done;
+      img.onerror = () => {
+        if (this.map.def.art === url) this.art = null;
+        resolve();
+      };
+      if (!cached) {
+        img.src = url;
+        this.artCache.set(url, img);
+      }
+      if (img.complete && img.naturalWidth > 0) done();
+    });
   }
 
   private bake(): void {
     const ctx = this.bgx;
     ctx.clearRect(0, 0, WORLD_W, WORLD_H);
     const theme = this.map.def.theme;
+    const art = this.art;
 
+    if (art && art.complete && art.naturalWidth > 0) {
+      // Layer 1 — painted battlefield (exact world pixels).
+      ctx.drawImage(art, 0, 0, WORLD_W, WORLD_H);
+      // Layer 1b — hairline guide locked to GameMap samples (road is baked into art).
+      this.paintAlignedPath(ctx, theme);
+      this.paintBuildHints(ctx, theme);
+      // Painted portals already mark the spawn — skip the gold IN badge.
+      return;
+    }
+
+    this.bakeProcedural(ctx, theme);
+  }
+
+  /**
+   * Ultra-light centerline so enemies read as locked to the baked brick road.
+   */
+  private paintAlignedPath(ctx: CanvasRenderingContext2D, theme: Theme): void {
+    ctx.save();
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.globalAlpha = 0.1;
+    ctx.strokeStyle = mixHex(theme.pathEdge, '#1a0808', 0.25);
+    ctx.lineWidth = CELL * 0.82;
+    this.strokePath(ctx);
+    ctx.globalAlpha = 0.18;
+    ctx.strokeStyle = 'rgba(255, 248, 230, 0.45)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 11]);
+    this.strokePath(ctx);
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  /** Nearly invisible pads — art grass stays dominant. */
+  private paintBuildHints(ctx: CanvasRenderingContext2D, theme: Theme): void {
+    ctx.save();
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (this.map.isPath(c, r) || this.map.blocked[this.map.idx(c, r)]) continue;
+        const x = c * CELL;
+        const y = r * CELL;
+        ctx.globalAlpha = 0.03;
+        ctx.fillStyle = mixHex(theme.grassHi, '#ffffff', 0.35);
+        ctx.beginPath();
+        ctx.roundRect(x + 10, y + 10, CELL - 20, CELL - 20, 10);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  private bakeProcedural(ctx: CanvasRenderingContext2D, theme: Theme): void {
     const sky = ctx.createLinearGradient(0, 0, 0, WORLD_H);
     sky.addColorStop(0, theme.skyTop);
     sky.addColorStop(0.22, mixHex(theme.skyTop, theme.skyBot, 0.45));
@@ -121,14 +221,6 @@ export class Renderer {
         ctx.fill();
         ctx.globalAlpha = 1;
         if (seeded(c * 5.1 + r * 2.7) > 0.38) this.grassTuft(ctx, theme, x, Math.max(y, lip), c, r);
-        if (seeded(c * 11 + r * 17) > 0.88) {
-          const sparkY = Math.max(lip + 8, y + CELL * (0.3 + seeded(c + r) * 0.4));
-          ctx.fillStyle = mixHex(theme.star, '#e6c35c', 0.4);
-          ctx.globalAlpha = 0.45;
-          star(ctx, x + CELL * (0.28 + shade * 0.44), sparkY, 3.2, 1.3, 5);
-          ctx.fill();
-          ctx.globalAlpha = 1;
-        }
       }
     }
 
@@ -394,13 +486,19 @@ export class Renderer {
     flash: number,
   ): void {
     ctx.drawImage(this.bg, 0, 0, WORLD_W, WORLD_H);
-    this.drawAmbient(ctx, time);
-    for (const lm of this.map.def.landmarks) {
-      const p = this.map.center(lm.c, lm.r);
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      drawLandmarkArt(ctx, lm.kind, time);
-      ctx.restore();
+    // Painted maps already have sky/scenery — skip procedural ambient wash.
+    if (!this.art || !this.art.complete || this.art.naturalWidth <= 0) {
+      this.drawAmbient(ctx, time);
+    }
+    // Painted art already includes scenery — only draw landmarks as fallback.
+    if (!this.art || !this.art.complete) {
+      for (const lm of this.map.def.landmarks) {
+        const p = this.map.center(lm.c, lm.r);
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        drawLandmarkArt(ctx, lm.kind, time);
+        ctx.restore();
+      }
     }
     this.drawHouse(ctx, time, sim.leaking);
     if (sim.hover && sim.placing) this.drawGhost(ctx, sim, sim.hover);
@@ -496,6 +594,11 @@ export class Renderer {
 
   private drawHouse(ctx: CanvasRenderingContext2D, time: number, leak: number): void {
     const box = houseOrigin(this.map.def);
+    // Painted battlefield already includes the keep — only pulse damage feedback.
+    if (this.art && this.art.complete && this.art.naturalWidth > 0) {
+      drawKeepLeak(ctx, box.x, box.y, box.w, box.h, time, leak);
+      return;
+    }
     drawKeep(ctx, box.x, box.y, box.w, box.h, time, leak, this.map.def.id);
   }
 

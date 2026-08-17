@@ -123,6 +123,7 @@ export const DIFFICULTIES: Record<DifficultyId, Difficulty> = {
 
 export type MapDef = {
   id: MapId;
+  art?: string;
   name: string;
   subtitle: string;
   briefing: string;
@@ -141,9 +142,26 @@ function cells(run: (add: (c: number, r: number) => void) => void): [number, num
   return out;
 }
 
+/** TOP portal → BOTTOM keep. Readable center S (COLS=10, ROWS=18). */
+function centerSPath(): [number, number][] {
+  return cells((add) => {
+    for (let y = 0; y <= 2; y++) add(4, y);
+    for (let x = 5; x <= 8; x++) add(x, 2);
+    for (let y = 3; y <= 5; y++) add(8, y);
+    for (let x = 7; x >= 1; x--) add(x, 5);
+    for (let y = 6; y <= 9; y++) add(1, y);
+    for (let x = 2; x <= 7; x++) add(x, 9);
+    for (let y = 10; y <= 12; y++) add(7, y);
+    for (let x = 6; x >= 3; x--) add(x, 12);
+    for (let y = 13; y <= 14; y++) add(3, y);
+    add(4, 14);
+  });
+}
+
 export const MAPS: Record<MapId, MapDef> = {
   lawn: {
     id: 'lawn',
+    art: './maps/play-lawn.jpg?v=3',
     name: 'South Lawn',
     subtitle: 'Protect the People’s House',
     briefing:
@@ -161,19 +179,8 @@ export const MAPS: Record<MapId, MapDef> = {
       grid: 'rgba(255,255,255,0.16)',
       star: '#fffdf2',
     },
-    // Portrait: spawn at top, keep at bottom. S-curve through the lawn.
-    path: cells((add) => {
-      for (let y = 0; y <= 2; y++) add(1, y);
-      for (let x = 2; x <= 8; x++) add(x, 2);
-      for (let y = 3; y <= 5; y++) add(8, y);
-      for (let x = 7; x >= 1; x--) add(x, 5);
-      for (let y = 6; y <= 9; y++) add(1, y);
-      for (let x = 2; x <= 7; x++) add(x, 9);
-      for (let y = 10; y <= 13; y++) add(7, y);
-      for (let x = 6; x >= 3; x--) add(x, 13);
-      for (let y = 14; y <= 14; y++) add(3, y);
-      add(4, 14);
-    }),
+    // Portrait: spawn at top, keep at bottom. Center S through the lawn.
+    path: centerSPath(),
     house: [
       [3, 15],
       [4, 15],
@@ -185,44 +192,7 @@ export const MAPS: Record<MapId, MapDef> = {
       [4, 17],
       [5, 17],
     ],
-    landmarks: [
-      { kind: 'fountain', c: 4, r: 3 },
-      { kind: 'roses', c: 6, r: 7 },
-      { kind: 'lincoln', c: 2, r: 11 },
-      { kind: 'tree', c: 0, r: 0 },
-      { kind: 'tree', c: 9, r: 0 },
-      { kind: 'bush', c: 5, r: 0 },
-      { kind: 'lamp', c: 3, r: 1 },
-      { kind: 'roses', c: 8, r: 1 },
-      { kind: 'tree', c: 0, r: 3 },
-      { kind: 'tree', c: 9, r: 3 },
-      { kind: 'bush', c: 0, r: 4 },
-      { kind: 'bench', c: 1, r: 4 },
-      { kind: 'lamp', c: 7, r: 4 },
-      { kind: 'bush', c: 2, r: 6 },
-      { kind: 'tree', c: 0, r: 7 },
-      { kind: 'pond', c: 4, r: 7 },
-      { kind: 'bush', c: 9, r: 6 },
-      { kind: 'bench', c: 8, r: 7 },
-      { kind: 'bush', c: 0, r: 8 },
-      { kind: 'tree', c: 9, r: 8 },
-      { kind: 'bridge', c: 5, r: 10 },
-      { kind: 'lamp', c: 1, r: 10 },
-      { kind: 'tree', c: 8, r: 10 },
-      { kind: 'statue', c: 4, r: 11 },
-      { kind: 'bush', c: 6, r: 11 },
-      { kind: 'tree', c: 0, r: 12 },
-      { kind: 'bench', c: 5, r: 12 },
-      { kind: 'lamp', c: 8, r: 12 },
-      { kind: 'tunnel', c: 9, r: 12 },
-      { kind: 'bush', c: 1, r: 14 },
-      { kind: 'roses', c: 6, r: 14 },
-      { kind: 'bush', c: 9, r: 14 },
-      { kind: 'tree', c: 0, r: 16 },
-      { kind: 'lamp', c: 2, r: 16 },
-      { kind: 'bush', c: 6, r: 16 },
-      { kind: 'tree', c: 9, r: 16 },
-    ],
+    landmarks: [],
     flavor: [
       'The South Lawn has seen worse picnics.',
       'Keep them off the colonnade.',
@@ -231,6 +201,7 @@ export const MAPS: Record<MapId, MapDef> = {
   },
   palazzo: {
     id: 'palazzo',
+    art: './maps/play-palazzo.jpg?v=3',
     name: 'Mar-a-Lago Drive',
     subtitle: 'Gold, palms, and a very exclusive gate',
     briefing:
@@ -248,17 +219,8 @@ export const MAPS: Record<MapId, MapDef> = {
       grid: 'rgba(255,255,255,0.18)',
       star: '#fff6d0',
     },
-    // Service drive → pool loop → ballroom steps (bottom keep).
-    path: cells((add) => {
-      for (let y = 0; y <= 3; y++) add(8, y);
-      for (let x = 7; x >= 1; x--) add(x, 3);
-      for (let y = 4; y <= 7; y++) add(1, y);
-      for (let x = 2; x <= 8; x++) add(x, 7);
-      for (let y = 8; y <= 10; y++) add(8, y);
-      for (let x = 7; x >= 2; x--) add(x, 10);
-      for (let y = 11; y <= 14; y++) add(2, y);
-      for (let x = 3; x <= 5; x++) add(x, 14);
-    }),
+    // Service drive S down to the ballroom steps (bottom keep).
+    path: centerSPath(),
     house: [
       [3, 15],
       [4, 15],
@@ -270,44 +232,7 @@ export const MAPS: Record<MapId, MapDef> = {
       [4, 17],
       [5, 17],
     ],
-    landmarks: [
-      { kind: 'palm', c: 3, r: 1 },
-      { kind: 'palm', c: 6, r: 5 },
-      { kind: 'pool', c: 4, r: 8 },
-      { kind: 'golf', c: 7, r: 12 },
-      { kind: 'palm', c: 0, r: 0 },
-      { kind: 'palm', c: 6, r: 0 },
-      { kind: 'palm', c: 9, r: 0 },
-      { kind: 'bush', c: 1, r: 1 },
-      { kind: 'lamp', c: 5, r: 1 },
-      { kind: 'palm', c: 7, r: 2 },
-      { kind: 'bush', c: 2, r: 4 },
-      { kind: 'palm', c: 9, r: 4 },
-      { kind: 'palm', c: 0, r: 5 },
-      { kind: 'bench', c: 3, r: 5 },
-      { kind: 'pool', c: 4, r: 5 },
-      { kind: 'roses', c: 8, r: 5 },
-      { kind: 'lamp', c: 2, r: 8 },
-      { kind: 'bench', c: 6, r: 8 },
-      { kind: 'tunnel', c: 9, r: 8 },
-      { kind: 'palm', c: 0, r: 9 },
-      { kind: 'bush', c: 7, r: 9 },
-      { kind: 'statue', c: 4, r: 11 },
-      { kind: 'palm', c: 6, r: 11 },
-      { kind: 'bridge', c: 8, r: 11 },
-      { kind: 'bench', c: 1, r: 12 },
-      { kind: 'pond', c: 4, r: 12 },
-      { kind: 'bush', c: 3, r: 13 },
-      { kind: 'lamp', c: 6, r: 13 },
-      { kind: 'palm', c: 9, r: 13 },
-      { kind: 'palm', c: 0, r: 14 },
-      { kind: 'roses', c: 6, r: 14 },
-      { kind: 'palm', c: 0, r: 16 },
-      { kind: 'lamp', c: 2, r: 16 },
-      { kind: 'bush', c: 6, r: 16 },
-      { kind: 'tree', c: 8, r: 16 },
-      { kind: 'palm', c: 9, r: 16 },
-    ],
+    landmarks: [],
     flavor: [
       'Jackets required. Aliens excepted.',
       'The putting green is not a public park.',
@@ -316,6 +241,7 @@ export const MAPS: Record<MapId, MapDef> = {
   },
   border: {
     id: 'border',
+    art: './maps/play-border.jpg?v=3',
     name: 'Frontier Ridge',
     subtitle: 'Steel, dust, and a very finished wall',
     briefing:
@@ -333,18 +259,8 @@ export const MAPS: Record<MapId, MapDef> = {
       grid: 'rgba(255,255,255,0.14)',
       star: '#fff4d4',
     },
-    // Ridge switchbacks down to the finished wall / keep.
-    path: cells((add) => {
-      for (let y = 0; y <= 2; y++) add(2, y);
-      for (let x = 3; x <= 7; x++) add(x, 2);
-      for (let y = 3; y <= 6; y++) add(7, y);
-      for (let x = 6; x >= 1; x--) add(x, 6);
-      for (let y = 7; y <= 10; y++) add(1, y);
-      for (let x = 2; x <= 8; x++) add(x, 10);
-      for (let y = 11; y <= 13; y++) add(8, y);
-      for (let x = 7; x >= 4; x--) add(x, 13);
-      add(4, 14);
-    }),
+    // Ridge S-switchbacks down to the finished wall / keep.
+    path: centerSPath(),
     house: [
       [3, 15],
       [4, 15],
@@ -356,42 +272,7 @@ export const MAPS: Record<MapId, MapDef> = {
       [4, 17],
       [5, 17],
     ],
-    landmarks: [
-      { kind: 'cactus', c: 3, r: 4 },
-      { kind: 'cactus', c: 5, r: 8 },
-      { kind: 'watch', c: 4, r: 1 },
-      { kind: 'gate', c: 6, r: 11 },
-      { kind: 'cactus', c: 0, r: 0 },
-      { kind: 'cactus', c: 6, r: 0 },
-      { kind: 'cactus', c: 9, r: 0 },
-      { kind: 'bush', c: 8, r: 1 },
-      { kind: 'cactus', c: 0, r: 2 },
-      { kind: 'cactus', c: 9, r: 2 },
-      { kind: 'bush', c: 2, r: 3 },
-      { kind: 'lamp', c: 0, r: 4 },
-      { kind: 'cactus', c: 5, r: 4 },
-      { kind: 'cactus', c: 9, r: 4 },
-      { kind: 'bush', c: 4, r: 5 },
-      { kind: 'bush', c: 7, r: 7 },
-      { kind: 'cactus', c: 0, r: 8 },
-      { kind: 'cactus', c: 2, r: 8 },
-      { kind: 'pond', c: 4, r: 8 },
-      { kind: 'cactus', c: 8, r: 8 },
-      { kind: 'cactus', c: 9, r: 9 },
-      { kind: 'cactus', c: 2, r: 11 },
-      { kind: 'bridge', c: 4, r: 11 },
-      { kind: 'tunnel', c: 0, r: 12 },
-      { kind: 'bush', c: 3, r: 12 },
-      { kind: 'cactus', c: 5, r: 12 },
-      { kind: 'bench', c: 7, r: 12 },
-      { kind: 'cactus', c: 1, r: 14 },
-      { kind: 'statue', c: 6, r: 14 },
-      { kind: 'cactus', c: 8, r: 14 },
-      { kind: 'bush', c: 0, r: 16 },
-      { kind: 'lamp', c: 2, r: 16 },
-      { kind: 'bush', c: 6, r: 16 },
-      { kind: 'cactus', c: 9, r: 16 },
-    ],
+    landmarks: [],
     flavor: [
       'The wall has a gift shop now.',
       'Watchtower reports: still tremendous.',
@@ -400,6 +281,7 @@ export const MAPS: Record<MapId, MapDef> = {
   },
   avenue: {
     id: 'avenue',
+    art: './maps/play-avenue.jpg?v=3',
     name: 'Fifth Avenue',
     subtitle: 'Traffic, tickers, and a gold tower',
     briefing:
@@ -417,17 +299,8 @@ export const MAPS: Record<MapId, MapDef> = {
       grid: 'rgba(255,255,255,0.14)',
       star: '#fff6e0',
     },
-    // Midtown grid: avenue → crosstown → lobby approach.
-    path: cells((add) => {
-      for (let y = 0; y <= 4; y++) add(1, y);
-      for (let x = 2; x <= 6; x++) add(x, 4);
-      for (let y = 5; y <= 7; y++) add(6, y);
-      for (let x = 5; x >= 2; x--) add(x, 7);
-      for (let y = 8; y <= 11; y++) add(2, y);
-      for (let x = 3; x <= 8; x++) add(x, 11);
-      for (let y = 12; y <= 14; y++) add(8, y);
-      for (let x = 7; x >= 4; x--) add(x, 14);
-    }),
+    // Midtown S: avenue → crosstown → lobby approach.
+    path: centerSPath(),
     house: [
       [3, 15],
       [4, 15],
@@ -439,45 +312,7 @@ export const MAPS: Record<MapId, MapDef> = {
       [4, 17],
       [5, 17],
     ],
-    landmarks: [
-      { kind: 'taxi', c: 3, r: 2 },
-      { kind: 'billboard', c: 7, r: 1 },
-      { kind: 'newsstand', c: 4, r: 9 },
-      { kind: 'taxi', c: 7, r: 12 },
-      { kind: 'tree', c: 0, r: 0 },
-      { kind: 'tree', c: 4, r: 0 },
-      { kind: 'tree', c: 9, r: 0 },
-      { kind: 'lamp', c: 2, r: 1 },
-      { kind: 'taxi', c: 5, r: 2 },
-      { kind: 'newsstand', c: 8, r: 2 },
-      { kind: 'bush', c: 4, r: 3 },
-      { kind: 'lamp', c: 8, r: 3 },
-      { kind: 'tree', c: 9, r: 4 },
-      { kind: 'tree', c: 1, r: 5 },
-      { kind: 'bench', c: 3, r: 5 },
-      { kind: 'taxi', c: 0, r: 6 },
-      { kind: 'fountain', c: 4, r: 6 },
-      { kind: 'lamp', c: 8, r: 6 },
-      { kind: 'newsstand', c: 8, r: 8 },
-      { kind: 'bench', c: 5, r: 8 },
-      { kind: 'tree', c: 9, r: 8 },
-      { kind: 'lamp', c: 0, r: 9 },
-      { kind: 'statue', c: 6, r: 9 },
-      { kind: 'tree', c: 3, r: 10 },
-      { kind: 'bush', c: 7, r: 10 },
-      { kind: 'taxi', c: 0, r: 12 },
-      { kind: 'newsstand', c: 4, r: 12 },
-      { kind: 'tunnel', c: 2, r: 13 },
-      { kind: 'bench', c: 3, r: 13 },
-      { kind: 'lamp', c: 6, r: 13 },
-      { kind: 'bridge', c: 9, r: 13 },
-      { kind: 'tree', c: 0, r: 14 },
-      { kind: 'tree', c: 0, r: 16 },
-      { kind: 'lamp', c: 2, r: 16 },
-      { kind: 'bush', c: 6, r: 16 },
-      { kind: 'taxi', c: 8, r: 16 },
-      { kind: 'tree', c: 9, r: 16 },
-    ],
+    landmarks: [],
     flavor: [
       'The ticker never sleeps. Neither should you.',
       'Do not block the gold doors.',
