@@ -71,7 +71,7 @@ export const DIFFICULTIES: Record<DifficultyId, Difficulty> = {
     id: 'easy',
     name: 'Fair & Balanced',
     tag: 'CABLE NEWS',
-    blurb: 'Full $560 kit so you can try every tower. Softer swarm. A very friendly press.',
+    blurb: '$560 · 120% Approval. Soft HP/speed. • Rule: elites sleep until wave 8.',
     startGold: 560,
     startApproval: 120,
     hpMul: 0.8,
@@ -84,7 +84,7 @@ export const DIFFICULTIES: Record<DifficultyId, Difficulty> = {
     id: 'normal',
     name: 'Tremendous',
     tag: 'RALLY DEFAULT',
-    blurb: 'The real deal. Ratings, walls, and a winding lawn.',
+    blurb: '$280 · 100% Approval. Fair multipliers. • Rule: commit early — two towers + upgrades.',
     startGold: 280,
     startApproval: 100,
     hpMul: 1,
@@ -97,20 +97,20 @@ export const DIFFICULTIES: Record<DifficultyId, Difficulty> = {
     id: 'hard',
     name: 'Witch Hunt',
     tag: 'SPECIAL COUNSEL',
-    blurb: 'Leaner war chest. Meaner swamp. They are coming faster.',
-    startGold: 210,
+    blurb: '$230 · 90% Approval. Hotter HP/speed. • Rule: lobbyists heal harder.',
+    startGold: 230,
     startApproval: 90,
-    hpMul: 1.28,
-    spdMul: 1.14,
-    rewardMul: 1.08,
-    leakMul: 1.18,
-    waveMul: 1.12,
+    hpMul: 1.22,
+    spdMul: 1.12,
+    rewardMul: 1.1,
+    leakMul: 1.15,
+    waveMul: 1.1,
   },
   insane: {
     id: 'insane',
     name: 'SAD!',
     tag: 'UNPRECEDENTED',
-    blurb: 'Everyone is against you. Still winnable. Barely.',
+    blurb: '$170 · 80% Approval. Brutal HP/speed. • Rule: aliens split twice as often.',
     startGold: 170,
     startApproval: 80,
     hpMul: 1.52,
@@ -249,7 +249,7 @@ export const MAPS: Record<MapId, MapDef> = {
     name: 'Frontier Ridge',
     subtitle: 'Steel, dust, and a very finished wall',
     briefing:
-      'High desert switchbacks, a split in the ridge, and a tunnel the swarm loves. Ground units under the rock cannot be hit. Drones still fly the long way. Hold the gate.',
+      'High desert switchbacks, a split in the ridge, and a tunnel the swarm loves. Ground units under the rock take hard cover — 45% damage. Drones still fly the long way. Hold the gate.',
     victory: 'The ridge holds. The wall is still there. Everybody said it could not be done.',
     defeat: 'They walked around. They always walk around. Ratings crater in the dust.',
     theme: {
@@ -419,14 +419,14 @@ export const WAVE_TITLES = [
   'CROWD’S GETTING BIG',
   'THEY BROUGHT CAMERAS',
   'THE SWAMP ARRIVES',
-  'RATINGS HOUR',
+  'RATINGS HOUR — LIVE',
   'SPECIAL COUNSEL',
   'BOTH SIDES NOW',
   'THE CARAVAN',
-  'EVERY NETWORK',
+  'EVERY NETWORK AT ONCE',
   'THE BASE IS LIT',
   'HISTORIC, THEY SAY',
-  'THE GREATEST WAVE',
+  'THE GREATEST WAVE EVER',
 ] as const;
 
 export const PAUSE_QUOTES = [
@@ -466,9 +466,10 @@ export const TICKER = [
   'MARKETS LOVE WALLS • DONATIONS UP • DRONES WRONG AGAIN •',
   'SOURCES SAY: tremendous • experts: furious • fountain: fine •',
   'POLL: 99% of you are doing a fantastic job • 1% is the swamp •',
-  'WEATHER: sunny with a chance of tariffs • bring a Truth Tower •',
-  'ALERT: Special Counsel spotted near the roses • TAX accordingly •',
+  'WEATHER: sunny with a chance of tariffs • pack a Truth Tower •',
+  'ALERT: Special Counsel near the roses • TAX him like you mean it •',
   'FEVER WATCH: streak 20 is a lifestyle • do not drop it •',
+  'TUNNEL WATCH: dust means ground units under rock — hold fire till they exit •',
 ] as const;
 
 export const SPECIAL_NAME: Record<string, string> = {
@@ -498,17 +499,17 @@ export type FieldEvent = {
 };
 
 export function eventForWave(wave: number): FieldEvent | null {
-  if (wave === 2) return { id: 'coffee', title: 'COFFEE BREAK', blurb: 'The swamp forgot how to walk. Briefly.', life: 2.6 };
-  if (wave === 3) return { id: 'tweet', title: 'TWEET STORM', blurb: 'Towers work weekends.', life: 8 };
+  if (wave === 2) return { id: 'coffee', title: 'COFFEE BREAK', blurb: 'The swamp forgot how to walk. Very briefly. Enjoy it.', life: 2.6 };
+  if (wave === 3) return { id: 'tweet', title: 'TWEET STORM', blurb: 'Towers work weekends. Fire rate goes nuclear.', life: 8 };
   if (wave === 4) return { id: 'prime', title: 'EXECUTIVE TIME', blurb: 'Everything hits harder. Believe me.', life: 8 };
-  if (wave === 5) return { id: 'drive', title: 'DONATION DRIVE', blurb: 'Kills pay double. Briefly.', life: 10 };
-  if (wave === 6) return { id: 'counsel', title: 'SPECIAL COUNSEL', blurb: 'A very large clerk is coming. TAX him.', life: 4.5 };
-  if (wave === 7) return { id: 'blackout', title: 'FAKE NEWS BLACKOUT', blurb: 'Drones forget how to fly fast.', life: 10 };
-  if (wave === 8) return { id: 'caravan', title: 'THE CARAVAN', blurb: 'Extra aliens. They did not RSVP.', life: 3.2 };
-  if (wave === 9) return { id: 'witch', title: 'WITCH HUNT', blurb: 'Bureaucrats found a second wind.', life: 8 };
-  if (wave === 10) return { id: 'prime', title: 'PRIME TIME', blurb: 'Every network. Every shot. Yuge.', life: 9 };
-  if (wave === 11) return { id: 'surge', title: 'RATINGS SURGE', blurb: 'The base is calling. Cash incoming.', life: 3.2 };
-  if (wave === 12) return { id: 'finale', title: 'FINAL RALLY', blurb: 'Everybody is watching. Fire faster.', life: 99 };
+  if (wave === 5) return { id: 'drive', title: 'DONATION DRIVE', blurb: 'Kills pay double. The base is generous today.', life: 10 };
+  if (wave === 6) return { id: 'counsel', title: 'SPECIAL COUNSEL', blurb: 'A very large clerk is coming. TAX him. Now.', life: 4.5 };
+  if (wave === 7) return { id: 'blackout', title: 'FAKE NEWS BLACKOUT', blurb: 'Drones forget how to fly fast. Lens fog.', life: 10 };
+  if (wave === 8) return { id: 'caravan', title: 'THE CARAVAN', blurb: 'Extra aliens. They did not RSVP. Still coming.', life: 3.2 };
+  if (wave === 9) return { id: 'witch', title: 'RED TAPE SURGE', blurb: 'Clerks are jogging. TAX the clump before they stretch.', life: 8 };
+  if (wave === 10) return { id: 'prime', title: 'PRIME TIME', blurb: 'Every network. Every shot. Absolutely yuge.', life: 9 };
+  if (wave === 11) return { id: 'surge', title: 'RATINGS SURGE', blurb: 'The base is calling. Cash incoming. Answer.', life: 3.2 };
+  if (wave === 12) return { id: 'finale', title: 'FINAL RALLY', blurb: 'Everybody is watching. Fire faster. Win louder.', life: 99 };
   return null;
 }
 
@@ -522,13 +523,32 @@ export function wavePreview(map: MapId, wave: number): string {
   for (const b of beats) counts[b.kind] = (counts[b.kind] ?? 0) + b.n;
   const names: Record<EnemyId, string> = {
     alien: 'aliens',
-    drone: 'drones',
+    drone: 'FLYERS',
     bureaucrat: 'clerks',
     lobbyist: 'lobbyists',
   };
-  return (Object.keys(counts) as EnemyId[])
+  const core = (Object.keys(counts) as EnemyId[])
     .map((k) => `${counts[k]} ${names[k]}`)
     .join(' · ');
+  const ev = eventForWave(wave);
+  if (!ev) return core;
+  if (ev.id === 'caravan') return `${core} · +caravan`;
+  if (ev.id === 'counsel') return `${core} · SPECIAL COUNSEL`;
+  return core;
+}
+
+/** First sentence of a map briefing — for select-screen mission brief. */
+export function mapBriefLine(mapId: MapId): string {
+  const briefing = MAPS[mapId]?.briefing ?? '';
+  const end = briefing.indexOf('.');
+  const head = end >= 0 ? briefing.slice(0, end + 1) : briefing;
+  const twist: Record<MapId, string> = {
+    lawn: ' Teach on the lawn — Truth on the bends.',
+    palazzo: ' Clerks arrive early — save for Tariff.',
+    border: ' Tunnel is hard cover (not invisible) — Brick both forks.',
+    avenue: ' Drones open early — Truth before Brick.',
+  };
+  return `${head}${twist[mapId] ?? ''}`;
 }
 
 export const STORY_CRAWL = [

@@ -160,7 +160,11 @@ function buildQueue(map: MapId, wave: number, waveMul: number): SpawnItem[] {
 
 function scaledHp(kind: EnemyId, wave: number): number {
   const base = ENEMIES[kind].hp;
-  return Math.round(base * Math.pow(1.155, wave - 1));
+  // Soft curve early, softer late — late waves used to outrun Tariff+Desk income.
+  const w = Math.max(0, wave - 1);
+  const early = Math.pow(1.14, Math.min(w, 7));
+  const late = w > 7 ? Math.pow(1.11, w - 7) : 1;
+  return Math.round(base * early * late);
 }
 
 export class Sim {
@@ -345,8 +349,12 @@ export class Sim {
     }
     if (ev.id === 'coffee') this.coffee = ev.life;
     if (ev.id === 'prime') this.primeTime = ev.life;
+    if (ev.id === 'counsel') {
+      this.credit(110);
+      this.fx.say(WORLD_W / 2, WORLD_H * 0.48, 'COUNSEL SLUSH +$110', '#e6c35c', 1.35);
+    }
     if (ev.id === 'caravan') {
-      for (let i = 0; i < 10; i++) this.waveQueue.push({ kind: 'alien', delay: 0.18 });
+      for (let i = 0; i < 10; i++) this.waveQueue.push({ kind: 'alien', delay: 0.28 + i * 0.06 });
     }
     if (ev.id === 'surge') {
       this.credit(80);
@@ -501,7 +509,6 @@ export class Sim {
     if (t.kind === 'truth') {
       for (const e of this.enemies) {
         if (e.hp <= 0) continue;
-        if (!e.flying && this.map.inTunnel(e.x, e.y)) continue;
         if (dist(t.x, t.y, e.x, e.y) <= 3.8 * CELL + e.radius) {
           this.beams.push({ x0: t.x, y0: t.y - 18, x1: e.x, y1: e.y - e.z, life: 0.16 });
           this.damage(e, 62, 'NOVA!', '#3cf0ff');
@@ -564,7 +571,7 @@ export class Sim {
   private spawnBoss(): void {
     const route = this.map.pickRoute();
     const s = this.map.sample(0, route);
-    const hp = Math.round(scaledHp('bureaucrat', this.wave) * this.diff.hpMul * (this.wave >= 12 ? 7.2 : 5.4));
+    const hp = Math.round(scaledHp('bureaucrat', this.wave) * this.diff.hpMul * (this.wave >= 12 ? 5.4 : 3.9));
     this.enemies.push({
       id: this.nextId++,
       kind: 'bureaucrat',
@@ -594,8 +601,10 @@ export class Sim {
 
   private spawnEnemy(kind: EnemyId, opts?: { splitter?: boolean; elite?: boolean; dist?: number; route?: number }): void {
     const def = ENEMIES[kind];
-    const elite = opts?.elite ?? (this.wave >= 7 && kind !== 'lobbyist' && Math.random() < 0.16 + this.wave * 0.01);
-    const splitter = opts?.splitter ?? (kind === 'alien' && this.wave >= 4 && Math.random() < 0.2);
+    const eliteFloor = this.diff.id === 'easy' ? 8 : 7;
+    const elite = opts?.elite ?? (this.wave >= eliteFloor && kind !== 'lobbyist' && Math.random() < 0.16 + this.wave * 0.01);
+    const splitChance = this.diff.id === 'insane' ? 0.4 : 0.2;
+    const splitter = opts?.splitter ?? (kind === 'alien' && this.wave >= 4 && Math.random() < splitChance);
     const hpMul = (elite ? 1.7 : 1) * (splitter ? 0.72 : 1);
     const hp = Math.round(scaledHp(kind, this.wave) * this.diff.hpMul * hpMul);
     const route = opts?.route ?? this.map.pickRoute();
@@ -683,8 +692,14 @@ export class Sim {
     }
   }
 
+  private coverMul(e: Enemy): number {
+    // Ridge tunnel: hard cover, not invisibility — still shootable, 45% damage.
+    if (!e.flying && this.map.inTunnel(e.x, e.y)) return 0.45;
+    return 1;
+  }
+
   private damage(e: Enemy, amt: number, label?: string, color = '#fff3b0'): void {
-    const mul = this.primeTime > 0 ? 1.32 : 1;
+    const mul = (this.primeTime > 0 ? 1.32 : 1) * this.coverMul(e);
     e.hp -= amt * mul;
     e.flash = 0.12;
     if (label) this.fx.say(e.x + (Math.random() * 16 - 8), e.y - 16 - e.z, label, color, amt > 40 ? 1.25 : 0.9);
@@ -695,7 +710,6 @@ export class Sim {
     let tagged = false;
     for (const e of this.enemies) {
       if (e.hp <= 0) continue;
-      if (!e.flying && this.map.inTunnel(e.x, e.y)) continue;
       if (dist(e.x, e.y, x, y) <= radius + e.radius) {
         // One splash callout max — labeling every hit floods the screen.
         const label = !tagged ? pick(BIG) : undefined;
@@ -711,7 +725,6 @@ export class Sim {
     for (const e of this.enemies) {
       if (e.hp <= 0) continue;
       if (!flyingOk && e.flying) continue;
-      if (!e.flying && this.map.inTunnel(e.x, e.y)) continue;
       if (dist(t.x, t.y, e.x, e.y) > range + e.radius) continue;
       if (e.dist > bestDist) {
         bestDist = e.dist;
@@ -762,7 +775,6 @@ export class Sim {
     for (const e of this.enemies) {
       if (e.id === skip.id || e.hp <= 0) continue;
       if (ignore?.has(e.id)) continue;
-      if (!e.flying && this.map.inTunnel(e.x, e.y)) continue;
       const d = dist(skip.x, skip.y, e.x, e.y);
       if (d > 92) continue;
       if (dist(t.x, t.y, e.x, e.y) > range + e.radius) continue;
@@ -811,23 +823,19 @@ export class Sim {
   }
 
   private fireBrick(t: Tower, e: Enemy, want = 1): boolean {
-    const here = this.map.cellOf(e.x, e.y);
-    let i = this.map.pathIndex[this.map.idx(here.c, here.r)];
-    if (i < 0) {
-      const near = this.map.nearestPathCell(e.x, e.y);
-      if (!near) return false;
-      i = near.i;
-    }
-    const mid = this.map.center(here.c, here.r);
-    const pastMid =
-      Math.hypot(e.x - mid.x, e.y - mid.y) < CELL * 0.2 || e.dist >= this.map.distAtCell(here.c, here.r);
-    let start = pastMid ? i + 1 : i;
+    // Walk the enemy's own rail so Frontier Ridge alt-routes get walls on THEIR track.
+    const len = this.map.routeLength(e.route);
+    const step = CELL * 0.9;
     let placed = 0;
-    for (let k = start; k < this.map.pathCells.length; k++) {
-      const cell = this.map.pathCells[k]!;
-      const c = cell[0];
-      const r = cell[1];
-      if (this.map.isHouse(c, r) || this.wallAt(c, r) || this.brickPending(c, r)) continue;
+    const used = new Set<number>();
+    for (let d = e.dist + CELL * 0.35; d < len && placed < want + 6; d += step) {
+      const s = this.map.sample(d, e.route);
+      const { c, r } = this.map.cellOf(s.x, s.y);
+      if (!this.map.inBounds(c, r) || this.map.isHouse(c, r)) continue;
+      if (!this.map.isPath(c, r)) continue;
+      const key = this.map.idx(c, r);
+      if (used.has(key) || this.wallAt(c, r) || this.brickPending(c, r)) continue;
+      used.add(key);
       const p = this.map.center(c, r);
       t.angle = Math.atan2(p.y - t.y, p.x - t.x);
       const st = towerStats('brick', t.tier);
@@ -1006,13 +1014,23 @@ export class Sim {
       e.angle = s.angle;
     }
 
+    const lobbyHeal = this.diff.id === 'hard' || this.diff.id === 'insane' ? 12.5 : 10;
     for (const e of this.enemies) {
       if (e.hp <= 0 || e.kind !== 'lobbyist') continue;
       for (const o of this.enemies) {
         if (o.id === e.id || o.hp <= 0 || o.flying) continue;
         if (dist(e.x, e.y, o.x, o.y) <= 54) {
-          o.hp = Math.min(o.maxHp, o.hp + 16 * tdt);
+          o.hp = Math.min(o.maxHp, o.hp + lobbyHeal * tdt);
         }
+      }
+      if (!e.flying && this.map.inTunnel(e.x, e.y) && Math.random() < tdt * 4) {
+        this.fx.spawn(e.x, e.y, 3, ['#6b5a40', '#a09070', '#3a2a18'], 40, 'smoke', 5);
+      }
+    }
+    for (const e of this.enemies) {
+      if (e.hp <= 0 || e.flying || e.kind === 'lobbyist') continue;
+      if (this.map.inTunnel(e.x, e.y) && Math.random() < tdt * 2.5) {
+        this.fx.spawn(e.x, e.y, 2, ['#6b5a40', '#c4b090'], 35, 'smoke', 4);
       }
     }
 
@@ -1021,9 +1039,8 @@ export class Sim {
       if (p.life <= 0) continue;
       for (const e of this.enemies) {
         if (e.hp <= 0) continue;
-        if (!e.flying && this.map.inTunnel(e.x, e.y)) continue;
         if (dist(e.x, e.y, p.x, p.y) <= p.r + e.radius) {
-          e.hp -= p.dps * tdt;
+          e.hp -= p.dps * tdt * this.coverMul(e);
           if (e.hp <= 0) this.kill(e, pick(KILLS[e.kind] ?? KILLS.alien));
         }
       }

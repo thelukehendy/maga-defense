@@ -1,5 +1,17 @@
 import type { Synth } from './audio.ts';
-import { ENEMY_LORE, MAX_TIER, MAP_ORDER, SPECIAL_NAME, TOWER_LORE, towerStats, UPGRADE_COST, wavePreview, END_QUOTES_LOSS, END_QUOTES_WIN } from './campaign.ts';
+import {
+  ENEMY_LORE,
+  MAX_TIER,
+  MAP_ORDER,
+  SPECIAL_NAME,
+  TOWER_LORE,
+  towerStats,
+  UPGRADE_COST,
+  wavePreview,
+  mapBriefLine,
+  END_QUOTES_LOSS,
+  END_QUOTES_WIN,
+} from './campaign.ts';
 import { getStars, rankTitle, rateStars, recordStars, starGlyphs } from './progress.ts';
 import type { Sim } from './sim.ts';
 import { MAX_WAVES, SELL_RATIO, TOWERS, type TowerId } from './types.ts';
@@ -38,6 +50,7 @@ export type HudHandles = {
   endRank: HTMLElement | null;
   nextMapBtn: HTMLButtonElement | null;
   pauseQuote: HTMLElement | null;
+  missionBrief: HTMLElement | null;
 };
 
 type SimPaint = Sim & { diff?: { id?: string } };
@@ -61,40 +74,65 @@ function paintInspect(hud: HudHandles, sim: Sim): void {
   const body = hud.inspectBody;
   const stats = hud.inspectStats;
   if (!title || !body || !stats) return;
+  const touchy = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
+  const liveEvent = sim.eventLife > 0.05;
+  const withEvent = (label: string): string => (liveEvent ? `${sim.eventTitle} · ${label}` : label);
+
+  if (sim.armed && sim.placing) {
+    title.textContent = withEvent('CONFIRM PLACEMENT');
+    body.textContent = `Tap the glowing tile again to plant ${TOWER_LORE[sim.placing].title}.`;
+    stats.textContent = `Tile ${sim.armed.c},${sim.armed.r} · ${formatStats(sim.placing, 0)}`;
+    return;
+  }
 
   if (sim.selected) {
     const kind = sim.selected.kind;
     const tier = sim.selected.tier ?? 0;
     const lore = TOWER_LORE[kind];
     const upgradeName = lore.upgrades[Math.min(tier, lore.upgrades.length - 1)] ?? lore.upgrades[0];
-    title.textContent = lore.title;
+    title.textContent = withEvent(lore.title);
     body.textContent = `${lore.motto} — ${lore.how}`;
-    stats.textContent = `${formatStats(kind, tier)} · ${upgradeName}${tier >= MAX_TIER ? ` · ${SPECIAL_NAME[kind] ?? 'SPECIAL'} (E)` : ''}`;
+    const special = tier >= MAX_TIER ? ` · ${SPECIAL_NAME[kind] ?? 'SPECIAL'}${touchy ? '' : ' (E)'}` : '';
+    stats.textContent = `${formatStats(kind, tier)} · ${upgradeName}${special}`;
     return;
   }
 
   if (sim.placing) {
     const lore = TOWER_LORE[sim.placing];
-    title.textContent = `PLACE ${lore.title}`;
+    title.textContent = withEvent(`PLACE ${lore.title}`);
     body.textContent = `${lore.motto} — ${lore.how}`;
-    stats.textContent = formatStats(sim.placing, 0);
+    stats.textContent = touchy
+      ? `${formatStats(sim.placing, 0)} · first tap = range, second = build`
+      : formatStats(sim.placing, 0);
     return;
   }
 
-    const threats = Object.values(ENEMY_LORE)
-      .map((e) => `${e.title}: ${e.motto}`)
-      .join(' · ');
-    if (sim.waveReady() && sim.wave < MAX_WAVES) {
-      const next = sim.wave + 1;
-      title.textContent = next === 1 ? 'OPENING STATEMENT' : `NEXT — WAVE ${next}`;
-      body.textContent = wavePreview(sim.map.def.id, next);
-      stats.textContent = 'Place · Upgrade · Hold the lawn';
-      return;
-    }
-    title.textContent = 'THREAT BRIEF';
-    body.textContent = 'Select a tower on the lawn, or pick a card to preview the arsenal.';
-    stats.textContent = threats;
+  const threats = Object.values(ENEMY_LORE)
+    .map((e) => `${e.title}: ${e.motto}`)
+    .join(' · ');
+  if (sim.waveReady() && sim.wave < MAX_WAVES) {
+    const next = sim.wave + 1;
+    const label = next === 1 ? 'OPENING STATEMENT' : `NEXT — WAVE ${next}`;
+    title.textContent = withEvent(label);
+    body.textContent = wavePreview(sim.map.def.id, next);
+    stats.textContent =
+      next === 6 || next === 12
+        ? 'Boss incoming · TAX + Desk · Hold the lawn'
+        : next === 1
+          ? 'Truth on bends · then START WAVE 1'
+          : 'Place · Upgrade · Hold the lawn';
+    return;
   }
+  if (liveEvent) {
+    title.textContent = sim.eventTitle;
+    body.textContent = sim.eventBlurb;
+    stats.textContent = sim.streak >= 5 ? `STREAK ${sim.streak}` : 'Event live — keep firing';
+    return;
+  }
+  title.textContent = 'THREAT BRIEF';
+  body.textContent = 'Select a tower on the lawn, or pick a card to preview the arsenal.';
+  stats.textContent = threats;
+}
 
 function paintUpgrade(hud: HudHandles, sim: Sim): void {
   const btn = hud.upgradeBtn;
@@ -162,6 +200,7 @@ export function bindHud(root: HTMLElement): HudHandles {
     endRank: opt(root, '#end-rank'),
     nextMapBtn: opt<HTMLButtonElement>(root, '#btn-next-map'),
     pauseQuote: opt(root, '#pause-quote'),
+    missionBrief: opt(root, '#mission-brief'),
   };
 }
 
@@ -243,7 +282,12 @@ export function paintHud(
           : 'SEND NEXT WAVE';
     }
     if (sim.wave < MAX_WAVES) {
-      hud.sendBtn.title = wavePreview(sim.map.def.id, sim.wave + 1);
+      const next = sim.wave + 1;
+      const tip = wavePreview(sim.map.def.id, next);
+      hud.sendBtn.title =
+        next === 6 || next === 12 ? `${tip} · boss` : next === sim.wave + 1 && sim.wave === 5 ? `${tip} · next: SPECIAL COUNSEL` : tip;
+      if (sim.wave === 5) hud.sendBtn.title = `${tip} · NEXT: SPECIAL COUNSEL`;
+      if (sim.wave === 11) hud.sendBtn.title = `${tip} · NEXT: THE BIGGEST CLERK`;
     }
   } else {
     hud.sendBtn.disabled = false;
@@ -251,11 +295,14 @@ export function paintHud(
     hud.sendBtn.classList.toggle('auto-on', sim.autoWaves);
     hud.sendBtn.textContent = sim.autoWaves
       ? narrow
-        ? 'AUTO ON'
-        : 'AUTO START ON'
+        ? 'AUTO · ON'
+        : 'AUTO WAVES · ON'
       : narrow
-        ? 'AUTO'
-        : 'AUTO START';
+        ? 'AUTO · OFF'
+        : 'AUTO WAVES · OFF';
+    hud.sendBtn.title = sim.autoWaves
+      ? 'Tap to turn off auto-advance between waves'
+      : 'Tap to auto-start the next wave after each clear';
   }
   hud.sellBtn.disabled = !sim.selected;
   hud.sellBtn.textContent = sim.selected
@@ -284,6 +331,9 @@ export function paintHud(
         starEl.textContent = starGlyphs(getStars(id as typeof MAP_ORDER[number], diffId as 'easy' | 'normal' | 'hard' | 'insane'));
       }
     }
+  }
+  if (hud.missionBrief && sim.map?.def?.id) {
+    hud.missionBrief.textContent = mapBriefLine(sim.map.def.id);
   }
 
   for (const card of hud.cards) {

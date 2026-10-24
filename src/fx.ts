@@ -147,6 +147,12 @@ export class FX {
     this.spawn(x, y, 14, ['#6b7280', '#d1d5db'], 55, 'smoke', 14);
   }
 
+  /** Soft brown/grey sparks for tunnel dust trails. */
+  dust(x: number, y: number): void {
+    this.spawn(x, y, 5, ['#8a6a48', '#a89070', '#6b6358', '#c4b49a'], 28, 'spark', 2.2);
+    this.spawn(x, y, 2, ['#9a9080', '#7a7068'], 14, 'smoke', 5);
+  }
+
   say(x: number, y: number, text: string, color: string, scale = 1): void {
     const f = this.f();
     f.alive = true;

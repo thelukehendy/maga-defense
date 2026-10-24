@@ -530,8 +530,14 @@ export class Renderer {
     }
     for (const e of sim.enemies) {
       if (e.hp <= 0) continue;
-      if (!e.flying && this.map.inTunnel(e.x, e.y)) continue;
-      layers.push({ y: e.y, draw: () => this.drawEnemy(ctx, e, time) });
+      const buried = !e.flying && this.map.inTunnel(e.x, e.y);
+      layers.push({ y: e.y, draw: () => this.drawEnemy(ctx, e, time, buried) });
+    }
+    for (const tun of this.map.tunnels) {
+      layers.push({
+        y: tun.y + tun.h,
+        draw: () => this.drawTunnelCover(ctx, tun, time),
+      });
     }
     layers.sort((a, b) => a.y - b.y);
     for (const layer of layers) layer.draw();
@@ -710,6 +716,20 @@ export class Renderer {
     if (sim.wave === 0 && sim.towers.length === 0) {
       const tw = 0.7 + Math.sin(time * 3) * 0.15;
       ctx.save();
+      ctx.globalAlpha = tw * 0.55;
+      ctx.strokeStyle = '#e6c35c';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 4]);
+      // Soft teach: highlight a couple of grass cells near the first bend.
+      for (const [c, r] of [
+        [3, 4],
+        [6, 5],
+        [4, 7],
+      ] as const) {
+        if (!this.map.canPlace(c, r, sim.occupied)) continue;
+        ctx.strokeRect(c * 64 + 6, r * 64 + 6, 52, 52);
+      }
+      ctx.setLineDash([]);
       ctx.globalAlpha = tw;
       ctx.fillStyle = 'rgba(8, 16, 36, 0.55)';
       ctx.beginPath();
@@ -907,8 +927,40 @@ export class Renderer {
     ctx.restore();
   }
 
-  private drawEnemy(ctx: CanvasRenderingContext2D, e: Enemy, time: number): void {
+  private drawTunnelCover(
+    ctx: CanvasRenderingContext2D,
+    tun: { x: number; y: number; w: number; h: number },
+    time: number,
+  ): void {
     ctx.save();
+    ctx.globalAlpha = 0.22 + Math.sin(time * 2.2) * 0.04;
+    const g = ctx.createLinearGradient(tun.x, tun.y, tun.x + tun.w, tun.y + tun.h);
+    g.addColorStop(0, '#3a2a18');
+    g.addColorStop(0.5, '#1a140c');
+    g.addColorStop(1, '#4a3820');
+    ctx.fillStyle = g;
+    ctx.fillRect(tun.x, tun.y, tun.w, tun.h);
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = '#e6c35c';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 5]);
+    ctx.strokeRect(tun.x + 2, tun.y + 2, tun.w - 4, tun.h - 4);
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#fff3b0';
+    ctx.font = '800 11px Impact, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.globalAlpha = 0.85;
+    ctx.fillText('UNDER THE RIDGE', tun.x + tun.w / 2, tun.y + 14);
+    ctx.restore();
+  }
+
+  private drawEnemy(ctx: CanvasRenderingContext2D, e: Enemy, time: number, buried = false): void {
+    ctx.save();
+    if (buried) {
+      ctx.globalAlpha = 0.38 + Math.sin(time * 6 + e.id) * 0.08;
+      ctx.filter = 'brightness(0.55) saturate(0.4)';
+    }
     ctx.translate(e.x, e.y - e.z + Math.sin(e.bob) * (e.flying ? 3 : 1));
     if (e.boss) {
       ctx.strokeStyle = `rgba(200, 16, 46, ${0.6 + Math.sin(time * 7) * 0.28})`;
