@@ -1314,7 +1314,7 @@ body {
 
 .dossier:has(canvas.portrait, canvas[data-portrait]) {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-columns: minmax(88px, 120px) minmax(0, 1fr);
   gap: 8px 12px;
   align-items: start;
 }
@@ -1323,10 +1323,10 @@ body {
 .dossier canvas[data-portrait],
 canvas.portrait {
   display: block;
-  width: 96px;
-  height: 96px;
-  max-width: 100%;
-  aspect-ratio: 1;
+  width: 100%;
+  max-width: 160px;
+  height: auto;
+  aspect-ratio: 160 / 88;
   object-fit: contain;
   border-radius: 10px;
   background: #7ec8f4;
@@ -1337,6 +1337,49 @@ canvas.portrait {
 .dossier:has(canvas.portrait, canvas[data-portrait]) canvas.portrait,
 .dossier:has(canvas.portrait, canvas[data-portrait]) canvas[data-portrait] {
   grid-row: 1 / span 4;
+}
+
+/*
+ * INFO lives in the play pillar (~400px on desktop landscape). Viewport media
+ * queries think the screen is wide and pack 4 crushing columns — always stack.
+ */
+#overlay-info .panel.codex {
+  max-width: min(560px, 100%);
+  width: 100%;
+  container-type: inline-size;
+  container-name: info-panel;
+}
+#overlay-info .dossier-grid,
+#overlay-info .dossier-grid.info-grid {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+#overlay-info .dossier:has(canvas.portrait, canvas[data-portrait]) {
+  grid-template-columns: 1fr;
+  justify-items: stretch;
+  text-align: left;
+  gap: 6px 10px;
+}
+#overlay-info .dossier:has(canvas.portrait, canvas[data-portrait]) canvas.portrait,
+#overlay-info .dossier:has(canvas.portrait, canvas[data-portrait]) canvas[data-portrait] {
+  grid-row: auto;
+  width: 100%;
+  max-width: none;
+  aspect-ratio: 160 / 88;
+}
+#overlay-info .dossier .how {
+  font-size: 13px;
+  line-height: 1.45;
+  color: #d7e0f5;
+}
+#overlay-info .dossier h3 {
+  font-size: 16px;
+  line-height: 1.15;
+}
+@container info-panel (min-width: 520px) {
+  .dossier-grid.info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .dossier.foe {
@@ -2309,15 +2352,37 @@ canvas.portrait {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .map-grid,
-  .dossier-grid,
-  .dossier-grid.info-grid,
-  #overlay-info .dossier-grid.info-grid {
+  .dossier-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .dossier:has(canvas.portrait) {
+  /* INFO stays single-column in the play pillar — never reintroduce a crushing 2-up. */
+  #overlay-info .dossier-grid,
+  #overlay-info .dossier-grid.info-grid {
     grid-template-columns: 1fr;
-    justify-items: center;
-    text-align: center;
+  }
+  /* Portrait phone: stack portrait above copy so long .how text stays readable. */
+  #overlay-info .dossier:has(canvas.portrait) {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+    text-align: left;
+    gap: 6px;
+  }
+  #overlay-info .dossier:has(canvas.portrait) canvas.portrait {
+    grid-row: auto;
+    width: 100%;
+    max-width: none;
+    aspect-ratio: 160 / 88;
+  }
+  #overlay-info .dossier .how {
+    font-size: 12.5px;
+    line-height: 1.4;
+  }
+  #overlay-info .dossier h3 {
+    font-size: 15px;
+  }
+  #overlay-info .panel.codex {
+    padding-left: 12px;
+    padding-right: 12px;
   }
   #overlay-select .pitch {
     font-size: 12px;
@@ -2363,6 +2428,14 @@ canvas.portrait {
   #overlay-select .diff-btn {
     min-height: 72px;
     padding: 8px 10px;
+  }
+  /* Tall phones: one dossier card per row so how-to copy isn't crushed. */
+  #overlay-info .dossier-grid.info-grid {
+    grid-template-columns: 1fr;
+  }
+  #overlay-info .dossier .how {
+    font-size: 14px;
+    line-height: 1.45;
   }
 }
 

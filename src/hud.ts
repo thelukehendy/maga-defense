@@ -253,10 +253,13 @@ export function paintHud(
     hud.donations.classList.add('bump');
   }
   const maxA = Math.max(1, sim.diff?.startApproval ?? 100);
-  hud.approvalFill.style.width = `${Math.min(100, (100 * sim.approval) / maxA)}%`;
+  const approvalPct = Math.round(Math.min(100, (100 * sim.approval) / maxA));
+  hud.approvalFill.style.width = `${approvalPct}%`;
   hud.approvalFill.classList.toggle('low', sim.approval <= maxA * 0.3);
-  hud.approvalText.textContent = `Approval ${sim.approval}%`;
-  hud.approvalFill.parentElement?.setAttribute('aria-valuenow', String(sim.approval));
+  // Show fill-relative % so Easy's 120 pool still reads as a full bar at start.
+  hud.approvalText.textContent = `Approval ${approvalPct}%`;
+  hud.approvalFill.parentElement?.setAttribute('aria-valuenow', String(approvalPct));
+  hud.approvalFill.parentElement?.setAttribute('aria-valuemax', '100');
   hud.wave.textContent = `${Math.min(sim.wave, MAX_WAVES)}/${MAX_WAVES}`;
   hud.fps.textContent = `${Math.round(fps)} FPS`;
   hud.fps.parentElement?.classList.toggle('hidden', !/(?:^|[?&])debug=1(?:&|$)/.test(location.search));

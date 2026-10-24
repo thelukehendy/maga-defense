@@ -71,7 +71,7 @@ export const DIFFICULTIES: Record<DifficultyId, Difficulty> = {
     id: 'easy',
     name: 'Fair & Balanced',
     tag: 'CABLE NEWS',
-    blurb: '$560 · 120% Approval. Soft HP/speed. • Rule: elites sleep until wave 8.',
+    blurb: '$560 · thicker Approval bar. Soft HP/speed. • Rule: elites sleep until wave 8.',
     startGold: 560,
     startApproval: 120,
     hpMul: 0.8,
